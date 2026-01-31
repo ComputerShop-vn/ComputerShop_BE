@@ -12,7 +12,6 @@ import java.util.Set;
 @NoArgsConstructor
 @Builder
 public class RoleResponse {
-    private Long id;
+    private int roleId;
     private String name;
-    private String description;
 }
