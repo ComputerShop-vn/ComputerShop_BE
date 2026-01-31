@@ -1,17 +1,26 @@
 package sp26.group3.computer.sba301_computershop.dto.response;
 
 import lombok.*;
-import lombok.experimental.FieldDefaults;
-import java.util.Set;
+
+import java.time.LocalDateTime;
 
 @Data
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE)
+@Builder
 public class UserResponse {
-    long id;
-    String email;
-    Set<RoleResponse> roles;
 
+    private int userId;
+
+    private String username;
+
+    private String email;
+
+    private String phoneNumber;
+
+    private String status;
+
+    private String roleName;
+
+    private LocalDateTime createdAt;
 }
