@@ -6,6 +6,7 @@ import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.info.License;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
+import io.swagger.v3.oas.models.Components;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -16,23 +17,33 @@ public class SwaggerConfig {
     public OpenAPI customOpenAPI() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("S2 Orchid Project API")
+                        .title("ComputerShop REST API")
                         .version("1.0.0")
-                        .description("API documentation for S2 Orchid Project - A Spring Boot REST API for orchid product management and order processing")
+                        .description(
+                                "API documentation for the ComputerShop project. " +
+                                        "This Spring Boot REST API supports computer product management, " +
+                                        "user authentication, order processing, and role-based access control."
+                        )
                         .contact(new Contact()
-                                .name("S2 Orchid Project Team")
-                                .email("support@s2orchid.com")
-                                .url("https://s2orchid.com"))
+                                .name("ComputerShop Development Team")
+                                .email("support@computershop.com")
+                                .url("https://computershop.com"))
                         .license(new License()
-                                .name("Apache 2.0")
-                                .url("https://www.apache.org/licenses/LICENSE-2.0.html")))
-                .addSecurityItem(new SecurityRequirement().addList("Bearer Authentication"))
-                .components(new io.swagger.v3.oas.models.Components()
-                        .addSecuritySchemes("Bearer Authentication",
+                                .name("Apache License 2.0")
+                                .url("https://www.apache.org/licenses/LICENSE-2.0.html"))
+                )
+                .addSecurityItem(
+                        new SecurityRequirement().addList("Bearer Authentication")
+                )
+                .components(new Components()
+                        .addSecuritySchemes(
+                                "Bearer Authentication",
                                 new SecurityScheme()
                                         .type(SecurityScheme.Type.HTTP)
                                         .scheme("bearer")
                                         .bearerFormat("JWT")
-                                        .description("Enter JWT token")));
+                                        .description("Enter JWT Bearer token to authorize")
+                        )
+                );
     }
 }

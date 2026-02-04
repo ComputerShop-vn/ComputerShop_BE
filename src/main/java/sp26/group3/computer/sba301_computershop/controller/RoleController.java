@@ -5,6 +5,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import sp26.group3.computer.sba301_computershop.dto.request.RoleCreationRequest;
 import sp26.group3.computer.sba301_computershop.dto.request.RoleUpdateRequest;
@@ -25,6 +26,7 @@ public class RoleController {
 
     // ================= CREATE =================
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     ApiResponse<RoleResponse> createRole(
             @RequestBody @Valid RoleCreationRequest request) {
 
@@ -41,6 +43,7 @@ public class RoleController {
 
     // ================= READ =================
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     ApiResponse<RoleResponse> getRoleById(@PathVariable int id) {
 
         log.info("[GET] /roles/{} - Get role by id", id);
@@ -54,6 +57,7 @@ public class RoleController {
     }
 
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
     ApiResponse<List<RoleResponse>> getAllRoles() {
 
         log.info("[GET] /roles - Get all roles");
@@ -69,6 +73,7 @@ public class RoleController {
 
     // ================= UPDATE =================
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     ApiResponse<RoleResponse> updateRole(
             @PathVariable int id,
             @RequestBody @Valid RoleUpdateRequest request) {
@@ -85,6 +90,7 @@ public class RoleController {
 
     // ================= DELETE =================
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     ApiResponse<Void> deleteRole(@PathVariable int id) {
 
         log.info("[DELETE] /roles/{} - Delete role", id);

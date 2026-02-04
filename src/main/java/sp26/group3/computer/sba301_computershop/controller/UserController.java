@@ -5,6 +5,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import sp26.group3.computer.sba301_computershop.dto.request.UserCreationRequest;
 import sp26.group3.computer.sba301_computershop.dto.request.UserUpdateRequest;
@@ -38,6 +39,7 @@ public class UserController {
 
     // ================= READ ALL =================
     @GetMapping
+    @PreAuthorize("hasAnyRole('STAFF','ADMIN')")
     ApiResponse<List<UserResponse>> getAllUsers() {
         log.info("[GET] /users - Get all users");
 
@@ -50,6 +52,7 @@ public class UserController {
 
     // ================= READ BY ID =================
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('STAFF','ADMIN')")
     ApiResponse<UserResponse> getUserById(@PathVariable int id) {
         log.info("[GET] /users/{} - Get user by id", id);
 
@@ -63,6 +66,7 @@ public class UserController {
 
     // ================= UPDATE =================
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('STAFF','ADMIN')")
     ApiResponse<UserResponse> updateUser(
             @PathVariable int id,
             @RequestBody @Valid UserUpdateRequest request) {
@@ -78,6 +82,7 @@ public class UserController {
 
     // ================= DELETE (SOFT DELETE) =================
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('STAFF','ADMIN')")
     ApiResponse<Void> deleteUser(@PathVariable int id) {
         log.warn("[DELETE] /users/{} - Soft delete user", id);
 
@@ -89,6 +94,7 @@ public class UserController {
 
     // ================= SELF PROFILE =================
     @GetMapping("/me")
+    @PreAuthorize("hasAnyRole('MEMBER','STAFF','ADMIN')")
     ApiResponse<UserResponse> getMyProfile() {
         log.info("[GET] /users/me - Get my profile");
 
@@ -101,6 +107,7 @@ public class UserController {
     }
 
     @PutMapping("/me")
+    @PreAuthorize("hasAnyRole('MEMBER','STAFF','ADMIN')")
     ApiResponse<UserResponse> updateMyProfile(
             @RequestBody @Valid UserUpdateRequest request) {
 
