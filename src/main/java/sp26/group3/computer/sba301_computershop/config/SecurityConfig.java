@@ -3,6 +3,7 @@ package sp26.group3.computer.sba301_computershop.config;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -23,13 +24,19 @@ import java.util.List;
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    private final String[] PUBLIC_ENDPOINTS = {
-            "/users/**",
-            "/auth/login", "/auth/introspect","/auth/logout","/auth/refresh",
+    private final String[] PUBLIC_ENDPOINTS_POST = {
+            "/auth/login",
+            "/users"
+    };
+
+    private final String[] PUBLIC_ENDPOINTS_GET = {
             "/swagger-ui/**",
             "/v3/api-docs/**",
-            "/swagger-ui.html",
-            "/roles/**"
+            "/swagger-ui.html"
+    };
+
+    private final String[] PUBLIC_ENDPOINTS_PATCH = {
+
     };
 
     @Autowired
@@ -41,7 +48,9 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource())) // bật cors ở đây
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(req -> req
-                        .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
+                        .requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINTS_POST).permitAll()
+                        .requestMatchers(HttpMethod.GET,  PUBLIC_ENDPOINTS_GET).permitAll()
+                        .requestMatchers(HttpMethod.PATCH, PUBLIC_ENDPOINTS_PATCH).permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2
@@ -72,7 +81,8 @@ public class SecurityConfig {
     @Bean
     JwtAuthenticationConverter jwtAuthenticationConverter() {
         JwtGrantedAuthoritiesConverter converter = new JwtGrantedAuthoritiesConverter();
-        converter.setAuthorityPrefix("");
+        converter.setAuthoritiesClaimName("scope");
+        converter.setAuthorityPrefix("ROLE_");
         JwtAuthenticationConverter jwtConverter = new JwtAuthenticationConverter();
         jwtConverter.setJwtGrantedAuthoritiesConverter(converter);
         return jwtConverter;
