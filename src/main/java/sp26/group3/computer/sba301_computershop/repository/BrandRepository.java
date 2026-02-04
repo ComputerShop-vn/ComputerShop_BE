@@ -4,5 +4,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import sp26.group3.computer.sba301_computershop.entity.Brand;
 
 public interface BrandRepository extends JpaRepository<Brand, Integer> {
+    boolean existsByBrandName(String brandName);
+
 }
 

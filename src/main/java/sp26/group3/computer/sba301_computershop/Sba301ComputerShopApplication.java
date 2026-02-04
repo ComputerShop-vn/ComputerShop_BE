@@ -23,7 +23,7 @@ public class Sba301ComputerShopApplication {
         return args -> {
 
             BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-
+//            Role role = Role.builder().name("ADMIN").build();
             User admin = User.builder()
                     .username("admin")
                     .email("admin@gmail.com")
@@ -37,7 +37,6 @@ public class Sba301ComputerShopApplication {
                                     .build()
                     )
                     .build();
-
             userRepository.save(admin);
         };
     }
