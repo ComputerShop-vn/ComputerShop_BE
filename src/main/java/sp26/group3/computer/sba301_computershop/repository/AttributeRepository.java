@@ -4,4 +4,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import sp26.group3.computer.sba301_computershop.entity.Attribute;
 
 public interface AttributeRepository extends JpaRepository<Attribute, Integer> {
+    boolean existsByAttributeName(String attributeName);
 }
