@@ -29,15 +29,6 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.MySQLDialect
         format_sql: false
-
-# ===============================
-# JWT CONFIG (MAP FROM .env)
-# ===============================
-jwt:
-  signer-key: ${JWT_SIGNER_KEY}
-  valid-duration: ${JWT_VALID_DURATION}
-  refreshable-duration: ${JWT_REFRESHABLE_DURATION}
-
 # ===============================
 # SERVER
 # ===============================
@@ -58,3 +49,18 @@ logging:
         SQL: OFF
       springframework:
         web: INFO
+# ===============================
+# JWT CONFIG (MAP FROM .env)
+# ===============================
+jwt:
+  signer-key: ${JWT_SIGNER_KEY}
+  valid-duration: ${JWT_VALID_DURATION}
+  refreshable-duration: ${JWT_REFRESHABLE_DURATION}
+
+  # ===============================
+  # Cloudinary CONFIG (MAP FROM .env)
+  # ===============================
+cloudinary:
+  cloud-name: ${CLOUDINARY_CLOUD_NAME}
+  api-key: ${CLOUDINARY_API_KEY}
+  api-secret: ${CLOUDINARY_API_SECRET}

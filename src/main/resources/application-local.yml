@@ -2,12 +2,19 @@ spring:
   application:
     name: SBA301_ComputerShop
 
+  # ===============================
+  # DATABASE (MYSQL)
+  # ===============================
   datasource:
     url: jdbc:sqlserver://localhost:1433;databaseName=test;encrypt=true;trustServerCertificate=true
     username: sa
-    password: 12345
+    password: Sa@12345
     driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
 
+
+  # ===============================
+  # JPA / HIBERNATE
+  # ===============================
   jpa:
     hibernate:
       ddl-auto: update
@@ -30,3 +37,10 @@ jwt:
   valid-duration: ${JWT_VALID_DURATION}
   refreshable-duration: ${JWT_REFRESHABLE_DURATION}
 
+  # ===============================
+  # Cloudinary CONFIG (MAP FROM .env)
+  # ===============================
+cloudinary:
+  cloud-name: ${CLOUDINARY_CLOUD_NAME}
+  api-key: ${CLOUDINARY_API_KEY}
+  api-secret: ${CLOUDINARY_API_SECRET}
