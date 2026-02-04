@@ -1,6 +1,7 @@
 package sp26.group3.computer.sba301_computershop.controller;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -26,19 +27,17 @@ public class BrandController {
 
     BrandService brandService;
 
-    // ================= CREATE =================
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-//    @PreAuthorize("hasAnyRole('STAFF','ADMIN')")
     public ApiResponse<BrandResponse> createBrand(
-            @RequestPart("data") @Valid BrandCreationRequest request,
-            @RequestPart(value = "logo", required = false) MultipartFile logo
+            @RequestParam("brandName") @NotBlank String brandName,
+            @RequestParam(value = "logo", required = false) MultipartFile logo
     ) {
 
-        log.info("[POST] /brands - Create brand | name={}", request.getBrandName());
+        BrandCreationRequest request = BrandCreationRequest.builder()
+                .brandName(brandName)
+                .build();
 
         BrandResponse result = brandService.createBrand(request, logo);
-
-        log.info("[POST] /brands - Create SUCCESS | brandId={}", result.getBrandId());
 
         ApiResponse<BrandResponse> response = new ApiResponse<>();
         response.setResult(result);
