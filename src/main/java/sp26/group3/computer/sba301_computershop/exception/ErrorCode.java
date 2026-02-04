@@ -10,6 +10,7 @@ public enum ErrorCode {
     UNCATEGORIZED_EXCEPTION(9999,"Uncategorized Error", HttpStatus.INTERNAL_SERVER_ERROR),
     USER_EXISTED(1001, "User already exists", HttpStatus.BAD_REQUEST),
     ROLE_NOT_FOUND(1002, "Role not found", HttpStatus.NOT_FOUND),
+    CATEGORY_NOT_FOUND(1011, "Category not found", HttpStatus.NOT_FOUND),
     UNAUTHENTICATED(1003, "Unauthenticated", HttpStatus.UNAUTHORIZED),
     UNAUTHORIZED(1004, "Unauthorized", HttpStatus.FORBIDDEN),
     INVALID_KEY(1005, "Invalid key", HttpStatus.BAD_REQUEST),
