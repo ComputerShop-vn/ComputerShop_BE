@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import sp26.group3.computer.sba301_computershop.enums.ProductItemStatus;
 
 @Entity
 @Table(name = "product_items")
@@ -25,5 +26,8 @@ public class ProductItem {
 
     @Column(name = "serial_number", nullable = false, unique = true)
     private String serialNumber;
-}
 
+    @Column(name = "status", nullable = false)
+    @Enumerated(EnumType.STRING)
+    private ProductItemStatus status;
+}
