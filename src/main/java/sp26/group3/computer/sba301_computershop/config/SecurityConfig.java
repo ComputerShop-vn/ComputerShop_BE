@@ -26,15 +26,26 @@ public class SecurityConfig {
 
     private final String[] PUBLIC_ENDPOINTS_POST = {
             "/auth/login",
-            "/users",
-            "/brands"
+            "/auth/register",
+            "/users"
     };
 
     private final String[] PUBLIC_ENDPOINTS_GET = {
             "/swagger-ui/**",
             "/v3/api-docs/**",
             "/swagger-ui.html",
-            "/brands"
+            "/products",
+            "/products/**",
+            "/categories",
+            "/categories/**",
+            "/brands",
+            "/brands/**",
+            "/promotions",
+            "/promotions/**",
+            "/blogs",
+            "/blogs/**",
+            "/attributes",
+            "/attributes/**"
     };
 
     private final String[] PUBLIC_ENDPOINTS_PATCH = {
@@ -47,7 +58,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .cors(cors -> cors.configurationSource(corsConfigurationSource())) // bật cors ở đây
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(req -> req
                         .requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINTS_POST).permitAll()
@@ -66,11 +77,10 @@ public class SecurityConfig {
         return http.build();
     }
 
-    // Cấu hình CORS cho phép mọi domain test (Swagger, frontend, v.v.)
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOriginPatterns(List.of("*")); // hoặc List.of("https://flexistudy-api-1.onrender.com")
+        config.setAllowedOriginPatterns(List.of("*"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         config.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept"));
         config.setAllowCredentials(true);

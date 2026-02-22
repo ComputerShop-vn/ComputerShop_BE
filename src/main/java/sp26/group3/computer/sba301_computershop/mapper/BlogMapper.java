@@ -11,6 +11,7 @@ import sp26.group3.computer.sba301_computershop.entity.Blog;
 @Mapper(componentModel = "spring")
 public interface BlogMapper {
 
+    @Mapping(target = "blogId", ignore = true)
     @Mapping(target = "user", ignore = true)
     @Mapping(target = "publishedAt", ignore = true)
     Blog toBlog(BlogCreationRequest request);
@@ -19,6 +20,7 @@ public interface BlogMapper {
     @Mapping(source = "user.username", target = "userName")
     BlogResponse toBlogResponse(Blog blog);
 
+    @Mapping(target = "blogId", ignore = true)
     @Mapping(target = "user", ignore = true)
     @Mapping(target = "publishedAt", ignore = true)
     void updateBlog(@MappingTarget Blog blog, BlogUpdateRequest request);

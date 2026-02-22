@@ -17,7 +17,6 @@ import sp26.group3.computer.sba301_computershop.dto.request.*;
 import sp26.group3.computer.sba301_computershop.dto.response.AuthenticationResponse;
 import sp26.group3.computer.sba301_computershop.dto.response.IntrospectResponse;
 import sp26.group3.computer.sba301_computershop.entity.InvalidatedToken;
-import sp26.group3.computer.sba301_computershop.entity.Role;
 import sp26.group3.computer.sba301_computershop.entity.User;
 import sp26.group3.computer.sba301_computershop.exception.AppException;
 import sp26.group3.computer.sba301_computershop.exception.ErrorCode;

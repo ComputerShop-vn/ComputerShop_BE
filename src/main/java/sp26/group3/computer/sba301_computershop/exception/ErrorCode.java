@@ -38,6 +38,14 @@ public enum ErrorCode {
     BRAND_NOT_FOUND(5001, "Brand not found", HttpStatus.NOT_FOUND),
     BRAND_NAME_EXISTED(5002, "Brand name already exists", HttpStatus.BAD_REQUEST),
 
+    // Product errors
+    PRODUCT_NOT_FOUND(6001, "Product not found", HttpStatus.NOT_FOUND),
+    PRODUCT_NAME_EXISTED(6002, "Product name already exists", HttpStatus.BAD_REQUEST),
+
+    // File errors
+    FILE_UPLOAD_FAILED(7001, "Failed to upload file", HttpStatus.INTERNAL_SERVER_ERROR),
+    FILE_DELETE_FAILED(7002, "Failed to delete file", HttpStatus.INTERNAL_SERVER_ERROR),
+
 
     ;
 

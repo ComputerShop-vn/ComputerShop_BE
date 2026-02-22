@@ -20,7 +20,6 @@ import sp26.group3.computer.sba301_computershop.repository.UserRepository;
 import sp26.group3.computer.sba301_computershop.service.UserService;
 
 import java.time.LocalDateTime;
-import java.util.HashSet;
 import java.util.List;
 
 @Service
@@ -34,10 +33,8 @@ public class UserServiceImpl implements UserService {
     UserMapper userMapper;
     PasswordEncoder passwordEncoder;
 
-    // ================= CREATE =================
     @Override
     public UserResponse createUser(UserCreationRequest request) {
-        log.info("Create user");
 
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
             throw new AppException(ErrorCode.USER_EXISTED);
@@ -55,7 +52,6 @@ public class UserServiceImpl implements UserService {
         return userMapper.toUserResponse(userRepository.save(user));
     }
 
-    // ================= READ =================
     @Override
     public UserResponse getUserById(int id) {
         User user = userRepository.findById(id)
@@ -71,8 +67,6 @@ public class UserServiceImpl implements UserService {
                 .toList();
     }
 
-
-    // ================= UPDATE =================
     @Override
     public UserResponse updateUser(int id, UserUpdateRequest request) {
         User user = userRepository.findById(id)
@@ -87,18 +81,15 @@ public class UserServiceImpl implements UserService {
         return userMapper.toUserResponse(userRepository.save(user));
     }
 
-    // ================= DELETE =================
     @Override
     public void deleteUser(int id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
-        user.setStatus("INACTIVE"); // soft delete
+        user.setStatus("INACTIVE");
         userRepository.save(user);
     }
 
-
-    // ================= SELF PROFILE =================
     @Override
     public UserResponse getMyProfile() {
         String email = SecurityContextHolder.getContext()

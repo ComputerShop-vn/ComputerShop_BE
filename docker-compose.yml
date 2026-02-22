@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: sba301_sqlserver
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=Sa@12345
+      - MSSQL_PID=Express
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+      - ./docker/init-db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P Sa@12345 -Q "SELECT 1" || exit 1
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+    networks:
+      - sba301_network
+
+volumes:
+  sqlserver_data:
+    driver: local
+
+networks:
+  sba301_network:
+    driver: bridge
