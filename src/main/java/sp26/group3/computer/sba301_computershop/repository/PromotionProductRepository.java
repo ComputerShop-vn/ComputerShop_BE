@@ -19,4 +19,9 @@ public interface PromotionProductRepository extends JpaRepository<PromotionProdu
             "AND p.endDate >= CURRENT_DATE " +
             "ORDER BY p.discountPercent DESC")
     Optional<PromotionProduct> findActivePromotionByProductId(@Param("productId") int productId);
+
+    @Query("SELECT COUNT(pp) > 0 FROM PromotionProduct pp " +
+            "WHERE pp.product.productId = :productId " +
+            "AND pp.promotion.promotionId = :promotionId")
+    boolean existsByProductIdAndPromotionId(@Param("productId") int productId, @Param("promotionId") int promotionId);
 }
