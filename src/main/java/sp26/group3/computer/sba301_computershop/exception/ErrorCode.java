@@ -42,6 +42,10 @@ public enum ErrorCode {
     PRODUCT_NOT_FOUND(6001, "Product not found", HttpStatus.NOT_FOUND),
     PRODUCT_NAME_EXISTED(6002, "Product name already exists", HttpStatus.BAD_REQUEST),
 
+    // Product Variant errors
+    VARIANT_NOT_FOUND(6101, "Product variant not found", HttpStatus.NOT_FOUND),
+    SKU_EXISTED(6102, "SKU already exists", HttpStatus.BAD_REQUEST),
+
     // File errors
     FILE_UPLOAD_FAILED(7001, "Failed to upload file", HttpStatus.INTERNAL_SERVER_ERROR),
     FILE_DELETE_FAILED(7002, "Failed to delete file", HttpStatus.INTERNAL_SERVER_ERROR),

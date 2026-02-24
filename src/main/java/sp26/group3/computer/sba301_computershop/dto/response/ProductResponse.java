@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -14,9 +16,9 @@ public class ProductResponse {
     private int productId;
     private String name;
     private String description;
-    private double price;
+    
+    private Double basePrice;
     private Double discountedPrice;
-    private int stockQuantity;
     
     private int categoryId;
     private String categoryName;
@@ -24,4 +26,6 @@ public class ProductResponse {
     private int brandId;
     private String brandName;
     private String brandLogoUrl;
+    
+    private List<ProductVariantResponse> variants;
 }

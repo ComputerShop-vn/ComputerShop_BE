@@ -9,8 +9,6 @@ import org.springframework.transaction.annotation.Transactional;
 import sp26.group3.computer.sba301_computershop.dto.request.PromotionCreationRequest;
 import sp26.group3.computer.sba301_computershop.dto.request.PromotionUpdateRequest;
 import sp26.group3.computer.sba301_computershop.dto.response.PromotionResponse;
-import sp26.group3.computer.sba301_computershop.entity.Brand;
-import sp26.group3.computer.sba301_computershop.entity.Category;
 import sp26.group3.computer.sba301_computershop.entity.Product;
 import sp26.group3.computer.sba301_computershop.entity.Promotion;
 import sp26.group3.computer.sba301_computershop.entity.PromotionProduct;

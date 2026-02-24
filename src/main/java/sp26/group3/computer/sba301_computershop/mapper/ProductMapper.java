@@ -15,6 +15,7 @@ public interface ProductMapper {
     @Mapping(target = "productId", ignore = true)
     @Mapping(target = "brand", ignore = true)
     @Mapping(target = "category", ignore = true)
+    @Mapping(target = "basePrice", ignore = true)
     Product toProduct(ProductCreationRequest request);
 
     @Mapping(source = "category.categoryId", target = "categoryId")
@@ -23,6 +24,7 @@ public interface ProductMapper {
     @Mapping(source = "brand.brandName", target = "brandName")
     @Mapping(source = "brand.logoUrl", target = "brandLogoUrl")
     @Mapping(target = "discountedPrice", ignore = true)
+    @Mapping(target = "variants", ignore = true)
     ProductResponse toProductResponse(Product product);
 
     @Mapping(source = "category.categoryId", target = "categoryId")
@@ -37,10 +39,12 @@ public interface ProductMapper {
     @Mapping(target = "discountPercent", ignore = true)
     @Mapping(target = "promoCode", ignore = true)
     @Mapping(target = "discountedPrice", ignore = true)
+    @Mapping(target = "variants", ignore = true)
     ProductDetailResponse toProductDetailResponse(Product product);
 
     @Mapping(target = "productId", ignore = true)
     @Mapping(target = "brand", ignore = true)
     @Mapping(target = "category", ignore = true)
+    @Mapping(target = "basePrice", ignore = true)
     void updateProduct(@MappingTarget Product product, ProductUpdateRequest request);
 }

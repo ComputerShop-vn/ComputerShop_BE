@@ -7,10 +7,6 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 
-/**
- * Response DTO for product detail page
- * Contains full information including description, images, reviews, etc.
- */
 @Data
 @Builder
 @NoArgsConstructor
@@ -20,9 +16,9 @@ public class ProductDetailResponse {
     private int productId;
     private String name;
     private String description;
-    private double price;
+    
+    private Double basePrice;
     private Double discountedPrice;
-    private int stockQuantity;
     
     private int categoryId;
     private String categoryName;
@@ -39,4 +35,6 @@ public class ProductDetailResponse {
     private Boolean hasPromotion;
     private Double discountPercent;
     private String promoCode;
+    
+    private List<ProductVariantResponse> variants;
 }

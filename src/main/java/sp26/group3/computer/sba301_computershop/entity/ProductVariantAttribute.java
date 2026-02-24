@@ -7,28 +7,26 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "product_items")
+@Table(name = "product_variant_attributes")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ProductItem {
+public class ProductVariantAttribute {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "item_id")
-    private int itemId;
-
-    @Deprecated
-    @ManyToOne
-    @JoinColumn(name = "product_id")
-    private Product product;
+    @Column(name = "variant_attr_id")
+    private int variantAttrId;
 
     @ManyToOne
-    @JoinColumn(name = "variant_id")
+    @JoinColumn(name = "variant_id", nullable = false)
     private ProductVariant variant;
 
-    @Column(name = "serial_number", nullable = false, unique = true)
-    private String serialNumber;
-}
+    @ManyToOne
+    @JoinColumn(name = "attribute_id", nullable = false)
+    private Attribute attribute;
 
+    @Column(nullable = false)
+    private String value;
+}
