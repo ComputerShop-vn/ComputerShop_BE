@@ -26,7 +26,7 @@ public class BlogController {
 
     // ================= CREATE =================
     @PostMapping
-    @PreAuthorize("hasAnyRole('USER','STAFF','ADMIN')")
+    @PreAuthorize("hasAnyRole('MEMBER','STAFF','ADMIN')")
     public ApiResponse<BlogResponse> createBlog(@RequestBody @Valid BlogCreationRequest request) {
         log.info("[POST] /blogs - Create blog");
 
@@ -83,7 +83,7 @@ public class BlogController {
 
     // ================= UPDATE =================
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('USER','STAFF','ADMIN')")
+    @PreAuthorize("hasAnyRole('MEMBER','STAFF','ADMIN')")
     public ApiResponse<BlogResponse> updateBlog(
             @PathVariable int id,
             @RequestBody @Valid BlogUpdateRequest request

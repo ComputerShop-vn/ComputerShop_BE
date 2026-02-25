@@ -9,6 +9,8 @@ import sp26.group3.computer.sba301_computershop.dto.request.RoleCreationRequest;
 import sp26.group3.computer.sba301_computershop.dto.request.RoleUpdateRequest;
 import sp26.group3.computer.sba301_computershop.dto.response.RoleResponse;
 import sp26.group3.computer.sba301_computershop.entity.Role;
+import sp26.group3.computer.sba301_computershop.exception.AppException;
+import sp26.group3.computer.sba301_computershop.exception.ErrorCode;
 import sp26.group3.computer.sba301_computershop.mapper.RoleMapper;
 import sp26.group3.computer.sba301_computershop.repository.RoleRepository;
 import sp26.group3.computer.sba301_computershop.service.RoleService;
@@ -30,7 +32,7 @@ public class RoleServiceImpl implements RoleService {
 
         // optional: check duplicate name
         if (roleRepository.existsByName(request.getName())) {
-            throw new RuntimeException("ROLE_ALREADY_EXISTS");
+            throw new AppException(ErrorCode.ROLE_EXISTED);
         }
 
         Role role = roleMapper.toRole(request);
@@ -44,7 +46,7 @@ public class RoleServiceImpl implements RoleService {
     public RoleResponse getRoleById(int id) {
 
         Role role = roleRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("ROLE_NOT_FOUND"));
+                .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_FOUND));
 
         return roleMapper.toRoleResponse(role);
     }
@@ -62,7 +64,7 @@ public class RoleServiceImpl implements RoleService {
     public RoleResponse updateRole(int id, RoleUpdateRequest request) {
 
         Role role = roleRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("ROLE_NOT_FOUND"));
+                .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_FOUND));
 
         roleMapper.updateRole(role, request);
 
@@ -75,7 +77,7 @@ public class RoleServiceImpl implements RoleService {
     public void deleteRole(int id) {
 
         Role role = roleRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("ROLE_NOT_FOUND"));
+                .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_FOUND));
 
         roleRepository.delete(role);
     }

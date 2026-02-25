@@ -7,6 +7,9 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import sp26.group3.computer.sba301_computershop.dto.request.AddPromotionToBrandRequest;
+import sp26.group3.computer.sba301_computershop.dto.request.AddPromotionToCategoryRequest;
+import sp26.group3.computer.sba301_computershop.dto.request.AddPromotionToProductsRequest;
 import sp26.group3.computer.sba301_computershop.dto.request.PromotionCreationRequest;
 import sp26.group3.computer.sba301_computershop.dto.request.PromotionUpdateRequest;
 import sp26.group3.computer.sba301_computershop.dto.response.ApiResponse;
@@ -108,6 +111,44 @@ public class PromotionController {
         promotionService.deletePromotion(id);
 
         log.warn("[DELETE] /promotions/{} - SUCCESS", id);
+
+        return new ApiResponse<>();
+    }
+
+    @PostMapping("/add-to-products")
+    @PreAuthorize("hasAnyRole('STAFF','ADMIN')")
+    public ApiResponse<Void> addPromotionToProducts(@RequestBody @Valid AddPromotionToProductsRequest request) {
+        log.info("[POST] /promotions/add-to-products - Adding promotion {} to products", request.getPromotionId());
+
+        promotionService.addPromotionToProducts(request.getPromotionId(), request.getProductIds());
+
+        log.info("[POST] /promotions/add-to-products - SUCCESS");
+
+        return new ApiResponse<>();
+    }
+
+    @PostMapping("/add-to-category")
+    @PreAuthorize("hasAnyRole('STAFF','ADMIN')")
+    public ApiResponse<Void> addPromotionToCategory(@RequestBody @Valid AddPromotionToCategoryRequest request) {
+        log.info("[POST] /promotions/add-to-category - Adding promotion {} to category {}", 
+                request.getPromotionId(), request.getCategoryId());
+
+        promotionService.addPromotionToCategory(request.getPromotionId(), request.getCategoryId());
+
+        log.info("[POST] /promotions/add-to-category - SUCCESS");
+
+        return new ApiResponse<>();
+    }
+
+    @PostMapping("/add-to-brand")
+    @PreAuthorize("hasAnyRole('STAFF','ADMIN')")
+    public ApiResponse<Void> addPromotionToBrand(@RequestBody @Valid AddPromotionToBrandRequest request) {
+        log.info("[POST] /promotions/add-to-brand - Adding promotion {} to brand {}", 
+                request.getPromotionId(), request.getBrandId());
+
+        promotionService.addPromotionToBrand(request.getPromotionId(), request.getBrandId());
+
+        log.info("[POST] /promotions/add-to-brand - SUCCESS");
 
         return new ApiResponse<>();
     }

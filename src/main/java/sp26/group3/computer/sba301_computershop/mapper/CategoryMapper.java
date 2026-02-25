@@ -10,11 +10,15 @@ import sp26.group3.computer.sba301_computershop.entity.Category;
 @Mapper(componentModel = "spring")
 public interface CategoryMapper {
 
+    @Mapping(target = "categoryId", ignore = true)
+    @Mapping(target = "parentCategory", ignore = true)
     Category toCategory(CategoryRequest request);
 
     @Mapping(source = "parentCategory.categoryId", target = "parentCategoryId")
     @Mapping(source = "parentCategory.categoryName", target = "parentCategoryName")
     CategoryResponse toCategoryResponse(Category category);
 
+    @Mapping(target = "categoryId", ignore = true)
+    @Mapping(target = "parentCategory", ignore = true)
     void updateCategory(@MappingTarget Category category, CategoryRequest request);
 }

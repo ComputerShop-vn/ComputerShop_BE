@@ -5,13 +5,20 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import sp26.group3.computer.sba301_computershop.dto.request.PromotionCreationRequest;
 import sp26.group3.computer.sba301_computershop.dto.request.PromotionUpdateRequest;
 import sp26.group3.computer.sba301_computershop.dto.response.PromotionResponse;
+import sp26.group3.computer.sba301_computershop.entity.Product;
 import sp26.group3.computer.sba301_computershop.entity.Promotion;
+import sp26.group3.computer.sba301_computershop.entity.PromotionProduct;
 import sp26.group3.computer.sba301_computershop.exception.AppException;
 import sp26.group3.computer.sba301_computershop.exception.ErrorCode;
 import sp26.group3.computer.sba301_computershop.mapper.PromotionMapper;
+import sp26.group3.computer.sba301_computershop.repository.BrandRepository;
+import sp26.group3.computer.sba301_computershop.repository.CategoryRepository;
+import sp26.group3.computer.sba301_computershop.repository.ProductRepository;
+import sp26.group3.computer.sba301_computershop.repository.PromotionProductRepository;
 import sp26.group3.computer.sba301_computershop.repository.PromotionRepository;
 import sp26.group3.computer.sba301_computershop.service.PromotionService;
 
@@ -25,6 +32,10 @@ public class PromotionServiceImpl implements PromotionService {
 
     PromotionRepository promotionRepository;
     PromotionMapper promotionMapper;
+    ProductRepository productRepository;
+    BrandRepository brandRepository;
+    CategoryRepository categoryRepository;
+    PromotionProductRepository promotionProductRepository;
 
     @Override
     public PromotionResponse createPromotion(PromotionCreationRequest request) {
@@ -103,7 +114,104 @@ public class PromotionServiceImpl implements PromotionService {
             throw new AppException(ErrorCode.PROMOTION_NOT_FOUND);
         }
 
+        // Xóa các bản ghi liên kết trước để tránh FK constraint violation
+        promotionProductRepository.deleteByPromotionPromotionId(promotionId);
+
         promotionRepository.deleteById(promotionId);
         log.info("Promotion deleted successfully with id: {}", promotionId);
+    }
+
+    @Override
+    @Transactional
+    public void addPromotionToProducts(int promotionId, List<Integer> productIds) {
+        log.info("Adding promotion {} to {} products", promotionId, productIds.size());
+
+        Promotion promotion = promotionRepository.findById(promotionId)
+                .orElseThrow(() -> new AppException(ErrorCode.PROMOTION_NOT_FOUND));
+
+        int addedCount = 0;
+        for (Integer productId : productIds) {
+            Product product = productRepository.findById(productId)
+                    .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_FOUND));
+
+            if (promotionProductRepository.existsByProductIdAndPromotionId(productId, promotionId)) {
+                log.warn("Product {} already has promotion {}, skipping", productId, promotionId);
+                continue;
+            }
+
+            PromotionProduct promotionProduct = PromotionProduct.builder()
+                    .promotion(promotion)
+                    .product(product)
+                    .build();
+
+            promotionProductRepository.save(promotionProduct);
+            addedCount++;
+        }
+
+        log.info("Successfully added promotion {} to {}/{} products", promotionId, addedCount, productIds.size());
+    }
+
+    @Override
+    @Transactional
+    public void addPromotionToCategory(int promotionId, int categoryId) {
+        log.info("Adding promotion {} to all products in category {}", promotionId, categoryId);
+
+        Promotion promotion = promotionRepository.findById(promotionId)
+                .orElseThrow(() -> new AppException(ErrorCode.PROMOTION_NOT_FOUND));
+
+        categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_FOUND));
+
+        List<Product> products = productRepository.findByCategoryCategoryId(categoryId);
+
+        int addedCount = 0;
+        for (Product product : products) {
+            if (promotionProductRepository.existsByProductIdAndPromotionId(product.getProductId(), promotionId)) {
+                log.warn("Product {} already has promotion {}, skipping", product.getProductId(), promotionId);
+                continue;
+            }
+
+            PromotionProduct promotionProduct = PromotionProduct.builder()
+                    .promotion(promotion)
+                    .product(product)
+                    .build();
+
+            promotionProductRepository.save(promotionProduct);
+            addedCount++;
+        }
+
+        log.info("Successfully added promotion {} to {}/{} products in category {}", promotionId, addedCount, products.size(), categoryId);
+    }
+
+    @Override
+    @Transactional
+    public void addPromotionToBrand(int promotionId, int brandId) {
+        log.info("Adding promotion {} to all products of brand {}", promotionId, brandId);
+
+        Promotion promotion = promotionRepository.findById(promotionId)
+                .orElseThrow(() -> new AppException(ErrorCode.PROMOTION_NOT_FOUND));
+
+        brandRepository.findById(brandId)
+                .orElseThrow(() -> new AppException(ErrorCode.BRAND_NOT_FOUND));
+
+        List<Product> products = productRepository.findByBrandBrandId(brandId);
+
+        int addedCount = 0;
+        for (Product product : products) {
+            if (promotionProductRepository.existsByProductIdAndPromotionId(product.getProductId(), promotionId)) {
+                log.warn("Product {} already has promotion {}, skipping", product.getProductId(), promotionId);
+                continue;
+            }
+
+            PromotionProduct promotionProduct = PromotionProduct.builder()
+                    .promotion(promotion)
+                    .product(product)
+                    .build();
+
+            promotionProductRepository.save(promotionProduct);
+            addedCount++;
+        }
+
+        log.info("Successfully added promotion {} to {}/{} products of brand {}", promotionId, addedCount, products.size(), brandId);
     }
 }

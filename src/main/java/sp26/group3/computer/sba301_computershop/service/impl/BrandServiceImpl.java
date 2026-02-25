@@ -42,7 +42,7 @@ public class BrandServiceImpl implements BrandService {
 
         // Upload logo if provided
         if (logo != null && !logo.isEmpty()) {
-            String logoUrl = cloudinaryService.uploadImage(logo);
+            String logoUrl = cloudinaryService.uploadBrandLogo(logo);
             brand.setLogoUrl(logoUrl);
         }
 
@@ -70,7 +70,7 @@ public class BrandServiceImpl implements BrandService {
 
         // Upload new logo if provided
         if (logo != null && !logo.isEmpty()) {
-            String logoUrl = cloudinaryService.uploadImage(logo);
+            String logoUrl = cloudinaryService.uploadBrandLogo(logo);
             brand.setLogoUrl(logoUrl);
         }
 

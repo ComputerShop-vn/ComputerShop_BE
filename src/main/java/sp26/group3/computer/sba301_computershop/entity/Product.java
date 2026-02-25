@@ -30,11 +30,8 @@ public class Product {
     @Column(nullable = false)
     private String name;
 
-    @Column(nullable = false)
-    private double price;
-
-    @Column(name = "stock_quantity")
-    private int stockQuantity;
+    @Column(name = "base_price")
+    private Double basePrice;
 
     @Column(columnDefinition = "TEXT")
     private String description;

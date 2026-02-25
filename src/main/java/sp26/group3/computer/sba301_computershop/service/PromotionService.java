@@ -19,4 +19,10 @@ public interface PromotionService {
     List<PromotionResponse> getAllPromotions();
 
     void deletePromotion(int promotionId);
+
+    void addPromotionToProducts(int promotionId, List<Integer> productIds);
+
+    void addPromotionToCategory(int promotionId, int categoryId);
+
+    void addPromotionToBrand(int promotionId, int brandId);
 }

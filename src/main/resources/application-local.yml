@@ -3,12 +3,12 @@ spring:
     name: SBA301_ComputerShop
 
   # ===============================
-  # DATABASE (MYSQL)
+  # DATABASE (SQL SERVER - Docker)
   # ===============================
   datasource:
-    url: jdbc:sqlserver://localhost:1433;databaseName=test;encrypt=true;trustServerCertificate=true
+    url: jdbc:sqlserver://localhost:1433;databaseName=ComputerShopDB;encrypt=true;trustServerCertificate=true
     username: sa
-    password: 12345
+    password: Sa@12345
     driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
 
 
@@ -17,7 +17,7 @@ spring:
   # ===============================
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     show-sql: true
     properties:
       hibernate:
