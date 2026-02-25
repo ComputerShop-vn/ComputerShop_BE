@@ -43,7 +43,7 @@ public class UserServiceImpl implements UserService {
         User user = userMapper.toUser(request);
         user.setPassword(passwordEncoder.encode(request.getPassword()));
 
-        Role userRole = roleRepository.findByName("Member")
+        Role userRole = roleRepository.findByName("MEMBER")
                 .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_FOUND));
         user.setCreatedAt(LocalDateTime.now());
         user.setStatus("ACTIVE");

@@ -78,8 +78,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             String jti = UUID.randomUUID().toString();
 
             JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
-                    .subject(String.valueOf(user.getUserId()))
-                    .claim("email", user.getEmail())
+                    .subject(user.getEmail())
+                    .claim("userId", user.getUserId())
                     .claim("scope", user.getRole().getName())
                     .issueTime(now)
                     .expirationTime(expiry)
@@ -95,7 +95,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             return jwt.serialize();
 
         } catch (JOSEException e) {
-            throw new RuntimeException("Cannot generate token", e);
+            log.error("Cannot generate token", e);
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
         }
     }
 
@@ -182,7 +183,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             throw new AppException(ErrorCode.UNAUTHENTICATED);
         }
 
-        String email = jwt.getJWTClaimsSet().getStringClaim("email");
+        String email = jwt.getJWTClaimsSet().getSubject();
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new AppException(ErrorCode.UNAUTHENTICATED));
 

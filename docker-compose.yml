@@ -14,7 +14,7 @@ services:
       - sqlserver_data:/var/opt/mssql
       - ./docker/init-db/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
-      test: /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P Sa@12345 -Q "SELECT 1" || exit 1
+      test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P Sa@12345 -Q "SELECT 1" -b -C || exit 1
       interval: 10s
       timeout: 3s
       retries: 10

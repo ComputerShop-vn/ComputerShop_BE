@@ -28,6 +28,7 @@ public class BrandController {
     BrandService brandService;
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAnyRole('STAFF','ADMIN')")
     public ApiResponse<BrandResponse> createBrand(
             @RequestParam("brandName") @NotBlank String brandName,
             @RequestParam(value = "logo", required = false) MultipartFile logo

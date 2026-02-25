@@ -24,4 +24,8 @@ public interface PromotionProductRepository extends JpaRepository<PromotionProdu
             "WHERE pp.product.productId = :productId " +
             "AND pp.promotion.promotionId = :promotionId")
     boolean existsByProductIdAndPromotionId(@Param("productId") int productId, @Param("promotionId") int promotionId);
+
+    void deleteByProductProductId(int productId);
+
+    void deleteByPromotionPromotionId(int promotionId);
 }

@@ -15,10 +15,14 @@ while (-not $isReady -and $retryCount -lt $maxRetries) {
     Write-Host "Attempt $retryCount/$maxRetries..."
     
     try {
-        $result = sqlcmd -S localhost,1433 -U sa -P "Sa@12345" -Q "SELECT 1" -h -1 2>&1
+        # Run sqlcmd inside the container (works without host sqlcmd installed)
+        $result = docker exec sba301_sqlserver /opt/mssql-tools18/bin/sqlcmd `
+            -S localhost -U sa -P "Sa@12345" -Q "SELECT 1" -b -C 2>&1
         if ($LASTEXITCODE -eq 0) {
             $isReady = $true
             Write-Host "SQL Server is ready!" -ForegroundColor Green
+        } else {
+            Write-Host "SQL Server not ready yet, waiting..." -ForegroundColor Gray
         }
     }
     catch {
@@ -41,7 +45,10 @@ Write-Host "`nRunning database initialization script..." -ForegroundColor Yellow
 $initScript = Join-Path $PSScriptRoot "init-db\init.sql"
 $logFile = Join-Path $PSScriptRoot "..\init-output.log"
 
-sqlcmd -S localhost,1433 -U sa -P "Sa@12345" -i $initScript -o $logFile
+# Copy the SQL file into the container and execute it
+docker cp $initScript sba301_sqlserver:/tmp/init.sql
+docker exec sba301_sqlserver /opt/mssql-tools18/bin/sqlcmd `
+    -S localhost -U sa -P "Sa@12345" -i /tmp/init.sql -C 2>&1 | Tee-Object -FilePath $logFile
 
 if ($LASTEXITCODE -eq 0) {
     Write-Host "`nDatabase initialized successfully!" -ForegroundColor Green

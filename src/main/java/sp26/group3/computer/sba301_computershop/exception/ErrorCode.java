@@ -10,11 +10,14 @@ public enum ErrorCode {
     UNCATEGORIZED_EXCEPTION(9999,"Uncategorized Error", HttpStatus.INTERNAL_SERVER_ERROR),
     USER_EXISTED(1001, "User already exists", HttpStatus.BAD_REQUEST),
     ROLE_NOT_FOUND(1002, "Role not found", HttpStatus.NOT_FOUND),
+    ROLE_EXISTED(1012, "Role already exists", HttpStatus.BAD_REQUEST),
     CATEGORY_NOT_FOUND(1011, "Category not found", HttpStatus.NOT_FOUND),
+    CATEGORY_SELF_PARENT(1013, "Category cannot be parent of itself", HttpStatus.BAD_REQUEST),
+    CATEGORY_HAS_CHILDREN(1014, "Cannot delete category with child categories", HttpStatus.BAD_REQUEST),
     UNAUTHENTICATED(1003, "Unauthenticated", HttpStatus.UNAUTHORIZED),
     UNAUTHORIZED(1004, "Unauthorized", HttpStatus.FORBIDDEN),
     INVALID_KEY(1005, "Invalid key", HttpStatus.BAD_REQUEST),
-    USER_NOT_EXISTED(10010, "User not existed",HttpStatus.NOT_FOUND),
+    USER_NOT_EXISTED(1010, "User not existed",HttpStatus.NOT_FOUND),
 //   Create user errors
     EMAIL_INVALID(1006, "EMAIL_INVALID", HttpStatus.BAD_REQUEST),
     EMAIL_REQUIRED(1009, "EMAIL_REQUIRED", HttpStatus.BAD_REQUEST),
@@ -49,6 +52,17 @@ public enum ErrorCode {
     // File errors
     FILE_UPLOAD_FAILED(7001, "Failed to upload file", HttpStatus.INTERNAL_SERVER_ERROR),
     FILE_DELETE_FAILED(7002, "Failed to delete file", HttpStatus.INTERNAL_SERVER_ERROR),
+
+    // Cart errors
+    CART_NOT_FOUND(8001, "Cart not found", HttpStatus.NOT_FOUND),
+    CART_ITEM_NOT_FOUND(8002, "Cart item not found", HttpStatus.NOT_FOUND),
+    CART_ITEM_ALREADY_EXISTS(8003, "Variant already exists in cart", HttpStatus.BAD_REQUEST),
+    INVALID_QUANTITY(8004, "Quantity must be greater than 0", HttpStatus.BAD_REQUEST),
+
+    // Order errors
+    ORDER_NOT_FOUND(9001, "Order not found", HttpStatus.NOT_FOUND),
+    EMPTY_CART(9002, "Cart is empty, cannot place order", HttpStatus.BAD_REQUEST),
+    INSUFFICIENT_STOCK(9003, "Insufficient stock for variant", HttpStatus.BAD_REQUEST),
 
 
     ;

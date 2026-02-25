@@ -114,6 +114,9 @@ public class PromotionServiceImpl implements PromotionService {
             throw new AppException(ErrorCode.PROMOTION_NOT_FOUND);
         }
 
+        // Xóa các bản ghi liên kết trước để tránh FK constraint violation
+        promotionProductRepository.deleteByPromotionPromotionId(promotionId);
+
         promotionRepository.deleteById(promotionId);
         log.info("Promotion deleted successfully with id: {}", promotionId);
     }

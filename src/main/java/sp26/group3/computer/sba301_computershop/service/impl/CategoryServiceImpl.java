@@ -67,7 +67,7 @@ public class CategoryServiceImpl implements CategoryService {
 
         if (request.getParentCategoryId() != null) {
             if (request.getParentCategoryId() == category.getCategoryId()) {
-                throw new IllegalArgumentException("Category cannot be parent of itself");
+                throw new AppException(ErrorCode.CATEGORY_SELF_PARENT);
             }
 
             Category parent = categoryRepository.findById(request.getParentCategoryId())
@@ -84,15 +84,18 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public void delete(int id) {
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_FOUND));
+
         // Prevent deletion if this category has child categories
         boolean hasChildren = categoryRepository.findAll()
                 .stream()
                 .anyMatch(c -> c.getParentCategory() != null && c.getParentCategory().getCategoryId() == id);
 
         if (hasChildren) {
-            throw new IllegalStateException("Cannot delete category with child categories");
+            throw new AppException(ErrorCode.CATEGORY_HAS_CHILDREN);
         }
 
-        categoryRepository.deleteById(id);
+        categoryRepository.delete(category);
     }
 }

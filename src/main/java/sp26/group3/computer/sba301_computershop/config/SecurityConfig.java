@@ -27,6 +27,9 @@ public class SecurityConfig {
     private final String[] PUBLIC_ENDPOINTS_POST = {
             "/auth/login",
             "/auth/register",
+            "/auth/introspect",
+            "/auth/refresh",
+            "/auth/logout",
             "/users"
     };
 

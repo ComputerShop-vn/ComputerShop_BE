@@ -274,19 +274,7 @@ public class ProductServiceImpl implements ProductService {
         log.info("Filtering products - categoryId: {}, brandId: {}, minPrice: {}, maxPrice: {}",
                 categoryId, brandId, minPrice, maxPrice);
 
-        List<Product> products = productRepository.findAll();
-
-        if (categoryId != null) {
-            products = products.stream()
-                    .filter(p -> p.getCategory().getCategoryId() == categoryId)
-                    .collect(Collectors.toList());
-        }
-
-        if (brandId != null) {
-            products = products.stream()
-                    .filter(p -> p.getBrand().getBrandId() == brandId)
-                    .collect(Collectors.toList());
-        }
+        List<Product> products = productRepository.filterProducts(categoryId, brandId, minPrice, maxPrice);
 
         List<ProductResponse> responses = products.stream()
                 .map(productMapper::toProductResponse)
@@ -297,17 +285,6 @@ public class ProductServiceImpl implements ProductService {
             populateDiscountedPrice(r);
         });
 
-        if (minPrice != null || maxPrice != null) {
-            responses = responses.stream()
-                    .filter(r -> {
-                        if (r.getBasePrice() == null) return false;
-                        if (minPrice != null && r.getBasePrice() < minPrice) return false;
-                        if (maxPrice != null && r.getBasePrice() > maxPrice) return false;
-                        return true;
-                    })
-                    .collect(Collectors.toList());
-        }
-
         return responses;
     }
 
@@ -315,15 +292,29 @@ public class ProductServiceImpl implements ProductService {
     public void deleteProduct(int productId) {
         log.warn("Deleting product with id: {}", productId);
 
-        if (!productRepository.existsById(productId)) {
-            throw new AppException(ErrorCode.PRODUCT_NOT_FOUND);
-        }
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_FOUND));
 
+        // Delete variant attributes and variants
+        List<ProductVariant> variants = productVariantRepository.findByProductProductId(productId);
+        for (ProductVariant variant : variants) {
+            productVariantAttributeRepository.deleteByVariantVariantId(variant.getVariantId());
+        }
+        productVariantRepository.deleteAll(variants);
+
+        // Delete promotion associations
+        promotionProductRepository.deleteByProductProductId(productId);
+
+        // Delete images from Cloudinary and DB
         List<ProductImage> images = productImageRepository.findByProductProductId(productId);
         for (ProductImage img : images) {
             cloudinaryService.deleteFile(img.getImageUrl());
         }
         productImageRepository.deleteByProductProductId(productId);
+
+        // Delete product
+        productRepository.delete(product);
+        log.info("Product deleted successfully with id: {}", productId);
     }
 
     private void populateDiscountedPrice(ProductResponse response) {
