@@ -48,7 +48,9 @@ public class SecurityConfig {
             "/blogs",
             "/blogs/**",
             "/attributes",
-            "/attributes/**"
+            "/attributes/**",
+            "/orders/payment/callback",
+            "/orders/payment/vnp-ipn"
     };
 
     private final String[] PUBLIC_ENDPOINTS_PATCH = {
