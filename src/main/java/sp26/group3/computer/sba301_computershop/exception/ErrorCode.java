@@ -17,6 +17,7 @@ public enum ErrorCode {
     UNAUTHENTICATED(1003, "Unauthenticated", HttpStatus.UNAUTHORIZED),
     UNAUTHORIZED(1004, "Unauthorized", HttpStatus.FORBIDDEN),
     INVALID_KEY(1005, "Invalid key", HttpStatus.BAD_REQUEST),
+    INVALID_REQUEST_BODY(1008, "Invalid JSON request body", HttpStatus.BAD_REQUEST),
     USER_NOT_EXISTED(1010, "User not existed",HttpStatus.NOT_FOUND),
 //   Create user errors
     EMAIL_INVALID(1006, "EMAIL_INVALID", HttpStatus.BAD_REQUEST),
@@ -52,6 +53,7 @@ public enum ErrorCode {
     // File errors
     FILE_UPLOAD_FAILED(7001, "Failed to upload file", HttpStatus.INTERNAL_SERVER_ERROR),
     FILE_DELETE_FAILED(7002, "Failed to delete file", HttpStatus.INTERNAL_SERVER_ERROR),
+    MAX_UPLOAD_SIZE_EXCEEDED(7003, "File size exceeds the maximum allowed limit (10MB per file)", HttpStatus.BAD_REQUEST),
 
     // Cart errors
     CART_NOT_FOUND(8001, "Cart not found", HttpStatus.NOT_FOUND),

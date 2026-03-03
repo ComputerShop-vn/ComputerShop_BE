@@ -282,10 +282,8 @@ public class OrderServiceImpl implements OrderService {
         ProductVariant variant = productItem.getVariant();
         Product product = variant.getProduct();
 
-        String imageUrl = productImageRepository.findByProductProductId(product.getProductId())
-                .stream()
-                .filter(ProductImage::isThumbnail)
-                .findFirst()
+        String imageUrl = productImageRepository
+                .findFirstByProductProductIdAndIsThumbnailTrue(product.getProductId())
                 .or(() -> productImageRepository.findByProductProductId(product.getProductId()).stream().findFirst())
                 .map(ProductImage::getImageUrl)
                 .orElse(null);
@@ -300,7 +298,7 @@ public class OrderServiceImpl implements OrderService {
                 .sku(variant.getSku())
                 .productId(product.getProductId())
                 .productName(product.getName())
-                .productImageUrl(imageUrl)
+                .thumbnailUrl(imageUrl)
                 .recipientName(item.getRecipientName())
                 .recipientPhone(item.getRecipientPhone())
                 .shippingAddress(item.getShippingAddress())

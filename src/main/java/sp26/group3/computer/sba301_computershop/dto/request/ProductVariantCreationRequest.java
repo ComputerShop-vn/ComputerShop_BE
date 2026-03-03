@@ -3,13 +3,17 @@ package sp26.group3.computer.sba301_computershop.dto.request;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import java.util.Map;
+import java.util.List;
 
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class ProductVariantCreationRequest {
 
     @NotNull(message = "Product ID is required")
@@ -27,5 +31,5 @@ public class ProductVariantCreationRequest {
 
     private String variantName;
 
-    private Map<Integer, String> attributes;
+    private List<AttributeValueDTO> attributes;
 }

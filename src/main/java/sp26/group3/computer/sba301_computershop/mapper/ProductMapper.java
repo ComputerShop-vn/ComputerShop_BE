@@ -2,9 +2,7 @@ package sp26.group3.computer.sba301_computershop.mapper;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import org.mapstruct.MappingTarget;
 import sp26.group3.computer.sba301_computershop.dto.request.ProductCreationRequest;
-import sp26.group3.computer.sba301_computershop.dto.request.ProductUpdateRequest;
 import sp26.group3.computer.sba301_computershop.dto.response.ProductDetailResponse;
 import sp26.group3.computer.sba301_computershop.dto.response.ProductResponse;
 import sp26.group3.computer.sba301_computershop.entity.Product;
@@ -41,10 +39,4 @@ public interface ProductMapper {
     @Mapping(target = "discountedPrice", ignore = true)
     @Mapping(target = "variants", ignore = true)
     ProductDetailResponse toProductDetailResponse(Product product);
-
-    @Mapping(target = "productId", ignore = true)
-    @Mapping(target = "brand", ignore = true)
-    @Mapping(target = "category", ignore = true)
-    @Mapping(target = "basePrice", ignore = true)
-    void updateProduct(@MappingTarget Product product, ProductUpdateRequest request);
 }
