@@ -21,6 +21,20 @@ services:
       start_period: 10s
     networks:
       - sba301_network
+  ngrok:
+    image: ngrok/ngrok:latest
+    container_name: sba301_ngrok
+    restart: always
+    environment:
+      - NGROK_AUTHTOKEN=3AFMOtslcgnRSFHP1IAGg0zaWeQ_5UytTyNXzDxbZjm9qbzDU
+    command:
+      - http
+      - --url=seamus-monoecious-retractively.ngrok-free.dev
+      - host.docker.internal:8080
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - sba301_network
 
 volumes:
   sqlserver_data:
@@ -29,3 +43,4 @@ volumes:
 networks:
   sba301_network:
     driver: bridge
+
