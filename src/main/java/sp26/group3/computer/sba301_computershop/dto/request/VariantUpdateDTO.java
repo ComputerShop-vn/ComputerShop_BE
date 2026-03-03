@@ -6,7 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Map;
+import java.util.List;
 
 @Data
 @Builder
@@ -27,8 +27,5 @@ public class VariantUpdateDTO {
 
     private String variantName;
 
-    private Map<Integer, String> attributes;
-
-    // Nếu true, variant sẽ bị xóa (soft delete)
-    private Boolean deleted;
+    private List<AttributeValueDTO> attributes;
 }

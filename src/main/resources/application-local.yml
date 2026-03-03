@@ -3,6 +3,14 @@ spring:
     name: SBA301_ComputerShop
 
   # ===============================
+  # FILE UPLOAD LIMITS
+  # ===============================
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 50MB
+
+  # ===============================
   # DATABASE (SQL SERVER - Docker)
   # ===============================
   datasource:

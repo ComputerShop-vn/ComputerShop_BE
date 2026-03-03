@@ -23,5 +23,5 @@ public class CartItemResponse {
     // Product info
     int productId;
     String productName;
-    String productImageUrl;
+    String thumbnailUrl;
 }

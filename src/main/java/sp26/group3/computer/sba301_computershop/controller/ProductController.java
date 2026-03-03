@@ -1,12 +1,14 @@
 package sp26.group3.computer.sba301_computershop.controller;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Encoding;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -24,16 +26,21 @@ import java.util.List;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
-@Tag(name = "Product Management", description = "APIs for managing products")
 public class ProductController {
 
     ProductService productService;
 
-    @PostMapping
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasAnyRole('STAFF','ADMIN')")
-    @Operation(summary = "Create new product", description = "Create a new product with images (Admin/Staff only)")
+    @io.swagger.v3.oas.annotations.parameters.RequestBody(
+            content = @Content(
+                    mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
+                    encoding = @Encoding(name = "product", contentType = MediaType.APPLICATION_JSON_VALUE)
+            )
+    )
     public ApiResponse<ProductResponse> createProduct(
             @RequestPart("product") @Valid ProductCreationRequest request,
+            @Parameter(description = "Product images")
             @RequestPart(value = "images", required = false) MultipartFile[] images
     ) {
         ProductResponse result = productService.createProduct(request, images);
@@ -44,8 +51,6 @@ public class ProductController {
     }
 
     @GetMapping
-    @Operation(summary = "Get all products with optional filters", 
-               description = "Retrieve all products. Supports filtering by category, brand, and price range via query parameters")
     public ApiResponse<List<ProductResponse>> getAllProducts(
             @RequestParam(required = false) Integer categoryId,
             @RequestParam(required = false) Integer brandId,
@@ -60,7 +65,6 @@ public class ProductController {
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "Get product by ID", description = "Get full product details including images, reviews, promotions")
     public ApiResponse<ProductDetailResponse> getProductById(@PathVariable int id) {
         ProductDetailResponse result = productService.getProductById(id);
 
@@ -70,7 +74,6 @@ public class ProductController {
     }
 
     @GetMapping("/search")
-    @Operation(summary = "Search products", description = "Search products by keyword in name or description")
     public ApiResponse<List<ProductResponse>> searchProducts(@RequestParam String keyword) {
         List<ProductResponse> result = productService.searchProducts(keyword);
 
@@ -79,12 +82,18 @@ public class ProductController {
         return response;
     }
 
-    @PutMapping("/{id}")
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasAnyRole('STAFF','ADMIN')")
-    @Operation(summary = "Update product", description = "Update product details with optional new images (Admin/Staff only)")
+    @io.swagger.v3.oas.annotations.parameters.RequestBody(
+            content = @Content(
+                    mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
+                    encoding = @Encoding(name = "product", contentType = MediaType.APPLICATION_JSON_VALUE)
+            )
+    )
     public ApiResponse<ProductResponse> updateProduct(
             @PathVariable int id,
             @RequestPart("product") @Valid ProductUpdateRequest request,
+            @Parameter(description = "Product images")
             @RequestPart(value = "images", required = false) MultipartFile[] images
     ) {
         ProductResponse result = productService.updateProduct(id, request, images);
@@ -96,7 +105,6 @@ public class ProductController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('STAFF','ADMIN')")
-    @Operation(summary = "Delete product", description = "Delete a product (Admin/Staff only)")
     public ApiResponse<Void> deleteProduct(@PathVariable int id) {
         productService.deleteProduct(id);
 

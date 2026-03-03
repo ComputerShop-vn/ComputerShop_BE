@@ -8,7 +8,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Map;
+import java.util.List;
 
 @Data
 @Builder
@@ -28,5 +28,5 @@ public class VariantCreationDTO {
 
     private String variantName;
 
-    private Map<Integer, String> attributes;
+    private List<AttributeValueDTO> attributes;
 }

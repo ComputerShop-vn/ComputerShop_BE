@@ -121,9 +121,11 @@ public class CartServiceImpl implements CartService {
             throw new AppException(ErrorCode.CART_ITEM_NOT_FOUND);
         }
 
-        cartItemRepository.delete(item);
+        cart.getCartItems().remove(item);
+        cartRepository.save(cart);
         log.info("Removed cart item | cartItemId={}", cartItemId);
 
+        cart = cartRepository.findById(cart.getCartId()).orElseThrow();
         return toCartResponse(cart);
     }
 
@@ -194,11 +196,9 @@ public class CartServiceImpl implements CartService {
         ProductVariant variant = item.getVariant();
         Product product = variant.getProduct();
 
-        // Get first thumbnail image, or first image if no thumbnail
-        String imageUrl = productImageRepository.findByProductProductId(product.getProductId())
-                .stream()
-                .filter(ProductImage::isThumbnail)
-                .findFirst()
+        // Get thumbnail image, or fallback to first image
+        String imageUrl = productImageRepository
+                .findFirstByProductProductIdAndIsThumbnailTrue(product.getProductId())
                 .or(() -> productImageRepository.findByProductProductId(product.getProductId()).stream().findFirst())
                 .map(ProductImage::getImageUrl)
                 .orElse(null);
@@ -213,7 +213,7 @@ public class CartServiceImpl implements CartService {
                 .quantity(item.getQuantity())
                 .productId(product.getProductId())
                 .productName(product.getName())
-                .productImageUrl(imageUrl)
+                .thumbnailUrl(imageUrl)
                 .build();
     }
 }

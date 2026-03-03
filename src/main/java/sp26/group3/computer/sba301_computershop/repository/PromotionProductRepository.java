@@ -6,7 +6,6 @@ import org.springframework.data.repository.query.Param;
 import sp26.group3.computer.sba301_computershop.entity.PromotionProduct;
 
 import java.util.List;
-import java.util.Optional;
 
 public interface PromotionProductRepository extends JpaRepository<PromotionProduct, Integer> {
 
@@ -18,7 +17,7 @@ public interface PromotionProductRepository extends JpaRepository<PromotionProdu
             "AND p.startDate <= CURRENT_DATE " +
             "AND p.endDate >= CURRENT_DATE " +
             "ORDER BY p.discountPercent DESC")
-    Optional<PromotionProduct> findActivePromotionByProductId(@Param("productId") int productId);
+    List<PromotionProduct> findActivePromotionByProductId(@Param("productId") int productId);
 
     @Query("SELECT COUNT(pp) > 0 FROM PromotionProduct pp " +
             "WHERE pp.product.productId = :productId " +

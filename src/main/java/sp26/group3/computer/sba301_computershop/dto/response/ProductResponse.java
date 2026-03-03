@@ -26,6 +26,8 @@ public class ProductResponse {
     private int brandId;
     private String brandName;
     private String brandLogoUrl;
-    
+
+    private String thumbnailUrl;
+
     private List<ProductVariantResponse> variants;
 }
