@@ -78,15 +78,14 @@ public class BrandController {
     @PreAuthorize("hasAnyRole('STAFF','ADMIN')")
     public ApiResponse<BrandResponse> updateBrand(
             @PathVariable int id,
-            @RequestPart("data") @Valid BrandUpdateRequest request,
-            @RequestPart(value = "logo", required = false) MultipartFile logo
+            @RequestParam("brandName") @NotBlank String brandName,
+            @RequestParam(value = "logo", required = false) MultipartFile logo
     ) {
-
-        log.info("[PUT] /brands/{} - Update brand", id);
+        BrandUpdateRequest request = BrandUpdateRequest.builder()
+                .brandName(brandName)
+                .build();
 
         BrandResponse result = brandService.updateBrand(id, request, logo);
-
-        log.info("[PUT] /brands/{} - Update SUCCESS", id);
 
         ApiResponse<BrandResponse> response = new ApiResponse<>();
         response.setResult(result);
