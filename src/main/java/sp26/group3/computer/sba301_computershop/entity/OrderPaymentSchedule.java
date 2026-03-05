@@ -6,7 +6,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import sp26.group3.computer.sba301_computershop.enums.PaymentStatus;
-import sp26.group3.computer.sba301_computershop.enums.PaymentType;
 
 import java.time.LocalDate;
 
@@ -23,38 +22,26 @@ public class OrderPaymentSchedule {
     @Column(name = "payment_schedule_id")
     private int paymentScheduleId;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id", nullable = false)
-    private Order order;
+    private Order order; // Liên kết về đơn hàng gốc
 
-    @Column(name = "provider_name")
-    private String providerName;
+    @Column(name = "installment_no", nullable = false)
+    private int installmentNo; // Kỳ thứ mấy (1, 2, 3...)
 
-    @Column(name = "duration_months")
-    private int durationMonths;
+    @Column(name = "amount", nullable = false)
+    private double amount; // Số tiền phải đóng của riêng kỳ này
 
-    @Column(name = "interest_rate")
-    private double interestRate;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "payment_type")
-    private PaymentType paymentType; // FULL, INSTALLMENT
-
-    @Column(name = "total_amount")
-    private double totalAmount;
-
-    @Column(name = "installment_no")
-    private int installmentNo;
-
-    private double amount;
-
-    @Column(name = "due_date")
-    private LocalDate dueDate;
+    @Column(name = "due_date", nullable = false)
+    private LocalDate dueDate; // Hạn chót phải đóng tiền
 
     @Column(name = "paid_date")
-    private LocalDate paidDate;
+    private LocalDate paidDate; // Ngày khách thực tế bấm thanh toán qua VNPay
+
+    @Column(name = "vnp_transaction_no")
+    private String vnpTransactionNo; // Lưu mã giao dịch VNPay trả về cho TỪNG KỲ để đối soát
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
     private PaymentStatus status; // PENDING, PAID, OVERDUE
 }
-

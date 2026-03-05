@@ -13,10 +13,13 @@ import sp26.group3.computer.sba301_computershop.dto.response.*;
 import sp26.group3.computer.sba301_computershop.entity.*;
 import sp26.group3.computer.sba301_computershop.enums.PaymentStatus;
 import sp26.group3.computer.sba301_computershop.enums.PaymentType;
+import sp26.group3.computer.sba301_computershop.enums.OrderStatus;
 import sp26.group3.computer.sba301_computershop.exception.AppException;
 import sp26.group3.computer.sba301_computershop.exception.ErrorCode;
 import sp26.group3.computer.sba301_computershop.repository.*;
 import sp26.group3.computer.sba301_computershop.service.OrderService;
+import sp26.group3.computer.sba301_computershop.service.PaymentService;
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -39,12 +42,14 @@ public class OrderServiceImpl implements OrderService {
     CartRepository cartRepository;
     CartItemRepository cartItemRepository;
     UserRepository userRepository;
+    InstallmentPackageRepository installmentPackageRepository;
+    PaymentService paymentService;
 
     // ======================== PLACE ORDER ========================
 
     @Override
     @Transactional
-    public OrderResponse placeOrder(PlaceOrderRequest request) {
+    public OrderResponse placeOrder(PlaceOrderRequest request, jakarta.servlet.http.HttpServletRequest servletRequest) {
         User user = getCurrentUser();
         Cart cart = cartRepository.findByUserUserId(user.getUserId())
                 .orElseThrow(() -> new AppException(ErrorCode.CART_NOT_FOUND));
@@ -68,11 +73,22 @@ public class OrderServiceImpl implements OrderService {
                 .sum();
 
         // 3. Create Order
+        InstallmentPackage pack = null;
+        if (request.getPaymentType() == PaymentType.INSTALLMENT) {
+            pack = installmentPackageRepository.findById(request.getPackageId())
+                    .orElseThrow(() -> new RuntimeException("Installment package not found"));
+            if (totalAmount < pack.getMinOrderAmount()) {
+                throw new RuntimeException("Order total amount does not meet package minimum order amount");
+            }
+        }
+
         Order order = Order.builder()
                 .user(user)
                 .totalAmount(totalAmount)
-                .status("PENDING")
+                .status(OrderStatus.PENDING)
                 .orderDate(LocalDateTime.now())
+                .paymentType(request.getPaymentType())
+                .installmentPackage(pack)
                 .build();
         order = orderRepository.save(order);
         log.info("Created order | orderId={} totalAmount={}", order.getOrderId(), totalAmount);
@@ -113,7 +129,14 @@ public class OrderServiceImpl implements OrderService {
         cartItemRepository.deleteAllByCartCartId(cart.getCartId());
         log.info("Cleared cart after placing order | cartId={}", cart.getCartId());
 
-        return toOrderResponse(order, orderItems);
+        // 7. Handle Payment URL for FULL or INSTALLMENT
+        String paymentUrl = null;
+        if (request.getPaymentType() == PaymentType.FULL || request.getPaymentType() == PaymentType.INSTALLMENT) {
+            var paymentDto = paymentService.createVnPayPayment(servletRequest, order.getOrderId(), null);
+            paymentUrl = paymentDto.getPaymentUrl();
+        }
+
+        return toOrderResponse(order, orderItems, paymentUrl);
     }
 
     // ======================== GET ORDER BY ID ========================
@@ -142,7 +165,8 @@ public class OrderServiceImpl implements OrderService {
                 .toList();
     }
 
-    // ======================== GET ALL ORDERS (ADMIN/STAFF) ========================
+    // ======================== GET ALL ORDERS (ADMIN/STAFF)
+    // ========================
 
     @Override
     public List<OrderResponse> getAllOrders() {
@@ -183,7 +207,7 @@ public class OrderServiceImpl implements OrderService {
         if (order.getUser().getUserId() != user.getUserId()) {
             throw new AppException(ErrorCode.ORDER_NOT_FOUND);
         }
-        if (!"PENDING".equals(order.getStatus())) {
+        if (order.getStatus() != OrderStatus.PENDING) {
             throw new AppException(ErrorCode.ORDER_NOT_FOUND);
         }
 
@@ -195,7 +219,7 @@ public class OrderServiceImpl implements OrderService {
             productVariantRepository.save(variant);
         }
 
-        order.setStatus("CANCELLED");
+        order.setStatus(OrderStatus.CANCELLED);
         orderRepository.save(order);
         log.info("Cancelled order | orderId={}", orderId);
     }
@@ -216,37 +240,46 @@ public class OrderServiceImpl implements OrderService {
     }
 
     private void createPaymentSchedules(Order order, PlaceOrderRequest request) {
-        if (request.getPaymentType() == PaymentType.FULL) {
-            // Single full payment
+        if (request.getPaymentType() == PaymentType.COD) {
+            // No payment schedule needed for COD, or maybe one for tracking?
+            // The flow says: "be to create order and navigate to payment success page"
+            // Let's create one schedule with COD status if needed, but for now, we follow
+            // the FULL/INSTALLMENT pattern.
             OrderPaymentSchedule schedule = OrderPaymentSchedule.builder()
                     .order(order)
-                    .paymentType(PaymentType.FULL)
-                    .totalAmount(order.getTotalAmount())
                     .installmentNo(1)
                     .amount(order.getTotalAmount())
                     .dueDate(LocalDate.now().plusDays(7))
-                    .status(PaymentStatus.PENDING)
+                    .status(PaymentStatus.UNPAID)
+                    .build();
+            paymentScheduleRepository.save(schedule);
+            log.info("Created COD payment schedule for orderId={}", order.getOrderId());
+        } else if (request.getPaymentType() == PaymentType.FULL) {
+            // Single full payment
+            OrderPaymentSchedule schedule = OrderPaymentSchedule.builder()
+                    .order(order)
+                    .installmentNo(1)
+                    .amount(order.getTotalAmount())
+                    .dueDate(LocalDate.now().plusDays(7))
+                    .status(PaymentStatus.UNPAID)
                     .build();
             paymentScheduleRepository.save(schedule);
         } else {
             // Installment payments
-            int months = request.getDurationMonths() != null ? request.getDurationMonths() : 12;
-            double rate = request.getInterestRate() != null ? request.getInterestRate() : 0.0;
+            InstallmentPackage pack = order.getInstallmentPackage();
+
+            int months = pack.getDurationMonths();
+            double rate = pack.getInterestRate();
             double totalWithInterest = order.getTotalAmount() * (1 + rate / 100);
             double monthlyAmount = totalWithInterest / months;
 
             for (int i = 1; i <= months; i++) {
                 OrderPaymentSchedule schedule = OrderPaymentSchedule.builder()
                         .order(order)
-                        .paymentType(PaymentType.INSTALLMENT)
-                        .providerName(request.getProviderName())
-                        .durationMonths(months)
-                        .interestRate(rate)
-                        .totalAmount(totalWithInterest)
                         .installmentNo(i)
                         .amount(Math.round(monthlyAmount * 100.0) / 100.0)
                         .dueDate(LocalDate.now().plusMonths(i))
-                        .status(PaymentStatus.PENDING)
+                        .status(PaymentStatus.UNPAID)
                         .build();
                 paymentScheduleRepository.save(schedule);
             }
@@ -254,13 +287,13 @@ public class OrderServiceImpl implements OrderService {
         }
     }
 
-    private OrderResponse toOrderResponse(Order order, List<OrderItem> items) {
+    private OrderResponse toOrderResponse(Order order, List<OrderItem> items, String paymentUrl) {
         List<OrderItemResponse> itemResponses = items.stream()
                 .map(this::toOrderItemResponse)
                 .toList();
 
         List<PaymentScheduleResponse> paymentResponses = paymentScheduleRepository
-                .findByOrderOrderId(order.getOrderId())
+                .findByOrderOrderIdOrderByInstallmentNoAsc(order.getOrderId())
                 .stream()
                 .map(this::toPaymentResponse)
                 .toList();
@@ -271,10 +304,16 @@ public class OrderServiceImpl implements OrderService {
                 .username(order.getUser().getUsername())
                 .totalAmount(order.getTotalAmount())
                 .status(order.getStatus())
+                .paymentType(order.getPaymentType())
                 .orderDate(order.getOrderDate())
                 .items(itemResponses)
                 .payments(paymentResponses)
+                .paymentUrl(paymentUrl)
                 .build();
+    }
+
+    private OrderResponse toOrderResponse(Order order, List<OrderItem> items) {
+        return toOrderResponse(order, items, null);
     }
 
     private OrderItemResponse toOrderItemResponse(OrderItem item) {
@@ -309,15 +348,11 @@ public class OrderServiceImpl implements OrderService {
     private PaymentScheduleResponse toPaymentResponse(OrderPaymentSchedule schedule) {
         return PaymentScheduleResponse.builder()
                 .paymentScheduleId(schedule.getPaymentScheduleId())
-                .paymentType(schedule.getPaymentType())
-                .providerName(schedule.getProviderName())
-                .durationMonths(schedule.getDurationMonths())
-                .interestRate(schedule.getInterestRate())
-                .totalAmount(schedule.getTotalAmount())
                 .installmentNo(schedule.getInstallmentNo())
                 .amount(schedule.getAmount())
                 .dueDate(schedule.getDueDate())
                 .paidDate(schedule.getPaidDate())
+                .vnpTransactionNo(schedule.getVnpTransactionNo())
                 .status(schedule.getStatus())
                 .build();
     }
