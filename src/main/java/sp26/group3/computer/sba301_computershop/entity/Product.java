@@ -33,7 +33,6 @@ public class Product {
     @Column(name = "base_price")
     private Double basePrice;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "NVARCHAR(MAX)")
     private String description;
 }
-
