@@ -3,7 +3,7 @@ package sp26.group3.computer.sba301_computershop.dto.response;
 import lombok.Builder;
 import lombok.Data;
 
-import java.util.Map;
+import java.util.List;
 
 @Data
 @Builder
@@ -15,5 +15,5 @@ public class ProductVariantResponse {
     private double price;
     private int stockQuantity;
     private String variantName;
-    private Map<String, String> attributes;
+    private List<VariantAttributeResponse> attributes;
 }
