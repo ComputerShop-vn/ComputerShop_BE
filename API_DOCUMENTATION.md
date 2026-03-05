@@ -445,11 +445,19 @@
           "price": 12000000.0,
           "stockQuantity": 10,
           "variantName": "RAM 8GB - SSD 256GB",
+<<<<<<< HEAD
           "attributes": [
             { "attributeId": 1, "attributeName": "RAM", "value": "8GB" },
             { "attributeId": 2, "attributeName": "SSD", "value": "256GB" },
             { "attributeId": 3, "attributeName": "Color", "value": "Silver" }
           ]
+=======
+          "attributes": {
+            "RAM": "8GB",
+            "SSD": "256GB",
+            "Color": "Silver"
+          }
+>>>>>>> b4048d24dbad407ef797b29bf6c63520128ac07a
         }
       ]
     }
@@ -668,7 +676,10 @@ fetch("/api/v1/products", {
 | `description` | null = không thay đổi |
 | `categoryId` | null = không thay đổi; có value → validate tồn tại |
 | `brandId` | null = không thay đổi; có value → validate tồn tại |
+<<<<<<< HEAD
 | `variants` | null / omit = **giữ nguyên** variants hiện có; truyền mảng → xử lý theo logic variants |
+=======
+>>>>>>> b4048d24dbad407ef797b29bf6c63520128ac07a
 
 **Behaviour `images` khi UPDATE:**
 
@@ -681,8 +692,12 @@ fetch("/api/v1/products", {
 
 ### ⚠️ Behaviour `variants` khi UPDATE (quan trọng nhất)
 
+<<<<<<< HEAD
 > **Logic cốt lõi:** Nếu `variants` **không được truyền (null / omit)** → giữ nguyên toàn bộ variants hiện tại, không thay đổi gì.  
 > Nếu `variants` **được truyền** (kể cả mảng rỗng `[]`) → danh sách gửi lên là **trạng thái sau cùng** mong muốn.
+=======
+> **Logic cốt lõi:** Danh sách variants gửi lên chính là **trạng thái sau cùng** mong muốn cho sản phẩm.
+>>>>>>> b4048d24dbad407ef797b29bf6c63520128ac07a
 
 **Phân loại item trong `variants`:**
 - Item có `variantId` → **cập nhật** variant có ID đó
@@ -692,14 +707,23 @@ fetch("/api/v1/products", {
 
 ---
 
+<<<<<<< HEAD
 **Case 1 — `variants: null` hoặc omit hoàn toàn field `variants`**
+=======
+**Case 1 — `variants: null` (hoặc omit hoàn toàn field `variants`)**
+>>>>>>> b4048d24dbad407ef797b29bf6c63520128ac07a
 ```json
 {
   "name": "Tên mới"
 }
 ```
+<<<<<<< HEAD
 > **Kết quả: GIỮ NGUYÊN toàn bộ variants** hiện có của sản phẩm.  
 > Dùng khi chỉ muốn sửa thông tin cơ bản (name, description, category, brand) mà không động đến variants.
+=======
+> **Kết quả: XOÁ TOÀN BỘ variants** hiện có của sản phẩm.  
+> Code xử lý: `null` → `List.of()` → không có `variantId` nào → xoá tất cả.
+>>>>>>> b4048d24dbad407ef797b29bf6c63520128ac07a
 
 ---
 
@@ -710,12 +734,17 @@ fetch("/api/v1/products", {
   "variants": []
 }
 ```
+<<<<<<< HEAD
 > **Kết quả: XOÁ TOÀN BỘ variants** (truyền tường minh mảng rỗng).
+=======
+> **Kết quả: XOÁ TOÀN BỘ variants** (tương tự null).
+>>>>>>> b4048d24dbad407ef797b29bf6c63520128ac07a
 
 ---
 
 **Case 3 — Giữ nguyên tất cả, chỉ update info sản phẩm**
 
+<<<<<<< HEAD
 Cách đơn giản nhất: **không truyền field `variants`**:
 ```json
 {
@@ -725,6 +754,9 @@ Cách đơn giản nhất: **không truyền field `variants`**:
 > Tất cả variants giữ nguyên.
 
 Hoặc truyền lại tất cả `variantId` hiện có:
+=======
+Cần truyền lại tất cả `variantId` hiện có:
+>>>>>>> b4048d24dbad407ef797b29bf6c63520128ac07a
 ```json
 {
   "name": "Tên mới",
@@ -847,6 +879,7 @@ Tạo mới hoặc đổi SKU của variant sang SKU đã tồn tại trong DB (
 | ✅ Xoá một phần | Attribute cũ không xuất hiện trong list gửi lên | Bị xoá |
 
 > **Tóm lại:** Gửi `attributeId` → giữ nguyên record đó (chỉ update value nếu đổi). Không gửi `attributeId` của attribute cũ → attribute đó bị xoá. Không có `attributeId` trong item → tạo mới.
+
 
 **Attribute resolution (tìm/tạo attribute theo input):**
 
@@ -2029,6 +2062,7 @@ formData.append("logo", newLogoFile);
 ### 3. Product Update — Không làm mất variants ngoài ý muốn
 
 ```javascript
+<<<<<<< HEAD
 // Nếu chỉ muốn đổi tên, KHÔNG cần gửi variants — variants tự động giữ nguyên:
 const updateBody = {
   name: "Tên mới"
@@ -2039,6 +2073,16 @@ const updateBody = {
 const updateBody = {
   name: "Tên mới",
   variants: []  // tường minh → xoá hết variants
+=======
+// Trước khi update product, lấy danh sách variants hiện có:
+const product = await fetch(`/api/v1/products/${id}`).then(r => r.json());
+const existingVariantIds = product.result.variants.map(v => ({ variantId: v.variantId }));
+
+// Nếu chỉ muốn đổi tên, giữ nguyên tất cả variants:
+const updateBody = {
+  name: "Tên mới",
+  variants: existingVariantIds  // bắt buộc phải gửi lại, nếu không gửi → xoá hết
+>>>>>>> b4048d24dbad407ef797b29bf6c63520128ac07a
 };
 ```
 
