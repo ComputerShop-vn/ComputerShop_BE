@@ -11,6 +11,6 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class UpdateOrderStatusRequest {
 
-    @NotBlank(message = "Status is required")
-    String status;
+    @jakarta.validation.constraints.NotNull(message = "Status is required")
+    sp26.group3.computer.sba301_computershop.enums.OrderStatus status;
 }

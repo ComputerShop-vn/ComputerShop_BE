@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import sp26.group3.computer.sba301_computershop.enums.PaymentStatus;
-import sp26.group3.computer.sba301_computershop.enums.PaymentType;
 
 import java.time.LocalDate;
 
@@ -17,14 +16,10 @@ import java.time.LocalDate;
 public class PaymentScheduleResponse {
 
     int paymentScheduleId;
-    PaymentType paymentType;
-    String providerName;
-    int durationMonths;
-    double interestRate;
-    double totalAmount;
     int installmentNo;
     double amount;
     LocalDate dueDate;
     LocalDate paidDate;
+    String vnpTransactionNo;
     PaymentStatus status;
 }

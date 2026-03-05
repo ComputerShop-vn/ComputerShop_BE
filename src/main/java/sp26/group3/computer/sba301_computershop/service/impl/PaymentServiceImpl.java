@@ -11,8 +11,13 @@ import org.springframework.transaction.annotation.Transactional;
 import sp26.group3.computer.sba301_computershop.config.VNPayConfig;
 import sp26.group3.computer.sba301_computershop.dto.response.PaymentDTO;
 import sp26.group3.computer.sba301_computershop.entity.Order;
+import sp26.group3.computer.sba301_computershop.entity.OrderPaymentSchedule;
+import sp26.group3.computer.sba301_computershop.enums.PaymentStatus;
+import sp26.group3.computer.sba301_computershop.enums.PaymentType;
+import sp26.group3.computer.sba301_computershop.enums.OrderStatus;
 import sp26.group3.computer.sba301_computershop.exception.AppException;
 import sp26.group3.computer.sba301_computershop.exception.ErrorCode;
+import sp26.group3.computer.sba301_computershop.repository.OrderPaymentScheduleRepository;
 import sp26.group3.computer.sba301_computershop.repository.OrderRepository;
 import sp26.group3.computer.sba301_computershop.service.PaymentService;
 import sp26.group3.computer.sba301_computershop.util.VNPayUtil;
@@ -32,6 +37,7 @@ public class PaymentServiceImpl implements PaymentService {
 
     VNPayConfig vnPayConfig;
     OrderRepository orderRepository;
+    OrderPaymentScheduleRepository orderPaymentScheduleRepository;
 
     @Override
     public PaymentDTO createVnPayPayment(HttpServletRequest request, int orderId, String bankCode) {
@@ -42,7 +48,7 @@ public class PaymentServiceImpl implements PaymentService {
                 .multiply(BigDecimal.valueOf(100))
                 .setScale(0, RoundingMode.HALF_UP)
                 .longValue();
-        //long finalAmount = amount * 100L;
+        // long finalAmount = amount * 100L;
         String vnp_TxnRef = VNPayUtil.getRandomNumber(8) + "_" + orderId;
         String vnp_IpAddr = VNPayUtil.getIpAddress(request);
 
@@ -133,7 +139,8 @@ public class PaymentServiceImpl implements PaymentService {
 
         if (signValue.equals(vnp_SecureHash)) {
             if ("00".equals(request.getParameter("vnp_ResponseCode"))) {
-                log.info("Thanh toán thành công: {}", request.getParameter("vnp_TxnRef"));
+                log.info("Thanh toán thành công: {}, TransactionNo: {}", request.getParameter("vnp_TxnRef"),
+                        request.getParameter("vnp_TransactionNo"));
                 return successUrl;
             } else {
                 log.warn("Thanh toán không thành công, ResponseCode: {}", request.getParameter("vnp_ResponseCode"));
@@ -144,6 +151,7 @@ public class PaymentServiceImpl implements PaymentService {
             return failUrl;
         }
     }
+
     @Override
     @Transactional
     public Map<String, String> handleVnPayIpn(HttpServletRequest request) {
@@ -171,6 +179,7 @@ public class PaymentServiceImpl implements PaymentService {
             // 3. Logic xử lý đơn hàng
             String txnRef = request.getParameter("vnp_TxnRef");
             String responseCode = request.getParameter("vnp_ResponseCode");
+            String vnpTransactionNo = request.getParameter("vnp_TransactionNo");
 
             try {
                 int orderId = Integer.parseInt(txnRef.split("_")[1]);
@@ -179,18 +188,68 @@ public class PaymentServiceImpl implements PaymentService {
                 if (order == null) {
                     response.put("RspCode", "01");
                     response.put("Message", "Order not found");
-                } else if ("PAID".equals(order.getStatus())) {
+                } else if (order.getPaymentType() == PaymentType.FULL && order.getStatus() == OrderStatus.PAID) {
                     response.put("RspCode", "02");
                     response.put("Message", "Order already confirmed");
                 } else {
                     if ("00".equals(responseCode)) {
-                        order.setStatus("PAID");
-                        orderRepository.save(order);
-                        log.info("Order {} marked as PAID via IPN", orderId);
+                        // Update payment schedule
+                        List<OrderPaymentSchedule> schedules = orderPaymentScheduleRepository
+                                .findByOrderOrderIdOrderByInstallmentNoAsc(orderId);
+                        boolean allPaid = true;
+                        if (schedules != null && !schedules.isEmpty()) {
+                            boolean scheduleUpdated = false;
+                            for (OrderPaymentSchedule schedule : schedules) {
+                                if (!scheduleUpdated && schedule.getStatus() == PaymentStatus.UNPAID) {
+                                    schedule.setStatus(PaymentStatus.PAID);
+                                    schedule.setPaidDate(java.time.LocalDate.now());
+                                    schedule.setVnpTransactionNo(vnpTransactionNo);
+                                    orderPaymentScheduleRepository.save(schedule);
+                                    scheduleUpdated = true;
+                                    // We don't break here because we need to check if all are paid
+                                } else if (schedule.getStatus() != PaymentStatus.PAID) {
+                                    allPaid = false;
+                                }
+                            }
+                        } else {
+                            allPaid = false;
+                        }
+
+                        // Update status for installment payment ONLY when all durations are paid
+                        // if (order.getPaymentType() == PaymentType.INSTALLMENT) {
+                        // if (allPaid) {
+                        // //order.setStatus(OrderStatus.PAID);
+                        // orderRepository.save(order);
+                        // log.info("Order {} fully paid - marked as PAID via IPN", orderId);
+                        // } else {
+                        // log.info("Order {} installment payment received - waiting for remaining
+                        // schedules",
+                        // orderId);
+                        // }
+                        // } else {
+                        // log.info("Order {} full payment - schedule updated, status unchanged",
+                        // orderId);
+                        // }
                     } else {
-                        order.setStatus("FAILED");
-                        orderRepository.save(order);
-                        log.info("Order {} marked as FAILED via IPN", orderId);
+                        log.warn("Giao dịch VNPay thất bại cho Order ID: {}. Mã lỗi: {}", orderId, responseCode);
+                        // Only set FAILED if it's not already PAID
+                        // if (order.getStatus() != OrderStatus.PAID) {
+                        // order.setStatus(OrderStatus.FAILED);
+                        // orderRepository.save(order);
+                        // }
+                        // log.info("Order {} marked as FAILED via IPN", orderId);
+
+                        // List<OrderPaymentSchedule> schedules = orderPaymentScheduleRepository
+                        // .findByOrderOrderIdOrderByInstallmentNoAsc(orderId);
+                        // if (schedules != null && !schedules.isEmpty()) {
+                        // for (OrderPaymentSchedule schedule : schedules) {
+                        // if (schedule.getStatus() == PaymentStatus.UNPAID) {
+                        // schedule.setVnpTransactionNo(vnpTransactionNo);
+                        // orderPaymentScheduleRepository.save(schedule);
+                        // break;
+                        // }
+                        // }
+                        // }
                     }
                     response.put("RspCode", "00");
                     response.put("Message", "Confirm Success");
