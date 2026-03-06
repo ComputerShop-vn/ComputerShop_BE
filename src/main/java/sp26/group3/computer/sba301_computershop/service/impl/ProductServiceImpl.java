@@ -15,6 +15,7 @@ import sp26.group3.computer.sba301_computershop.dto.request.VariantUpdateDTO;
 import sp26.group3.computer.sba301_computershop.dto.response.ProductDetailResponse;
 import sp26.group3.computer.sba301_computershop.dto.response.ProductResponse;
 import sp26.group3.computer.sba301_computershop.dto.response.ProductVariantResponse;
+import sp26.group3.computer.sba301_computershop.dto.response.VariantAttributeResponse;
 import sp26.group3.computer.sba301_computershop.entity.*;
 import sp26.group3.computer.sba301_computershop.exception.AppException;
 import sp26.group3.computer.sba301_computershop.exception.ErrorCode;
@@ -24,7 +25,10 @@ import sp26.group3.computer.sba301_computershop.repository.*;
 import sp26.group3.computer.sba301_computershop.service.CloudinaryService;
 import sp26.group3.computer.sba301_computershop.service.ProductService;
 
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -172,38 +176,39 @@ public class ProductServiceImpl implements ProductService {
             log.info("Updated {} images for product id: {}", imageUrls.size(), productId);
         }
 
-        // Handle variants update — luôn chạy, null = xóa hết variants
-        List<VariantUpdateDTO> incomingVariants =
-                request.getVariants() != null ? request.getVariants() : List.of();
-        log.info("Processing {} variants for product id: {}", incomingVariants.size(), productId);
+        if (request.getVariants() != null) {
+            List<VariantUpdateDTO> incomingVariants = request.getVariants();
+            log.info("Processing {} variants for product id: {}", incomingVariants.size(), productId);
 
-        // Collect variantIds còn tồn tại sau update
-        Set<Integer> incomingIds = incomingVariants.stream()
-                .filter(v -> v.getVariantId() != null)
-                .map(VariantUpdateDTO::getVariantId)
-                .collect(Collectors.toSet());
+            // Collect variantIds còn tồn tại sau update
+            Set<Integer> incomingIds = incomingVariants.stream()
+                    .filter(v -> v.getVariantId() != null)
+                    .map(VariantUpdateDTO::getVariantId)
+                    .collect(Collectors.toSet());
 
-        // Xóa các variant cũ không có trong danh sách gửi lên
-        List<ProductVariant> existingVariants = productVariantRepository.findByProductProductId(productId);
-        for (ProductVariant existing : existingVariants) {
-            if (!incomingIds.contains(existing.getVariantId())) {
-                deleteVariant(existing.getVariantId());
-                log.info("Auto-deleted variant id: {}", existing.getVariantId());
+            // Xóa các variant cũ không có trong danh sách gửi lên
+            List<ProductVariant> existingVariants = productVariantRepository.findByProductProductId(productId);
+            for (ProductVariant existing : existingVariants) {
+                if (!incomingIds.contains(existing.getVariantId())) {
+                    deleteVariant(existing.getVariantId());
+                    log.info("Auto-deleted variant id: {}", existing.getVariantId());
+                }
             }
-        }
 
-        for (VariantUpdateDTO variantDTO : incomingVariants) {
-            if (variantDTO.getVariantId() != null) {
-                updateExistingVariant(variantDTO);
-                log.info("Updated variant id: {}", variantDTO.getVariantId());
-            } else {
-                createNewVariant(updatedProduct, variantDTO);
-                log.info("Created new variant with SKU: {}", variantDTO.getSku());
+            for (VariantUpdateDTO variantDTO : incomingVariants) {
+                if (variantDTO.getVariantId() != null) {
+                    updateExistingVariant(variantDTO);
+                    log.info("Updated variant id: {}", variantDTO.getVariantId());
+                } else {
+                    createNewVariant(updatedProduct, variantDTO);
+                    log.info("Created new variant with SKU: {}", variantDTO.getSku());
+                }
             }
-        }
 
-        // Update product base price after variants changed
-        updateProductBasePrice(productId);
+            updateProductBasePrice(productId);
+        } else {
+            log.info("Variants not provided for product id: {} — keeping existing variants", productId);
+        }
 
         ProductResponse response = productMapper.toProductResponse(updatedProduct);
         populateVariants(response);
@@ -350,7 +355,7 @@ public class ProductServiceImpl implements ProductService {
         List<ProductVariant> variants = productVariantRepository
                 .findByProductProductId(response.getProductId());
         List<ProductVariantResponse> variantResponses = variants.stream()
-                .map(productVariantMapper::toProductVariantResponse)
+                .map(v -> toVariantResponseWithAttributes(v))
                 .collect(Collectors.toList());
         response.setVariants(variantResponses);
     }
@@ -359,9 +364,24 @@ public class ProductServiceImpl implements ProductService {
         List<ProductVariant> variants = productVariantRepository
                 .findByProductProductId(response.getProductId());
         List<ProductVariantResponse> variantResponses = variants.stream()
-                .map(productVariantMapper::toProductVariantResponse)
+                .map(v -> toVariantResponseWithAttributes(v))
                 .collect(Collectors.toList());
         response.setVariants(variantResponses);
+    }
+
+    private ProductVariantResponse toVariantResponseWithAttributes(ProductVariant variant) {
+        ProductVariantResponse res = productVariantMapper.toProductVariantResponse(variant);
+        List<ProductVariantAttribute> attrs =
+                productVariantAttributeRepository.findByVariantVariantId(variant.getVariantId());
+        List<VariantAttributeResponse> attrList = attrs.stream()
+                .map(a -> VariantAttributeResponse.builder()
+                        .attributeId(a.getAttribute().getAttributeId())
+                        .attributeName(a.getAttribute().getAttributeName())
+                        .value(a.getValue())
+                        .build())
+                .collect(Collectors.toList());
+        res.setAttributes(attrList);
+        return res;
     }
 
     private void updateProductBasePrice(int productId) {
@@ -432,19 +452,48 @@ public class ProductServiceImpl implements ProductService {
 
         ProductVariant updatedVariant = productVariantRepository.save(variant);
 
-        // Luôn xóa attributes cũ rồi insert lại — null = không gắn attribute nào
-        productVariantAttributeRepository.deleteByVariantVariantId(variantDTO.getVariantId());
+        // null = không truyền → giữ nguyên attributes hiện có
+        // [] = truyền mảng rỗng → xoá toàn bộ attributes
+        // [...] = merge: giữ attribute đã có (theo attributeId), thêm mới, xoá attribute không còn trong list
         if (variantDTO.getAttributes() != null) {
+            List<ProductVariantAttribute> existingAttrs =
+                    productVariantAttributeRepository.findByVariantVariantId(variantDTO.getVariantId());
+
+            // Map attributeId → existing record
+            Map<Integer, ProductVariantAttribute> existingByAttrId = new HashMap<>();
+            for (ProductVariantAttribute existing : existingAttrs) {
+                existingByAttrId.put(existing.getAttribute().getAttributeId(), existing);
+            }
+
+            Set<Integer> incomingAttrIds = new HashSet<>();
             for (AttributeValueDTO attrDTO : variantDTO.getAttributes()) {
                 Attribute attribute = resolveOrCreateAttribute(attrDTO);
+                int attrId = attribute.getAttributeId();
+                incomingAttrIds.add(attrId);
 
-                ProductVariantAttribute variantAttribute = ProductVariantAttribute.builder()
-                        .variant(updatedVariant)
-                        .attribute(attribute)
-                        .value(attrDTO.getValue())
-                        .build();
+                if (existingByAttrId.containsKey(attrId)) {
+                    // Attribute đã tồn tại → chỉ update value nếu có thay đổi
+                    ProductVariantAttribute existing = existingByAttrId.get(attrId);
+                    if (attrDTO.getValue() != null && !attrDTO.getValue().equals(existing.getValue())) {
+                        existing.setValue(attrDTO.getValue());
+                        productVariantAttributeRepository.save(existing);
+                    }
+                } else {
+                    // Attribute chưa có → tạo mới
+                    ProductVariantAttribute variantAttribute = ProductVariantAttribute.builder()
+                            .variant(updatedVariant)
+                            .attribute(attribute)
+                            .value(attrDTO.getValue())
+                            .build();
+                    productVariantAttributeRepository.save(variantAttribute);
+                }
+            }
 
-                productVariantAttributeRepository.save(variantAttribute);
+            // Xoá các attribute cũ không có trong list gửi lên
+            for (ProductVariantAttribute existing : existingAttrs) {
+                if (!incomingAttrIds.contains(existing.getAttribute().getAttributeId())) {
+                    productVariantAttributeRepository.delete(existing);
+                }
             }
         }
     }
