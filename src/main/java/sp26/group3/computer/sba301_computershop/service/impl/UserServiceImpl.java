@@ -69,16 +69,30 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponse updateUser(int id, UserUpdateRequest request) {
+
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
+        log.info("===== DEBUG UPDATE USER =====");
+        log.info("User ID: {}", id);
+        log.info("Old status BEFORE mapper: {}", user.getStatus());
+        log.info("Request status: {}", request.getStatus());
+
+        // Gọi mapper
         userMapper.updateUser(user, request);
+
+        log.info("Status AFTER mapper: {}", user.getStatus());
 
         if (request.getPassword() != null && !request.getPassword().isBlank()) {
             user.setPassword(passwordEncoder.encode(request.getPassword()));
         }
 
-        return userMapper.toUserResponse(userRepository.save(user));
+        User savedUser = userRepository.save(user);
+
+        log.info("Status AFTER save: {}", savedUser.getStatus());
+        log.info("===== END DEBUG =====");
+
+        return userMapper.toUserResponse(savedUser);
     }
 
     @Override
@@ -104,19 +118,30 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponse updateMyProfile(UserUpdateRequest request) {
+
         String email = SecurityContextHolder.getContext()
                 .getAuthentication()
                 .getName();
 
+        log.info("Logged in email: " + email);
+
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
-        userMapper.updateUser(user, request);
+       log.info("User ID: " + user.getUserId());
+       log.info("Old status: " + user.getStatus());
+        log.info("Request status: " + request.getStatus());
 
-        if (request.getPassword() != null && !request.getPassword().isBlank()) {
-            user.setPassword(passwordEncoder.encode(request.getPassword()));
+        if (request.getStatus() != null && !request.getStatus().isBlank()) {
+            user.setStatus(request.getStatus());
         }
 
-        return userMapper.toUserResponse(userRepository.save(user));
+        log.info("After set status: " + user.getStatus());
+
+        User savedUser = userRepository.save(user);
+
+        log.info("Saved status in object: " + savedUser.getStatus());
+
+        return userMapper.toUserResponse(savedUser);
     }
 }

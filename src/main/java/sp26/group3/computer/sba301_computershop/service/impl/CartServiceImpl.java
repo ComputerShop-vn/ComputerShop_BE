@@ -141,7 +141,7 @@ public class CartServiceImpl implements CartService {
         log.info("Cleared cart | cartId={}", cart.getCartId());
 
         cart = cartRepository.findById(cart.getCartId()).orElseThrow();
-        cart.setCartItems(new ArrayList<>());
+        cart.getCartItems().clear();
         return toCartResponse(cart);
     }
 
