@@ -43,7 +43,19 @@ public class PaymentServiceImpl implements PaymentService {
     public PaymentDTO createVnPayPayment(HttpServletRequest request, int orderId, String bankCode) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
-        BigDecimal amount = BigDecimal.valueOf(order.getTotalAmount());
+
+        BigDecimal amount;
+        if (order.getPaymentType() == PaymentType.INSTALLMENT) {
+            List<OrderPaymentSchedule> schedules = orderPaymentScheduleRepository
+                    .findByOrderOrderIdOrderByInstallmentNoAsc(orderId);
+            OrderPaymentSchedule nextPayment = schedules.stream()
+                    .filter(schedule -> schedule.getStatus() == PaymentStatus.UNPAID)
+                    .findFirst()
+                    .orElseThrow(() -> new AppException(ErrorCode.ORDER_ALREADY_PAID));
+            amount = BigDecimal.valueOf(nextPayment.getAmount());
+        } else {
+            amount = BigDecimal.valueOf(order.getTotalAmount());
+        }
         long finalAmount = amount
                 .multiply(BigDecimal.valueOf(100))
                 .setScale(0, RoundingMode.HALF_UP)

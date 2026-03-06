@@ -30,7 +30,7 @@ public class Order {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status")
-    private sp26.group3.computer.sba301_computershop.enums.OrderStatus status;
+    private OrderStatus status;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "payment_type")
