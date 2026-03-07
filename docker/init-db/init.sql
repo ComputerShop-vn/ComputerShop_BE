@@ -35,6 +35,7 @@ IF OBJECT_ID('attributes',                 'U') IS NOT NULL DROP TABLE attribute
 IF OBJECT_ID('blogs',                      'U') IS NOT NULL DROP TABLE blogs;
 IF OBJECT_ID('brands',                     'U') IS NOT NULL DROP TABLE brands;
 IF OBJECT_ID('categories',                 'U') IS NOT NULL DROP TABLE categories;
+IF OBJECT_ID('installment_package',        'U') IS NOT NULL DROP TABLE installment_package;
 IF OBJECT_ID('users',                      'U') IS NOT NULL DROP TABLE users;
 IF OBJECT_ID('roles',                      'U') IS NOT NULL DROP TABLE roles;
 IF OBJECT_ID('invalidated_token',          'U') IS NOT NULL DROP TABLE invalidated_token;
@@ -48,6 +49,16 @@ GO
 CREATE TABLE roles (
     role_id  INT           IDENTITY(1,1) PRIMARY KEY,
     name     NVARCHAR(50)  NOT NULL UNIQUE
+);
+
+-- installment_package
+CREATE TABLE installment_package (
+    package_id       INT           IDENTITY(1,1) PRIMARY KEY,
+    name             NVARCHAR(255) NOT NULL,
+    duration_months  INT           NOT NULL,
+    interest_rate    FLOAT         NOT NULL,
+    min_order_amount FLOAT         NOT NULL,
+    is_active        BIT           DEFAULT 1
 );
 
 -- users
@@ -191,12 +202,15 @@ CREATE TABLE cart_items (
 
 -- orders
 CREATE TABLE orders (
-    order_id     INT           IDENTITY(1,1) PRIMARY KEY,
-    user_id      INT           NOT NULL,
-    total_amount FLOAT,
-    status       NVARCHAR(50),
-    order_date   DATETIME2,
-    FOREIGN KEY (user_id) REFERENCES users(user_id)
+    order_id               INT           IDENTITY(1,1) PRIMARY KEY,
+    user_id                INT           NOT NULL,
+    total_amount           FLOAT,
+    status                 NVARCHAR(50),
+    payment_type           NVARCHAR(20),
+    installment_package_id INT           NULL,
+    order_date             DATETIME2,
+    FOREIGN KEY (user_id)                REFERENCES users(user_id),
+    FOREIGN KEY (installment_package_id) REFERENCES installment_package(package_id)
 );
 
 -- order_items
@@ -217,16 +231,12 @@ CREATE TABLE order_items (
 CREATE TABLE order_payment_schedule (
     payment_schedule_id INT          IDENTITY(1,1) PRIMARY KEY,
     order_id            INT          NOT NULL,
-    provider_name       NVARCHAR(255),
-    duration_months     INT,
-    interest_rate       FLOAT,
-    payment_type        NVARCHAR(20),
-    total_amount        FLOAT,
-    installment_no      INT,
-    amount              FLOAT,
-    due_date            DATE,
+    installment_no      INT          NOT NULL,
+    amount              FLOAT        NOT NULL,
+    due_date            DATE         NOT NULL,
     paid_date           DATE,
-    status              NVARCHAR(20),
+    vnp_transaction_no  NVARCHAR(255),
+    status              NVARCHAR(20) NOT NULL,
     FOREIGN KEY (order_id) REFERENCES orders(order_id)
 );
 
@@ -286,6 +296,15 @@ INSERT INTO roles (role_id, name) VALUES
 (2, 'STAFF'),
 (3, 'MEMBER');
 SET IDENTITY_INSERT roles OFF;
+
+-- Installment Packages
+SET IDENTITY_INSERT installment_package ON;
+INSERT INTO installment_package (package_id, name, duration_months, interest_rate, min_order_amount, is_active) VALUES
+(1, N'Trả góp 3 tháng - Lãi suất 0%',        3,  0.0,  3000000.00, 1),
+(2, N'Trả góp 6 tháng - Lãi suất 0%',        6,  1.0,  5000000.00, 1),
+(3, N'Trả góp 12 tháng - Lãi suất 1.5%',    12,  1.5, 10000000.00, 1),
+(4, N'Trả góp 9 tháng - Không hoạt động',    9,  1.5,  5000000.00, 0);
+SET IDENTITY_INSERT installment_package OFF;
 
 -- Users  (password = Admin@123 for all)
 SET IDENTITY_INSERT users ON;
