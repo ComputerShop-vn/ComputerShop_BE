@@ -5,6 +5,9 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 
+import sp26.group3.computer.sba301_computershop.enums.OrderStatus;
+import sp26.group3.computer.sba301_computershop.enums.PaymentType;
+
 @Entity
 @Table(name = "orders")
 @Data
@@ -25,7 +28,17 @@ public class Order {
     @Column(name = "total_amount")
     private Double totalAmount;
 
-    private String status;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status")
+    private OrderStatus status;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_type")
+    private PaymentType paymentType;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "installment_package_id")
+    private InstallmentPackage installmentPackage;
 
     @Column(name = "order_date")
     private LocalDateTime orderDate;
