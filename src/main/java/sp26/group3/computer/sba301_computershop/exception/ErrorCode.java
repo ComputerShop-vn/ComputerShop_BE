@@ -1,13 +1,11 @@
 package sp26.group3.computer.sba301_computershop.exception;
 
-
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
-
 @Getter
 public enum ErrorCode {
-    UNCATEGORIZED_EXCEPTION(9999,"Uncategorized Error", HttpStatus.INTERNAL_SERVER_ERROR),
+    UNCATEGORIZED_EXCEPTION(9999, "Uncategorized Error", HttpStatus.INTERNAL_SERVER_ERROR),
     USER_EXISTED(1001, "User already exists", HttpStatus.BAD_REQUEST),
     ROLE_NOT_FOUND(1002, "Role not found", HttpStatus.NOT_FOUND),
     ROLE_EXISTED(1012, "Role already exists", HttpStatus.BAD_REQUEST),
@@ -18,8 +16,8 @@ public enum ErrorCode {
     UNAUTHORIZED(1004, "Unauthorized", HttpStatus.FORBIDDEN),
     INVALID_KEY(1005, "Invalid key", HttpStatus.BAD_REQUEST),
     INVALID_REQUEST_BODY(1008, "Invalid JSON request body", HttpStatus.BAD_REQUEST),
-    USER_NOT_EXISTED(1010, "User not existed",HttpStatus.NOT_FOUND),
-//   Create user errors
+    USER_NOT_EXISTED(1010, "User not existed", HttpStatus.NOT_FOUND),
+    // Create user errors
     EMAIL_INVALID(1006, "EMAIL_INVALID", HttpStatus.BAD_REQUEST),
     EMAIL_REQUIRED(1009, "EMAIL_REQUIRED", HttpStatus.BAD_REQUEST),
     INVALID_PASSWORD(1007, "PASSWORD_INVALID", HttpStatus.BAD_REQUEST),
@@ -53,7 +51,8 @@ public enum ErrorCode {
     // File errors
     FILE_UPLOAD_FAILED(7001, "Failed to upload file", HttpStatus.INTERNAL_SERVER_ERROR),
     FILE_DELETE_FAILED(7002, "Failed to delete file", HttpStatus.INTERNAL_SERVER_ERROR),
-    MAX_UPLOAD_SIZE_EXCEEDED(7003, "File size exceeds the maximum allowed limit (10MB per file)", HttpStatus.BAD_REQUEST),
+    MAX_UPLOAD_SIZE_EXCEEDED(7003, "File size exceeds the maximum allowed limit (10MB per file)",
+            HttpStatus.BAD_REQUEST),
 
     // Cart errors
     CART_NOT_FOUND(8001, "Cart not found", HttpStatus.NOT_FOUND),
@@ -65,7 +64,7 @@ public enum ErrorCode {
     ORDER_NOT_FOUND(9001, "Order not found", HttpStatus.NOT_FOUND),
     EMPTY_CART(9002, "Cart is empty, cannot place order", HttpStatus.BAD_REQUEST),
     INSUFFICIENT_STOCK(9003, "Insufficient stock for variant", HttpStatus.BAD_REQUEST),
-
+    ORDER_ALREADY_PAID(9004, "Order is already fully paid", HttpStatus.BAD_REQUEST),
 
     ;
 

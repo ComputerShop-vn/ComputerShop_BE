@@ -24,7 +24,7 @@ public class Blog {
     @Column(nullable = false)
     private String title;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "NVARCHAR(MAX)")
     private String content;
 
     @Column(name = "published_at")

@@ -8,5 +8,5 @@ import java.util.List;
 
 @Repository
 public interface OrderPaymentScheduleRepository extends JpaRepository<OrderPaymentSchedule, Integer> {
-    List<OrderPaymentSchedule> findByOrderOrderId(int orderId);
+    List<OrderPaymentSchedule> findByOrderOrderIdOrderByInstallmentNoAsc(int orderId);
 }

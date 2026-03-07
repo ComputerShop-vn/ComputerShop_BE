@@ -1,0 +1,605 @@
+[INFO] Scanning for projects...
+Downloading from central: https://repo.maven.apache.org/maven2/org/cyclonedx/maven-metadata.xml
+Downloading from central: https://repo.maven.apache.org/maven2/org/springframework/boot/maven-metadata.xml
+Downloading from central: https://repo.maven.apache.org/maven2/io/github/git-commit-id/maven-metadata.xml
+Downloading from central: https://repo.maven.apache.org/maven2/org/flywaydb/maven-metadata.xml
+Progress (1): 249 B
+Progress (2): 249 B | 234 B
+Progress (3): 249 B | 234 B | 255 B
+Progress (4): 249 B | 234 B | 255 B | 243 B
+                                           
+Downloaded from central: https://repo.maven.apache.org/maven2/org/springframework/boot/maven-metadata.xml (249 B at 427 B/s)
+Downloaded from central: https://repo.maven.apache.org/maven2/org/cyclonedx/maven-metadata.xml (243 B at 416 B/s)
+Downloaded from central: https://repo.maven.apache.org/maven2/org/flywaydb/maven-metadata.xml (234 B at 401 B/s)
+Downloaded from central: https://repo.maven.apache.org/maven2/io/github/git-commit-id/maven-metadata.xml (255 B at 436 B/s)
+Downloading from central: https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/maven-metadata.xml
+Downloading from central: https://repo.maven.apache.org/maven2/org/jooq/maven-metadata.xml
+Downloading from central: https://repo.maven.apache.org/maven2/org/liquibase/maven-metadata.xml
+Downloading from central: https://repo.maven.apache.org/maven2/org/graalvm/buildtools/maven-metadata.xml
+Progress (1): 375 B
+                   
+Downloaded from central: https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/maven-metadata.xml (375 B at 5.3 kB/s)
+Downloading from central: https://repo.maven.apache.org/maven2/org/apache/maven/plugins/maven-metadata.xml
+Progress (1): 398 B
+Progress (2): 398 B | 242 B
+Progress (3): 398 B | 242 B | 243 B
+                                   
+Downloaded from central: https://repo.maven.apache.org/maven2/org/jooq/maven-metadata.xml (398 B at 4.7 kB/s)
+Downloaded from central: https://repo.maven.apache.org/maven2/org/liquibase/maven-metadata.xml (243 B at 2.9 kB/s)
+Downloading from central: https://repo.maven.apache.org/maven2/org/codehaus/mojo/maven-metadata.xml
+Downloaded from central: https://repo.maven.apache.org/maven2/org/graalvm/buildtools/maven-metadata.xml (242 B at 2.7 kB/s)
+Progress (1): 4.6 kB
+Progress (1): 9.7 kB
+Progress (1): 14 kB 
+                   
+Downloaded from central: https://repo.maven.apache.org/maven2/org/apache/maven/plugins/maven-metadata.xml (14 kB at 179 kB/s)
+Progress (1): 3.1 kB
+Progress (1): 7.7 kB
+Progress (1): 12 kB 
+Progress (1): 17 kB
+Progress (1): 20 kB
+Progress (1): 21 kB
+                   
+Downloaded from central: https://repo.maven.apache.org/maven2/org/codehaus/mojo/maven-metadata.xml (21 kB at 131 kB/s)
+[INFO] 
+[INFO] --------------< sp26.group3.computer:SBA301_ComputerShop >--------------
+[INFO] Building SBA301_ComputerShop 0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] >>> spring-boot:3.5.6:run (default-cli) > test-compile @ SBA301_ComputerShop >>>
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ SBA301_ComputerShop ---
+[INFO] Copying 3 resources from src\main\resources to target\classes
+[INFO] Copying 0 resource from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.11.0:compile (default-compile) @ SBA301_ComputerShop ---
+[INFO] Nothing to compile - all classes are up to date
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ SBA301_ComputerShop ---
+[INFO] skip non existing resourceDirectory E:\Workspace\SBA\ComputerShop_BE\src\test\resources
+[INFO] 
+[INFO] --- compiler:3.11.0:testCompile (default-testCompile) @ SBA301_ComputerShop ---
+[INFO] Nothing to compile - all classes are up to date
+[INFO] 
+[INFO] <<< spring-boot:3.5.6:run (default-cli) < test-compile @ SBA301_ComputerShop <<<
+[INFO] 
+[INFO] 
+[INFO] --- spring-boot:3.5.6:run (default-cli) @ SBA301_ComputerShop ---
+[INFO] Attaching agents: []
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.5.6)
+
+2026-03-05T10:18:04.401+07:00  INFO 17688 --- [SBA301_ComputerShop] [           main] s.g.c.s.Sba301ComputerShopApplication    : Starting Sba301ComputerShopApplication using Java 21.0.5 with PID 17688 (E:\Workspace\SBA\ComputerShop_BE\target\classes started by Acer in E:\Workspace\SBA\ComputerShop_BE)
+2026-03-05T10:18:04.402+07:00  INFO 17688 --- [SBA301_ComputerShop] [           main] s.g.c.s.Sba301ComputerShopApplication    : The following 1 profile is active: "local"
+2026-03-05T10:18:05.156+07:00  INFO 17688 --- [SBA301_ComputerShop] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-03-05T10:18:05.246+07:00  INFO 17688 --- [SBA301_ComputerShop] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 83 ms. Found 24 JPA repository interfaces.
+2026-03-05T10:18:05.734+07:00  INFO 17688 --- [SBA301_ComputerShop] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+2026-03-05T10:18:05.750+07:00  INFO 17688 --- [SBA301_ComputerShop] [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-03-05T10:18:05.750+07:00  INFO 17688 --- [SBA301_ComputerShop] [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.46]
+2026-03-05T10:18:05.812+07:00  INFO 17688 --- [SBA301_ComputerShop] [           main] o.a.c.c.C.[.[localhost].[/api/v1]        : Initializing Spring embedded WebApplicationContext
+2026-03-05T10:18:05.813+07:00  INFO 17688 --- [SBA301_ComputerShop] [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 1379 ms
+2026-03-05T10:18:06.001+07:00  INFO 17688 --- [SBA301_ComputerShop] [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-03-05T10:18:06.051+07:00  INFO 17688 --- [SBA301_ComputerShop] [           main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.6.29.Final
+2026-03-05T10:18:06.084+07:00  INFO 17688 --- [SBA301_ComputerShop] [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-03-05T10:18:06.318+07:00  INFO 17688 --- [SBA301_ComputerShop] [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-03-05T10:18:06.343+07:00  INFO 17688 --- [SBA301_ComputerShop] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-03-05T10:18:06.788+07:00  INFO 17688 --- [SBA301_ComputerShop] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection ConnectionID:1 ClientConnectionId: 3a98f891-9a55-4375-b28f-a30bd503aa31
+2026-03-05T10:18:06.788+07:00  INFO 17688 --- [SBA301_ComputerShop] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-03-05T10:18:06.976+07:00  WARN 17688 --- [SBA301_ComputerShop] [           main] org.hibernate.orm.deprecation            : HHH90000025: SQLServerDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2026-03-05T10:18:06.995+07:00  INFO 17688 --- [SBA301_ComputerShop] [           main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-1)']
+	Database driver: undefined/unknown
+	Database version: 17.0
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-03-05T10:18:07.937+07:00  INFO 17688 --- [SBA301_ComputerShop] [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+Hibernate: 
+    alter table blogs 
+       drop constraint if exists FKpg4damav6db6a6fh5peylcni5
+Hibernate: 
+    alter table cart_items 
+       drop constraint if exists FKpcttvuq4mxppo8sxggjtn5i2c
+Hibernate: 
+    alter table cart_items 
+       drop constraint if exists FK5yyw1o0dor9gmxfra1dqvn4qa
+Hibernate: 
+    alter table carts 
+       drop constraint if exists FKb5o626f86h46m4s7ms6ginnop
+Hibernate: 
+    alter table categories 
+       drop constraint if exists FK9il7y6fehxwunjeepq0n7g5rd
+Hibernate: 
+    alter table order_items 
+       drop constraint if exists FKbioxgbv59vetrxe0ejfubep1w
+Hibernate: 
+    alter table order_items 
+       drop constraint if exists FKn32uytqfm87ngkm3fpk90mdpo
+Hibernate: 
+    alter table order_payment_schedule 
+       drop constraint if exists FK50e51fcia4ghsm47laaxv4l7l
+Hibernate: 
+    alter table orders 
+       drop constraint if exists FK1y9f6qn50v7de652f4inxpg4i
+Hibernate: 
+    alter table orders 
+       drop constraint if exists FK32ql8ubntj5uh44ph9659tiih
+Hibernate: 
+    alter table pc_build 
+       drop constraint if exists FKqcwxmfvv8v7a60vgtt1bkd9qd
+Hibernate: 
+    alter table pc_build_item 
+       drop constraint if exists FK33ywdufdi905s9s3qgtampnde
+Hibernate: 
+    alter table pc_build_item 
+       drop constraint if exists FKlw2bjof5y2qlv2l44ro7pl3ro
+Hibernate: 
+    alter table product_images 
+       drop constraint if exists FKqnq71xsohugpqwf3c9gxmsuy
+Hibernate: 
+    alter table product_items 
+       drop constraint if exists FK3gegsnjqr0sr3ipk5vu75t21r
+Hibernate: 
+    alter table product_items 
+       drop constraint if exists FKa0mb5u488bvadlhq544p3u36g
+Hibernate: 
+    alter table product_variant_attributes 
+       drop constraint if exists FKg7pjdef3bfwe1dbec1r98q562
+Hibernate: 
+    alter table product_variant_attributes 
+       drop constraint if exists FKjcp7i8t08la8masfe513eisnv
+Hibernate: 
+    alter table product_variants 
+       drop constraint if exists FKosqitn4s405cynmhb87lkvuau
+Hibernate: 
+    alter table products 
+       drop constraint if exists FKa3a4mpsfdf4d2y6r8ra3sc8mv
+Hibernate: 
+    alter table products 
+       drop constraint if exists FKog2rp4qthbtt2lfyhfo32lsw9
+Hibernate: 
+    alter table promotion_product 
+       drop constraint if exists FK3iocefx29d2sk89s2th7xfg4j
+Hibernate: 
+    alter table promotion_product 
+       drop constraint if exists FK3oyj7em0cwqst2vf9i68k3bu4
+Hibernate: 
+    alter table reviews 
+       drop constraint if exists FKpl51cejpw4gy5swfar8br9ngi
+Hibernate: 
+    alter table reviews 
+       drop constraint if exists FKcgy7qjc1r99dp117y9en6lxye
+Hibernate: 
+    alter table users 
+       drop constraint if exists FKp56c1712k691lhsyewcssf40f
+Hibernate: 
+    alter table warranty_claim 
+       drop constraint if exists FK5v8ni2nhqaewslt685kjw97rr
+Hibernate: 
+    drop table if exists attributes
+Hibernate: 
+    drop table if exists blogs
+Hibernate: 
+    drop table if exists brands
+Hibernate: 
+    drop table if exists cart_items
+Hibernate: 
+    drop table if exists carts
+Hibernate: 
+    drop table if exists categories
+Hibernate: 
+    drop table if exists installment_package
+Hibernate: 
+    drop table if exists invalidated_token
+Hibernate: 
+    drop table if exists order_items
+Hibernate: 
+    drop table if exists order_payment_schedule
+Hibernate: 
+    drop table if exists orders
+Hibernate: 
+    drop table if exists pc_build
+Hibernate: 
+    drop table if exists pc_build_item
+Hibernate: 
+    drop table if exists product_images
+Hibernate: 
+    drop table if exists product_items
+Hibernate: 
+    drop table if exists product_variant_attributes
+Hibernate: 
+    drop table if exists product_variants
+Hibernate: 
+    drop table if exists products
+Hibernate: 
+    drop table if exists promotion_product
+Hibernate: 
+    drop table if exists promotions
+Hibernate: 
+    drop table if exists reviews
+Hibernate: 
+    drop table if exists roles
+Hibernate: 
+    drop table if exists users
+Hibernate: 
+    drop table if exists warranty_claim
+Hibernate: 
+    create table attributes (
+        attribute_id int identity not null,
+        attribute_name varchar(255) not null,
+        primary key (attribute_id)
+    )
+Hibernate: 
+    create table blogs (
+        blog_id int identity not null,
+        user_id int not null,
+        published_at datetime2(6),
+        content TEXT,
+        title varchar(255) not null,
+        primary key (blog_id)
+    )
+Hibernate: 
+    create table brands (
+        brand_id int identity not null,
+        brand_name varchar(255) not null,
+        logo_url varchar(255),
+        primary key (brand_id)
+    )
+Hibernate: 
+    create table cart_items (
+        cart_id int not null,
+        cart_item_id int identity not null,
+        quantity int not null,
+        variant_id int not null,
+        primary key (cart_item_id)
+    )
+Hibernate: 
+    create table carts (
+        cart_id int identity not null,
+        user_id int not null,
+        created_at datetime2(6),
+        primary key (cart_id)
+    )
+Hibernate: 
+    create table categories (
+        category_id int identity not null,
+        parent_category_id int,
+        category_name varchar(255) not null,
+        primary key (category_id)
+    )
+Hibernate: 
+    create table installment_package (
+        duration_months int not null,
+        interest_rate float(53),
+        is_active bit,
+        min_order_amount float(53),
+        package_id int identity not null,
+        name varchar(255) not null,
+        primary key (package_id)
+    )
+Hibernate: 
+    create table invalidated_token (
+        expiry_time datetime2(6),
+        id varchar(255) not null,
+        primary key (id)
+    )
+Hibernate: 
+    create table order_items (
+        item_id int not null,
+        order_id int not null,
+        order_item_id int identity not null,
+        quantity int not null,
+        unit_price float(53),
+        recipient_name varchar(255),
+        recipient_phone varchar(255),
+        shipping_address varchar(255),
+        primary key (order_item_id)
+    )
+Hibernate: 
+    create table order_payment_schedule (
+        amount float(53) not null,
+        due_date date not null,
+        installment_no int not null,
+        order_id int not null,
+        paid_date date,
+        payment_schedule_id int identity not null,
+        status varchar(255) not null check (status in ('PENDING','PAID','OVERDUE')),
+        vnp_transaction_no varchar(255),
+        primary key (payment_schedule_id)
+    )
+Hibernate: 
+    create table orders (
+        installment_package_id int,
+        order_id int identity not null,
+        total_amount float(53),
+        user_id int not null,
+        order_date datetime2(6),
+        payment_type varchar(255) check (payment_type in ('FULL','INSTALLMENT','COD')),
+        status varchar(255) check (status in ('PENDING','CONFIRMED','DELIVERED','COMPLETED','CANCELLED','PAID','FAILED')),
+        primary key (order_id)
+    )
+Hibernate: 
+    create table pc_build (
+        build_id int identity not null,
+        total_price float(53),
+        user_id int not null,
+        created_at datetime2(6),
+        build_name varchar(255),
+        status varchar(255) check (status in ('DRAFT','SAVED','ORDERED')),
+        primary key (build_id)
+    )
+Hibernate: 
+    create table pc_build_item (
+        build_id int not null,
+        build_item_id int identity not null,
+        product_id int not null,
+        quantity int not null,
+        primary key (build_item_id)
+    )
+Hibernate: 
+    create table product_images (
+        image_id int identity not null,
+        is_thumbnail bit,
+        product_id int not null,
+        image_url varchar(255) not null,
+        primary key (image_id)
+    )
+Hibernate: 
+    create table product_items (
+        item_id int identity not null,
+        product_id int,
+        variant_id int,
+        serial_number varchar(255) not null,
+        primary key (item_id)
+    )
+Hibernate: 
+    create table product_variant_attributes (
+        attribute_id int not null,
+        variant_attr_id int identity not null,
+        variant_id int not null,
+        value varchar(255) not null,
+        primary key (variant_attr_id)
+    )
+Hibernate: 
+    create table product_variants (
+        price float(53) not null,
+        product_id int not null,
+        stock_quantity int,
+        variant_id int identity not null,
+        sku varchar(255) not null,
+        variant_name varchar(255),
+        primary key (variant_id)
+    )
+Hibernate: 
+    create table products (
+        base_price float(53),
+        brand_id int not null,
+        category_id int not null,
+        product_id int identity not null,
+        description TEXT,
+        name varchar(255) not null,
+        primary key (product_id)
+    )
+Hibernate: 
+    create table promotion_product (
+        product_id int not null,
+        promo_prod_id int identity not null,
+        promotion_id int not null,
+        primary key (promo_prod_id)
+    )
+Hibernate: 
+    create table promotions (
+        discount_percent int not null,
+        end_date date,
+        promotion_id int identity not null,
+        start_date date,
+        promo_code varchar(255) not null,
+        primary key (promotion_id)
+    )
+Hibernate: 
+    create table reviews (
+        product_id int not null,
+        rating int not null,
+        review_id int identity not null,
+        user_id int not null,
+        created_at datetime2(6),
+        comment varchar(255),
+        primary key (review_id)
+    )
+Hibernate: 
+    create table roles (
+        role_id int identity not null,
+        name varchar(255) not null,
+        primary key (role_id)
+    )
+Hibernate: 
+    create table users (
+        role_id int not null,
+        user_id int identity not null,
+        created_at datetime2(6),
+        email varchar(255) not null,
+        password_hash varchar(255) not null,
+        phone_number varchar(255),
+        status varchar(255),
+        username varchar(255) not null,
+        primary key (user_id)
+    )
+Hibernate: 
+    create table warranty_claim (
+        claim_date date,
+        claim_id int identity not null,
+        order_item_id int not null,
+        reason varchar(255),
+        status varchar(255),
+        primary key (claim_id)
+    )
+Hibernate: 
+    alter table carts 
+       add constraint UK64t7ox312pqal3p7fg9o503c2 unique (user_id)
+Hibernate: 
+    alter table product_items 
+       add constraint UKk7xxo6f1qqrlrbyb083w8yh3g unique (serial_number)
+Hibernate: 
+    alter table product_variants 
+       add constraint UKq935p2d1pbjm39n0063ghnfgn unique (sku)
+Hibernate: 
+    alter table promotions 
+       add constraint UKlb6axxr9obo82kwyavxvj917y unique (promo_code)
+Hibernate: 
+    alter table roles 
+       add constraint UKofx66keruapi6vyqpv6f2or37 unique (name)
+Hibernate: 
+    alter table users 
+       add constraint UK6dotkott2kjsp8vw4d0m25fb7 unique (email)
+Hibernate: 
+    alter table users 
+       add constraint UKr43af9ap4edm43mmtq01oddj6 unique (username)
+Hibernate: 
+    alter table blogs 
+       add constraint FKpg4damav6db6a6fh5peylcni5 
+       foreign key (user_id) 
+       references users
+Hibernate: 
+    alter table cart_items 
+       add constraint FKpcttvuq4mxppo8sxggjtn5i2c 
+       foreign key (cart_id) 
+       references carts
+Hibernate: 
+    alter table cart_items 
+       add constraint FK5yyw1o0dor9gmxfra1dqvn4qa 
+       foreign key (variant_id) 
+       references product_variants
+Hibernate: 
+    alter table carts 
+       add constraint FKb5o626f86h46m4s7ms6ginnop 
+       foreign key (user_id) 
+       references users
+Hibernate: 
+    alter table categories 
+       add constraint FK9il7y6fehxwunjeepq0n7g5rd 
+       foreign key (parent_category_id) 
+       references categories
+Hibernate: 
+    alter table order_items 
+       add constraint FKbioxgbv59vetrxe0ejfubep1w 
+       foreign key (order_id) 
+       references orders
+Hibernate: 
+    alter table order_items 
+       add constraint FKn32uytqfm87ngkm3fpk90mdpo 
+       foreign key (item_id) 
+       references product_items
+Hibernate: 
+    alter table order_payment_schedule 
+       add constraint FK50e51fcia4ghsm47laaxv4l7l 
+       foreign key (order_id) 
+       references orders
+Hibernate: 
+    alter table orders 
+       add constraint FK1y9f6qn50v7de652f4inxpg4i 
+       foreign key (installment_package_id) 
+       references installment_package
+Hibernate: 
+    alter table orders 
+       add constraint FK32ql8ubntj5uh44ph9659tiih 
+       foreign key (user_id) 
+       references users
+Hibernate: 
+    alter table pc_build 
+       add constraint FKqcwxmfvv8v7a60vgtt1bkd9qd 
+       foreign key (user_id) 
+       references users
+Hibernate: 
+    alter table pc_build_item 
+       add constraint FK33ywdufdi905s9s3qgtampnde 
+       foreign key (build_id) 
+       references pc_build
+Hibernate: 
+    alter table pc_build_item 
+       add constraint FKlw2bjof5y2qlv2l44ro7pl3ro 
+       foreign key (product_id) 
+       references products
+Hibernate: 
+    alter table product_images 
+       add constraint FKqnq71xsohugpqwf3c9gxmsuy 
+       foreign key (product_id) 
+       references products
+Hibernate: 
+    alter table product_items 
+       add constraint FK3gegsnjqr0sr3ipk5vu75t21r 
+       foreign key (product_id) 
+       references products
+Hibernate: 
+    alter table product_items 
+       add constraint FKa0mb5u488bvadlhq544p3u36g 
+       foreign key (variant_id) 
+       references product_variants
+Hibernate: 
+    alter table product_variant_attributes 
+       add constraint FKg7pjdef3bfwe1dbec1r98q562 
+       foreign key (attribute_id) 
+       references attributes
+Hibernate: 
+    alter table product_variant_attributes 
+       add constraint FKjcp7i8t08la8masfe513eisnv 
+       foreign key (variant_id) 
+       references product_variants
+Hibernate: 
+    alter table product_variants 
+       add constraint FKosqitn4s405cynmhb87lkvuau 
+       foreign key (product_id) 
+       references products
+Hibernate: 
+    alter table products 
+       add constraint FKa3a4mpsfdf4d2y6r8ra3sc8mv 
+       foreign key (brand_id) 
+       references brands
+Hibernate: 
+    alter table products 
+       add constraint FKog2rp4qthbtt2lfyhfo32lsw9 
+       foreign key (category_id) 
+       references categories
+Hibernate: 
+    alter table promotion_product 
+       add constraint FK3iocefx29d2sk89s2th7xfg4j 
+       foreign key (product_id) 
+       references products
+Hibernate: 
+    alter table promotion_product 
+       add constraint FK3oyj7em0cwqst2vf9i68k3bu4 
+       foreign key (promotion_id) 
+       references promotions
+Hibernate: 
+    alter table reviews 
+       add constraint FKpl51cejpw4gy5swfar8br9ngi 
+       foreign key (product_id) 
+       references products
+Hibernate: 
+    alter table reviews 
+       add constraint FKcgy7qjc1r99dp117y9en6lxye 
+       foreign key (user_id) 
+       references users
+Hibernate: 
+    alter table users 
+       add constraint FKp56c1712k691lhsyewcssf40f 
+       foreign key (role_id) 
+       references roles
+Hibernate: 
+    alter table warranty_claim 
+       add constraint FK5v8ni2nhqaewslt685kjw97rr 
+       foreign key (order_item_id) 
+       references order_items
+2026-03-05T10:18:08.234+07:00  INFO 17688 --- [SBA301_ComputerShop] [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-03-05T10:18:08.654+07:00  INFO 17688 --- [SBA301_ComputerShop] [           main] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-03-05T10:18:09.649+07:00  WARN 17688 --- [SBA301_ComputerShop] [           main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-03-05T10:18:10.351+07:00  INFO 17688 --- [SBA301_ComputerShop] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/api/v1'
+2026-03-05T10:18:10.357+07:00  INFO 17688 --- [SBA301_ComputerShop] [           main] s.g.c.s.Sba301ComputerShopApplication    : Started Sba301ComputerShopApplication in 6.416 seconds (process running for 6.735)

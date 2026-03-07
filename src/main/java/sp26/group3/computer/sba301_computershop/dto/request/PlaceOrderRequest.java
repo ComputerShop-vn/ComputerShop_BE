@@ -26,7 +26,5 @@ public class PlaceOrderRequest {
     PaymentType paymentType;
 
     // Only required for INSTALLMENT
-    String providerName;
-    Integer durationMonths;
-    Double interestRate;
+    Integer packageId;
 }

@@ -28,12 +28,13 @@ public class OrderController {
     @PostMapping
     @PreAuthorize("hasAnyRole('MEMBER','STAFF','ADMIN')")
     public ApiResponse<OrderResponse> placeOrder(
-            @RequestBody @Valid PlaceOrderRequest request) {
+            @RequestBody @Valid PlaceOrderRequest request,
+            jakarta.servlet.http.HttpServletRequest servletRequest) {
 
         log.info("[POST] /orders - Place order | paymentType={}", request.getPaymentType());
 
         ApiResponse<OrderResponse> apiResponse = new ApiResponse<>();
-        apiResponse.setResult(orderService.placeOrder(request));
+        apiResponse.setResult(orderService.placeOrder(request, servletRequest));
 
         log.info("[POST] /orders - SUCCESS | orderId={}", apiResponse.getResult().getOrderId());
         return apiResponse;
