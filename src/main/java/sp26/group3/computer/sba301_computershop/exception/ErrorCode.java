@@ -59,6 +59,7 @@ public enum ErrorCode {
     CART_ITEM_NOT_FOUND(8002, "Cart item not found", HttpStatus.NOT_FOUND),
     CART_ITEM_ALREADY_EXISTS(8003, "Variant already exists in cart", HttpStatus.BAD_REQUEST),
     INVALID_QUANTITY(8004, "Quantity must be greater than 0", HttpStatus.BAD_REQUEST),
+    PRODUCT_OUT_OF_STOCK(8005, "Product is out of stock", HttpStatus.BAD_REQUEST),
 
     // Order errors
     ORDER_NOT_FOUND(9001, "Order not found", HttpStatus.NOT_FOUND),
