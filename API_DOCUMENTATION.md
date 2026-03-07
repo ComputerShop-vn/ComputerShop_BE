@@ -445,19 +445,11 @@
           "price": 12000000.0,
           "stockQuantity": 10,
           "variantName": "RAM 8GB - SSD 256GB",
-<<<<<<< HEAD
           "attributes": [
             { "attributeId": 1, "attributeName": "RAM", "value": "8GB" },
             { "attributeId": 2, "attributeName": "SSD", "value": "256GB" },
             { "attributeId": 3, "attributeName": "Color", "value": "Silver" }
           ]
-=======
-          "attributes": {
-            "RAM": "8GB",
-            "SSD": "256GB",
-            "Color": "Silver"
-          }
->>>>>>> b4048d24dbad407ef797b29bf6c63520128ac07a
         }
       ]
     }
@@ -676,10 +668,7 @@ fetch("/api/v1/products", {
 | `description` | null = không thay đổi |
 | `categoryId` | null = không thay đổi; có value → validate tồn tại |
 | `brandId` | null = không thay đổi; có value → validate tồn tại |
-<<<<<<< HEAD
 | `variants` | null / omit = **giữ nguyên** variants hiện có; truyền mảng → xử lý theo logic variants |
-=======
->>>>>>> b4048d24dbad407ef797b29bf6c63520128ac07a
 
 **Behaviour `images` khi UPDATE:**
 
@@ -692,12 +681,8 @@ fetch("/api/v1/products", {
 
 ### ⚠️ Behaviour `variants` khi UPDATE (quan trọng nhất)
 
-<<<<<<< HEAD
 > **Logic cốt lõi:** Nếu `variants` **không được truyền (null / omit)** → giữ nguyên toàn bộ variants hiện tại, không thay đổi gì.  
 > Nếu `variants` **được truyền** (kể cả mảng rỗng `[]`) → danh sách gửi lên là **trạng thái sau cùng** mong muốn.
-=======
-> **Logic cốt lõi:** Danh sách variants gửi lên chính là **trạng thái sau cùng** mong muốn cho sản phẩm.
->>>>>>> b4048d24dbad407ef797b29bf6c63520128ac07a
 
 **Phân loại item trong `variants`:**
 - Item có `variantId` → **cập nhật** variant có ID đó
@@ -707,23 +692,14 @@ fetch("/api/v1/products", {
 
 ---
 
-<<<<<<< HEAD
 **Case 1 — `variants: null` hoặc omit hoàn toàn field `variants`**
-=======
-**Case 1 — `variants: null` (hoặc omit hoàn toàn field `variants`)**
->>>>>>> b4048d24dbad407ef797b29bf6c63520128ac07a
 ```json
 {
   "name": "Tên mới"
 }
 ```
-<<<<<<< HEAD
 > **Kết quả: GIỮ NGUYÊN toàn bộ variants** hiện có của sản phẩm.  
 > Dùng khi chỉ muốn sửa thông tin cơ bản (name, description, category, brand) mà không động đến variants.
-=======
-> **Kết quả: XOÁ TOÀN BỘ variants** hiện có của sản phẩm.  
-> Code xử lý: `null` → `List.of()` → không có `variantId` nào → xoá tất cả.
->>>>>>> b4048d24dbad407ef797b29bf6c63520128ac07a
 
 ---
 
@@ -734,17 +710,12 @@ fetch("/api/v1/products", {
   "variants": []
 }
 ```
-<<<<<<< HEAD
 > **Kết quả: XOÁ TOÀN BỘ variants** (truyền tường minh mảng rỗng).
-=======
-> **Kết quả: XOÁ TOÀN BỘ variants** (tương tự null).
->>>>>>> b4048d24dbad407ef797b29bf6c63520128ac07a
 
 ---
 
 **Case 3 — Giữ nguyên tất cả, chỉ update info sản phẩm**
 
-<<<<<<< HEAD
 Cách đơn giản nhất: **không truyền field `variants`**:
 ```json
 {
@@ -754,9 +725,6 @@ Cách đơn giản nhất: **không truyền field `variants`**:
 > Tất cả variants giữ nguyên.
 
 Hoặc truyền lại tất cả `variantId` hiện có:
-=======
-Cần truyền lại tất cả `variantId` hiện có:
->>>>>>> b4048d24dbad407ef797b29bf6c63520128ac07a
 ```json
 {
   "name": "Tên mới",
@@ -1369,9 +1337,7 @@ formData.append("logo", logoFile);       // optional
   "recipientPhone": "0901234567",
   "shippingAddress": "123 Đường ABC, Q1, TP.HCM",
   "paymentType": "INSTALLMENT",
-  "providerName": "Home Credit",
-  "durationMonths": 12,
-  "interestRate": 1.5
+  "packageId": 2
 }
 ```
 
@@ -1381,9 +1347,12 @@ formData.append("logo", logoFile);       // optional
 | `recipientPhone` | ✅ | — | Không được rỗng |
 | `shippingAddress` | ✅ | — | Không được rỗng |
 | `paymentType` | ✅ | — | `"FULL"` hoặc `"INSTALLMENT"` |
-| `providerName` | ❌ | null | Chỉ dùng khi INSTALLMENT |
-| `durationMonths` | ❌ | `12` | Chỉ dùng khi INSTALLMENT; null → mặc định 12 |
-| `interestRate` | ❌ | `0.0` | Chỉ dùng khi INSTALLMENT; null → mặc định 0.0 (%) |
+| `packageId` | ❌ | null | **Bắt buộc khi `paymentType = "INSTALLMENT"`**. Lấy từ `GET /installment-packages/active` |
+
+**Validation khi chọn INSTALLMENT:**
+- `packageId` phải tồn tại và `isActive = true`
+- Tổng tiền đơn hàng phải >= `minOrderAmount` của gói trả góp
+- Nếu vi phạm → lỗi 400 hoặc lỗi custom (tuỳ implementation)
 
 **Response:**
 ```json
@@ -1396,7 +1365,16 @@ formData.append("logo", logoFile);       // optional
     "username": "nguyenvana",
     "totalAmount": 24000000.0,
     "status": "PENDING",
+    "paymentType": "INSTALLMENT",
     "orderDate": "2026-03-04T10:30:00",
+    "installmentPackage": {
+      "packageId": 2,
+      "name": "Trả góp 6 tháng - Lãi suất 0%",
+      "durationMonths": 6,
+      "interestRate": 1.0,
+      "minOrderAmount": 5000000.0,
+      "isActive": true
+    },
     "items": [
       {
         "orderItemId": 21,
@@ -1415,18 +1393,59 @@ formData.append("logo", logoFile);       // optional
         "serialNumber": "DELL-INS-8GB-256-A1B2C3D4"
       }
     ],
-    "payments": [
+    "paymentSchedule": [
       {
         "paymentScheduleId": 1,
-        "paymentType": "FULL",
-        "providerName": null,
-        "durationMonths": 0,
-        "interestRate": 0.0,
-        "totalAmount": 24000000.0,
         "installmentNo": 1,
-        "amount": 24000000.0,
-        "dueDate": "2026-03-11",
+        "amount": 4040000.0,
+        "dueDate": "2026-04-04",
         "paidDate": null,
+        "vnpTransactionNo": null,
+        "status": "PENDING"
+      },
+      {
+        "paymentScheduleId": 2,
+        "installmentNo": 2,
+        "amount": 4040000.0,
+        "dueDate": "2026-05-04",
+        "paidDate": null,
+        "vnpTransactionNo": null,
+        "status": "PENDING"
+      },
+      {
+        "paymentScheduleId": 3,
+        "installmentNo": 3,
+        "amount": 4040000.0,
+        "dueDate": "2026-06-04",
+        "paidDate": null,
+        "vnpTransactionNo": null,
+        "status": "PENDING"
+      },
+      {
+        "paymentScheduleId": 4,
+        "installmentNo": 4,
+        "amount": 4040000.0,
+        "dueDate": "2026-07-04",
+        "paidDate": null,
+        "vnpTransactionNo": null,
+        "status": "PENDING"
+      },
+      {
+        "paymentScheduleId": 5,
+        "installmentNo": 5,
+        "amount": 4040000.0,
+        "dueDate": "2026-08-04",
+        "paidDate": null,
+        "vnpTransactionNo": null,
+        "status": "PENDING"
+      },
+      {
+        "paymentScheduleId": 6,
+        "installmentNo": 6,
+        "amount": 4040000.0,
+        "dueDate": "2026-09-04",
+        "paidDate": null,
+        "vnpTransactionNo": null,
         "status": "PENDING"
       }
     ]
@@ -1435,9 +1454,16 @@ formData.append("logo", logoFile);       // optional
 ```
 
 **Công thức tính INSTALLMENT:**
+- Lấy thông tin gói: `durationMonths`, `interestRate` từ bảng `installment_package`
 - `totalWithInterest = totalAmount × (1 + interestRate / 100)`
-- `monthlyAmount = totalWithInterest / durationMonths`
+- `monthlyAmount = totalWithInterest / durationMonths` (làm tròn nếu cần)
 - `dueDate` kỳ thứ i = `today + i tháng`
+
+**Ví dụ tính toán:**
+- Tổng tiền: 24,000,000 VNĐ
+- Gói: 6 tháng, lãi suất 1%
+- Tổng có lãi: 24,000,000 × 1.01 = 24,240,000 VNĐ
+- Mỗi kỳ: 24,240,000 / 6 = 4,040,000 VNĐ
 
 **Số payment records theo loại:**
 
@@ -1448,12 +1474,13 @@ formData.append("logo", logoFile);       // optional
 
 **Flow sau khi đặt hàng:**
 1. Validate stock cho TẤT CẢ items trước khi tạo bất kỳ thứ gì
-2. Tạo Order
-3. Giảm stock của từng variant (`stockQuantity -= quantity`)
-4. Tạo `ProductItem` với `serialNumber = "{sku}-{8 ký tự đầu UUID}"`
-5. Tạo `OrderItem` cho từng sản phẩm
-6. Tạo payment schedule
-7. **Xoá toàn bộ giỏ hàng**
+2. Nếu INSTALLMENT: validate `packageId` hợp lệ và `totalAmount >= minOrderAmount`
+3. Tạo Order (lưu `payment_type` và `installment_package_id`)
+4. Giảm stock của từng variant (`stockQuantity -= quantity`)
+5. Tạo `ProductItem` với `serialNumber = "{sku}-{8 ký tự đầu UUID}"`
+6. Tạo `OrderItem` cho từng sản phẩm
+7. Tạo payment schedule (1 kỳ nếu FULL, N kỳ nếu INSTALLMENT)
+8. **Xoá toàn bộ giỏ hàng**
 
 | Case | Code |
 |------|------|
@@ -1463,6 +1490,9 @@ formData.append("logo", logoFile);       // optional
 | ❌ Bất kỳ item nào không đủ stock | 9003 "Insufficient stock for variant" (không tạo order) |
 | ❌ `paymentType` null | 400 validation |
 | ❌ Thiếu recipientName/Phone/Address | 400 validation |
+| ❌ `paymentType = INSTALLMENT` nhưng thiếu `packageId` | 400 validation |
+| ❌ `packageId` không tồn tại hoặc `isActive = false` | 400 hoặc custom error |
+| ❌ `totalAmount < minOrderAmount` của gói trả góp | 400 hoặc custom error |
 
 ---
 
@@ -1617,7 +1647,146 @@ PENDING → PROCESSING → SHIPPING → DELIVERED
 
 ---
 
-# 10. 📝 Blogs — `/blogs`
+# 10. � Installment Packages — `/installment-packages`
+
+---
+
+## GET `/installment-packages/active`
+
+**Auth:** Public
+
+> Lấy danh sách **chỉ các gói trả góp đang hoạt động** (`isActive = true`).
+
+**Response:**
+```json
+{
+  "code": 1000,
+  "message": null,
+  "result": [
+    {
+      "packageId": 1,
+      "name": "Trả góp 3 tháng - Lãi suất 0%",
+      "durationMonths": 3,
+      "interestRate": 0.0,
+      "minOrderAmount": 3000000.0,
+      "isActive": true
+    },
+    {
+      "packageId": 2,
+      "name": "Trả góp 6 tháng - Lãi suất 0%",
+      "durationMonths": 6,
+      "interestRate": 1.0,
+      "minOrderAmount": 5000000.0,
+      "isActive": true
+    }
+  ]
+}
+```
+
+| Case | Kết quả |
+|------|---------|
+| ✅ Có gói active | Trả về list |
+| ✅ Không có gói active | `result: []` |
+
+---
+
+## GET `/installment-packages`
+
+**Auth:** Public
+
+> Lấy **tất cả** gói trả góp, bao gồm cả không hoạt động.
+
+**Response:** `List<InstallmentPackageResponse>` (giống `/active`).
+
+---
+
+## POST `/installment-packages`
+
+**Auth:** STAFF, ADMIN
+
+**Request:**
+```json
+{
+  "name": "Trả góp 18 tháng - Lãi suất 2%",
+  "durationMonths": 18,
+  "interestRate": 2.0,
+  "minOrderAmount": 15000000.0,
+  "isActive": true
+}
+```
+
+| Field | Bắt buộc | Validation |
+|-------|----------|-----------|
+| `name` | ✅ | Không được rỗng |
+| `durationMonths` | ✅ | Số nguyên dương |
+| `interestRate` | ✅ | Số thực >= 0 (%) |
+| `minOrderAmount` | ✅ | Số thực >= 0 |
+| `isActive` | ✅ | `true` hoặc `false` |
+
+| Case | Code |
+|------|------|
+| ✅ Thành công | 1000 |
+| ❌ Thiếu field bắt buộc | 400 |
+
+---
+
+## PUT `/installment-packages/{id}`
+
+**Auth:** STAFF, ADMIN
+
+**Request:**
+```json
+{
+  "name": "Trả góp 6 tháng - Lãi suất 0.5%",
+  "durationMonths": 6,
+  "interestRate": 0.5,
+  "minOrderAmount": 5000000.0,
+  "isActive": false
+}
+```
+
+| Field | Behaviour |
+|-------|-----------|
+| `name` | null = không thay đổi |
+| `durationMonths` | null = không thay đổi |
+| `interestRate` | null = không thay đổi |
+| `minOrderAmount` | null = không thay đổi |
+| `isActive` | null = không thay đổi |
+
+> **Partial update:** Mỗi field đều nullable. Gửi gì thì update nấy.
+
+| Case | Code |
+|------|------|
+| ✅ Thành công | 1000 |
+| ❌ Package không tồn tại | 404 (hoặc lỗi phù hợp, tuỳ implementation) |
+
+---
+
+## DELETE `/installment-packages/{id}`
+
+**Auth:** STAFF, ADMIN
+
+> Xoá hoàn toàn gói trả góp.
+
+**Response:**
+```json
+{
+  "code": 1000,
+  "message": "Installment package deleted successfully",
+  "result": null
+}
+```
+
+| Case | Code |
+|------|------|
+| ✅ Thành công | 1000 |
+| ❌ Không tồn tại | 404 |
+
+---
+
+---
+
+# 11. �📝 Blogs — `/blogs`
 
 ---
 
@@ -1737,7 +1906,7 @@ PENDING → PROCESSING → SHIPPING → DELIVERED
 
 ---
 
-# 11. 🎁 Promotions — `/promotions`
+# 12. 🎁 Promotions — `/promotions`
 
 ---
 
@@ -1932,7 +2101,7 @@ PENDING → PROCESSING → SHIPPING → DELIVERED
 
 ---
 
-# 12. 🛡️ Roles — `/roles`
+# 13. 🛡️ Roles — `/roles`
 
 > **Chỉ ADMIN** mới có quyền truy cập module này.
 
@@ -2062,7 +2231,6 @@ formData.append("logo", newLogoFile);
 ### 3. Product Update — Không làm mất variants ngoài ý muốn
 
 ```javascript
-<<<<<<< HEAD
 // Nếu chỉ muốn đổi tên, KHÔNG cần gửi variants — variants tự động giữ nguyên:
 const updateBody = {
   name: "Tên mới"
@@ -2073,16 +2241,6 @@ const updateBody = {
 const updateBody = {
   name: "Tên mới",
   variants: []  // tường minh → xoá hết variants
-=======
-// Trước khi update product, lấy danh sách variants hiện có:
-const product = await fetch(`/api/v1/products/${id}`).then(r => r.json());
-const existingVariantIds = product.result.variants.map(v => ({ variantId: v.variantId }));
-
-// Nếu chỉ muốn đổi tên, giữ nguyên tất cả variants:
-const updateBody = {
-  name: "Tên mới",
-  variants: existingVariantIds  // bắt buộc phải gửi lại, nếu không gửi → xoá hết
->>>>>>> b4048d24dbad407ef797b29bf6c63520128ac07a
 };
 ```
 
