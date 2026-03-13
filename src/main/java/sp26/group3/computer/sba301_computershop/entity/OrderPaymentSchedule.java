@@ -43,5 +43,5 @@ public class OrderPaymentSchedule {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
-    private PaymentStatus status; // PENDING, PAID, OVERDUE
+    private PaymentStatus status; // UNPAID, PAID, OVERDUE
 }

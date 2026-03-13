@@ -16,18 +16,20 @@ public class ProductResponse {
     private int productId;
     private String name;
     private String description;
-    
+
     private Double basePrice;
     private Double discountedPrice;
-    
+
     private int categoryId;
     private String categoryName;
-    
+
     private int brandId;
     private String brandName;
     private String brandLogoUrl;
 
     private String thumbnailUrl;
+
+    private int warrantyMonths;
 
     private List<ProductVariantResponse> variants;
 }
