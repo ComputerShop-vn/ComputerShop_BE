@@ -16,25 +16,27 @@ public class ProductDetailResponse {
     private int productId;
     private String name;
     private String description;
-    
+
     private Double basePrice;
     private Double discountedPrice;
-    
+
     private int categoryId;
     private String categoryName;
-    
+
     private int brandId;
     private String brandName;
     private String brandLogoUrl;
-    
+
     private List<String> imageUrls;
-    
+
     private Double averageRating;
     private Integer totalReviews;
-    
+
     private Boolean hasPromotion;
     private Double discountPercent;
     private String promoCode;
-    
+
+    private int warrantyMonths;
+
     private List<ProductVariantResponse> variants;
 }

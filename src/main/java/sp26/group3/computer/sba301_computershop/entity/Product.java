@@ -35,4 +35,7 @@ public class Product {
 
     @Column(columnDefinition = "NVARCHAR(MAX)")
     private String description;
+
+    @Column(name = "warranty_months")
+    private int warrantyMonths;
 }
