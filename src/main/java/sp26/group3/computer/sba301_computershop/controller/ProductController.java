@@ -20,6 +20,8 @@ import sp26.group3.computer.sba301_computershop.dto.response.ProductResponse;
 import sp26.group3.computer.sba301_computershop.service.ProductService;
 
 import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/products")
@@ -50,14 +52,34 @@ public class ProductController {
         return response;
     }
 
+    /**
+     * Lọc sản phẩm theo category, brand, giá, và attribute.
+     * Attribute filter formats:
+     *   attributes=Socket:AM5              → Socket = AM5 (exact, case-insensitive)
+     *   attributes=GPU Length:lte:400      → GPU Length ≤ 400 (numeric)
+     *   attributes=Wattage:gte:750         → Wattage ≥ 750 (numeric)
+     * Có thể dùng nhiều attributes cùng lúc: tất cả đều phải thỏa mãn trên cùng 1 variant.
+     */
     @GetMapping
     public ApiResponse<List<ProductResponse>> getAllProducts(
             @RequestParam(required = false) Integer categoryId,
             @RequestParam(required = false) Integer brandId,
             @RequestParam(required = false) Double minPrice,
-            @RequestParam(required = false) Double maxPrice
+            @RequestParam(required = false) Double maxPrice,
+            @RequestParam(required = false) List<String> attributes
     ) {
-        List<ProductResponse> result = productService.filterProducts(categoryId, brandId, minPrice, maxPrice);
+        // Parse "Socket:AM5" → {"Socket": "AM5"}
+        Map<String, String> attrMap = new LinkedHashMap<>();
+        if (attributes != null) {
+            for (String attr : attributes) {
+                int idx = attr.indexOf(':');
+                if (idx > 0) {
+                    attrMap.put(attr.substring(0, idx).trim(), attr.substring(idx + 1).trim());
+                }
+            }
+        }
+
+        List<ProductResponse> result = productService.filterProducts(categoryId, brandId, minPrice, maxPrice, attrMap);
 
         ApiResponse<List<ProductResponse>> response = new ApiResponse<>();
         response.setResult(result);
