@@ -10,4 +10,6 @@ public interface WarrantyRepository extends JpaRepository<Warranty, Integer> {
     List<Warranty> findByOrderItem_Order_OrderId(int orderId);
 
     Optional<Warranty> findByOrderItem_OrderItemId(int orderItemId);
+
+    List<Warranty> findByOrderItem_Order_User_PhoneNumber(String phoneNumber);
 }

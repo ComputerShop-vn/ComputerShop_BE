@@ -8,6 +8,7 @@ import sp26.group3.computer.sba301_computershop.enums.WarrantyStatus;
 import sp26.group3.computer.sba301_computershop.enums.WarrantyType;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Data
 @Builder
@@ -24,4 +25,5 @@ public class WarrantyResponse {
     private String description;
     private WarrantyStatus status;
     private WarrantyType type;
+    private List<ClaimResponse> claims;
 }

@@ -39,6 +39,15 @@ public class WarrantyController {
         return apiResponse;
     }
 
+    @GetMapping("/phone/{phoneNumber}")
+    @PreAuthorize("hasAnyRole('MEMBER','STAFF','ADMIN')")
+    public ApiResponse<List<WarrantyResponse>> getWarrantiesByPhoneNumber(@PathVariable String phoneNumber) {
+        List<WarrantyResponse> response = warrantyService.getWarrantiesByPhoneNumber(phoneNumber);
+        ApiResponse<List<WarrantyResponse>> apiResponse = new ApiResponse<>();
+        apiResponse.setResult(response);
+        return apiResponse;
+    }
+
     @PutMapping("/{id}/status")
     @PreAuthorize("hasAnyRole('STAFF','ADMIN')")
     public ApiResponse<WarrantyResponse> updateWarrantyStatus(

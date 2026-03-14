@@ -155,6 +155,8 @@ public class ProductServiceImpl implements ProductService {
             product.setName(request.getName());
         if (request.getDescription() != null)
             product.setDescription(request.getDescription());
+        if (request.getWarrantyMonths() != null)
+            product.setWarrantyMonths(request.getWarrantyMonths());
 
         Product updatedProduct = productRepository.save(product);
         log.info("Product updated successfully with id: {}", productId);
