@@ -47,6 +47,7 @@ public class OrderServiceImpl implements OrderService {
     UserRepository userRepository;
     InstallmentPackageRepository installmentPackageRepository;
     PaymentService paymentService;
+    sp26.group3.computer.sba301_computershop.service.WarrantyService warrantyService;
 
     // ======================== PLACE ORDER ========================
 
@@ -277,6 +278,10 @@ public class OrderServiceImpl implements OrderService {
         order.setStatus(request.getStatus());
         orderRepository.save(order);
         log.info("Updated order status | orderId={} status={}", orderId, request.getStatus());
+
+        if (request.getStatus() == OrderStatus.COMPLETED) {
+            warrantyService.createWarrantiesForOrder(order);
+        }
 
         List<OrderItem> items = orderItemRepository.findByOrderOrderId(orderId);
         return toOrderResponse(order, items);

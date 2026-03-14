@@ -84,8 +84,9 @@ public class ProductServiceImpl implements ProductService {
 
         // Create variants if provided
         if (request.getVariants() != null && !request.getVariants().isEmpty()) {
-            log.info("Creating {} variants for product id: {}", request.getVariants().size(), savedProduct.getProductId());
-            
+            log.info("Creating {} variants for product id: {}", request.getVariants().size(),
+                    savedProduct.getProductId());
+
             for (VariantCreationDTO variantDTO : request.getVariants()) {
                 if (productVariantRepository.existsBySku(variantDTO.getSku())) {
                     throw new AppException(ErrorCode.SKU_EXISTED);
@@ -119,8 +120,9 @@ public class ProductServiceImpl implements ProductService {
 
             // Update product base price to the lowest variant price
             updateProductBasePrice(savedProduct.getProductId());
-            
-            log.info("Created {} variants for product id: {}", request.getVariants().size(), savedProduct.getProductId());
+
+            log.info("Created {} variants for product id: {}", request.getVariants().size(),
+                    savedProduct.getProductId());
         }
 
         ProductResponse response = productMapper.toProductResponse(savedProduct);
@@ -149,8 +151,10 @@ public class ProductServiceImpl implements ProductService {
             product.setBrand(brand);
         }
 
-        if (request.getName() != null) product.setName(request.getName());
-        if (request.getDescription() != null) product.setDescription(request.getDescription());
+        if (request.getName() != null)
+            product.setName(request.getName());
+        if (request.getDescription() != null)
+            product.setDescription(request.getDescription());
 
         Product updatedProduct = productRepository.save(product);
         log.info("Product updated successfully with id: {}", productId);
@@ -251,8 +255,8 @@ public class ProductServiceImpl implements ProductService {
             response.setPromoCode(null);
         }
 
-        if (response.getHasPromotion() && response.getDiscountPercent() != null && 
-            response.getDiscountPercent() > 0 && response.getBasePrice() != null) {
+        if (response.getHasPromotion() && response.getDiscountPercent() != null &&
+                response.getDiscountPercent() > 0 && response.getBasePrice() != null) {
             double discountedPrice = response.getBasePrice() * (1 - response.getDiscountPercent() / 100.0);
             response.setDiscountedPrice(discountedPrice);
         }
@@ -260,7 +264,7 @@ public class ProductServiceImpl implements ProductService {
         populateVariants(response);
 
         log.info("Product detail populated with {} images, avgRating={}, totalReviews={}, hasPromotion={}, {} variants",
-                imageUrls.size(), avgRating, totalReviews, response.getHasPromotion(), 
+                imageUrls.size(), avgRating, totalReviews, response.getHasPromotion(),
                 response.getVariants() != null ? response.getVariants().size() : 0);
 
         return response;
@@ -270,7 +274,8 @@ public class ProductServiceImpl implements ProductService {
     public List<ProductResponse> searchProducts(String keyword) {
         log.info("Searching products with keyword: {}", keyword);
 
-        List<ProductResponse> responses = productRepository.findByNameContainingIgnoreCaseOrDescriptionContainingIgnoreCase(keyword, keyword)
+        List<ProductResponse> responses = productRepository
+                .findByNameContainingIgnoreCaseOrDescriptionContainingIgnoreCase(keyword, keyword)
                 .stream()
                 .map(productMapper::toProductResponse)
                 .collect(Collectors.toList());
@@ -402,8 +407,9 @@ public class ProductServiceImpl implements ProductService {
     }
 
     private void populateDiscountedPrice(ProductResponse response) {
-        if (response.getBasePrice() == null) return;
-        
+        if (response.getBasePrice() == null)
+            return;
+
         promotionProductRepository.findActivePromotionByProductId(response.getProductId())
                 .stream().findFirst()
                 .ifPresent(pp -> {
@@ -439,8 +445,8 @@ public class ProductServiceImpl implements ProductService {
 
     private ProductVariantResponse toVariantResponseWithAttributes(ProductVariant variant) {
         ProductVariantResponse res = productVariantMapper.toProductVariantResponse(variant);
-        List<ProductVariantAttribute> attrs =
-                productVariantAttributeRepository.findByVariantVariantId(variant.getVariantId());
+        List<ProductVariantAttribute> attrs = productVariantAttributeRepository
+                .findByVariantVariantId(variant.getVariantId());
         List<VariantAttributeResponse> attrList = attrs.stream()
                 .map(a -> VariantAttributeResponse.builder()
                         .attributeId(a.getAttribute().getAttributeId())
@@ -522,10 +528,11 @@ public class ProductServiceImpl implements ProductService {
 
         // null = không truyền → giữ nguyên attributes hiện có
         // [] = truyền mảng rỗng → xoá toàn bộ attributes
-        // [...] = merge: giữ attribute đã có (theo attributeId), thêm mới, xoá attribute không còn trong list
+        // [...] = merge: giữ attribute đã có (theo attributeId), thêm mới, xoá
+        // attribute không còn trong list
         if (variantDTO.getAttributes() != null) {
-            List<ProductVariantAttribute> existingAttrs =
-                    productVariantAttributeRepository.findByVariantVariantId(variantDTO.getVariantId());
+            List<ProductVariantAttribute> existingAttrs = productVariantAttributeRepository
+                    .findByVariantVariantId(variantDTO.getVariantId());
 
             // Map attributeId → existing record
             Map<Integer, ProductVariantAttribute> existingByAttrId = new HashMap<>();
@@ -590,7 +597,6 @@ public class ProductServiceImpl implements ProductService {
         }
         return attributeRepository.findByAttributeName(name)
                 .orElseGet(() -> attributeRepository.save(
-                        Attribute.builder().attributeName(name).build()
-                ));
+                        Attribute.builder().attributeName(name).build()));
     }
 }

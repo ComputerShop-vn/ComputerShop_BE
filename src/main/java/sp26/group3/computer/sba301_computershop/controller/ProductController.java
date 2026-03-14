@@ -34,17 +34,10 @@ public class ProductController {
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasAnyRole('STAFF','ADMIN')")
-    @io.swagger.v3.oas.annotations.parameters.RequestBody(
-            content = @Content(
-                    mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
-                    encoding = @Encoding(name = "product", contentType = MediaType.APPLICATION_JSON_VALUE)
-            )
-    )
+    @io.swagger.v3.oas.annotations.parameters.RequestBody(content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE, encoding = @Encoding(name = "product", contentType = MediaType.APPLICATION_JSON_VALUE)))
     public ApiResponse<ProductResponse> createProduct(
             @RequestPart("product") @Valid ProductCreationRequest request,
-            @Parameter(description = "Product images")
-            @RequestPart(value = "images", required = false) MultipartFile[] images
-    ) {
+            @Parameter(description = "Product images") @RequestPart(value = "images", required = false) MultipartFile[] images) {
         ProductResponse result = productService.createProduct(request, images);
 
         ApiResponse<ProductResponse> response = new ApiResponse<>();
@@ -106,18 +99,11 @@ public class ProductController {
 
     @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasAnyRole('STAFF','ADMIN')")
-    @io.swagger.v3.oas.annotations.parameters.RequestBody(
-            content = @Content(
-                    mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
-                    encoding = @Encoding(name = "product", contentType = MediaType.APPLICATION_JSON_VALUE)
-            )
-    )
+    @io.swagger.v3.oas.annotations.parameters.RequestBody(content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE, encoding = @Encoding(name = "product", contentType = MediaType.APPLICATION_JSON_VALUE)))
     public ApiResponse<ProductResponse> updateProduct(
             @PathVariable int id,
             @RequestPart("product") @Valid ProductUpdateRequest request,
-            @Parameter(description = "Product images")
-            @RequestPart(value = "images", required = false) MultipartFile[] images
-    ) {
+            @Parameter(description = "Product images") @RequestPart(value = "images", required = false) MultipartFile[] images) {
         ProductResponse result = productService.updateProduct(id, request, images);
 
         ApiResponse<ProductResponse> response = new ApiResponse<>();

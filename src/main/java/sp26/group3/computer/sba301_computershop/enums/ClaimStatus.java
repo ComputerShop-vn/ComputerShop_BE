@@ -1,10 +1,8 @@
 package sp26.group3.computer.sba301_computershop.enums;
 
-public enum OrderStatus {
+public enum ClaimStatus {
     PENDING,
-    CONFIRMED,
-    DELIVERED,
+    PROCESSING,
     COMPLETED,
-    CANCELLED,
-    FAILED
+    REJECTED
 }
