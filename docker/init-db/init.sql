@@ -22,6 +22,9 @@ IF OBJECT_ID('order_items',                'U') IS NOT NULL DROP TABLE order_ite
 IF OBJECT_ID('orders',                     'U') IS NOT NULL DROP TABLE orders;
 IF OBJECT_ID('cart_items',                 'U') IS NOT NULL DROP TABLE cart_items;
 IF OBJECT_ID('carts',                      'U') IS NOT NULL DROP TABLE carts;
+IF OBJECT_ID('pc_build_items',             'U') IS NOT NULL DROP TABLE pc_build_items;
+IF OBJECT_ID('pc_builds',                  'U') IS NOT NULL DROP TABLE pc_builds;
+-- legacy names (drop if exist from old schema)
 IF OBJECT_ID('pc_build_item',              'U') IS NOT NULL DROP TABLE pc_build_item;
 IF OBJECT_ID('pc_build',                   'U') IS NOT NULL DROP TABLE pc_build;
 IF OBJECT_ID('promotion_product',          'U') IS NOT NULL DROP TABLE promotion_product;
@@ -31,6 +34,7 @@ IF OBJECT_ID('product_variant_attributes', 'U') IS NOT NULL DROP TABLE product_v
 IF OBJECT_ID('product_items',              'U') IS NOT NULL DROP TABLE product_items;
 IF OBJECT_ID('product_variants',           'U') IS NOT NULL DROP TABLE product_variants;
 IF OBJECT_ID('products',                   'U') IS NOT NULL DROP TABLE products;
+IF OBJECT_ID('compatibility_rules',        'U') IS NOT NULL DROP TABLE compatibility_rules;
 IF OBJECT_ID('attributes',                 'U') IS NOT NULL DROP TABLE attributes;
 IF OBJECT_ID('blogs',                      'U') IS NOT NULL DROP TABLE blogs;
 IF OBJECT_ID('brands',                     'U') IS NOT NULL DROP TABLE brands;
@@ -122,6 +126,17 @@ CREATE TABLE product_variants (
 CREATE TABLE attributes (
     attribute_id   INT           IDENTITY(1,1) PRIMARY KEY,
     attribute_name NVARCHAR(100) NOT NULL UNIQUE
+);
+
+-- compatibility_rules  (drive getFilterHints + future validation)
+CREATE TABLE compatibility_rules (
+    rule_id          INT           IDENTITY(1,1) PRIMARY KEY,
+    component_type_1 NVARCHAR(50)  NOT NULL,
+    component_type_2 NVARCHAR(50)  NULL,    -- NULL for MIN_WATTAGE
+    attribute_1      NVARCHAR(100) NOT NULL,
+    attribute_2      NVARCHAR(100) NULL,    -- NULL for MIN_WATTAGE
+    rule_type        NVARCHAR(20)  NOT NULL,
+    description      NVARCHAR(500)
 );
 
 -- product_variant_attributes  (EAV for variant specs)
@@ -240,25 +255,28 @@ CREATE TABLE order_payment_schedule (
     FOREIGN KEY (order_id) REFERENCES orders(order_id)
 );
 
--- pc_build
-CREATE TABLE pc_build (
+-- pc_builds  (replaces old pc_build — note updated_at added)
+CREATE TABLE pc_builds (
     build_id    INT           IDENTITY(1,1) PRIMARY KEY,
     user_id     INT           NOT NULL,
     build_name  NVARCHAR(255),
     total_price FLOAT,
     created_at  DATETIME2,
+    updated_at  DATETIME2,
     status      NVARCHAR(20),
     FOREIGN KEY (user_id) REFERENCES users(user_id)
 );
 
--- pc_build_item
-CREATE TABLE pc_build_item (
-    build_item_id INT IDENTITY(1,1) PRIMARY KEY,
-    build_id      INT NOT NULL,
-    product_id    INT NOT NULL,
-    quantity      INT NOT NULL,
-    FOREIGN KEY (build_id)   REFERENCES pc_build(build_id),
-    FOREIGN KEY (product_id) REFERENCES products(product_id)
+-- pc_build_items  (replaces old pc_build_item — variant-based, has component_type and price)
+CREATE TABLE pc_build_items (
+    build_item_id  INT           IDENTITY(1,1) PRIMARY KEY,
+    build_id       INT           NOT NULL,
+    component_type NVARCHAR(50)  NOT NULL,
+    variant_id     INT           NOT NULL,
+    quantity       INT           NOT NULL,
+    price          FLOAT         NOT NULL,
+    FOREIGN KEY (build_id)   REFERENCES pc_builds(build_id),
+    FOREIGN KEY (variant_id) REFERENCES product_variants(variant_id)
 );
 
 -- reviews
@@ -348,105 +366,265 @@ INSERT INTO brands (brand_id, brand_name) VALUES
 (7,  'Kingston'),
 (8,  'Samsung'),
 (9,  'Logitech'),
-(10, 'NZXT');
+(10, 'NZXT'),
+(11, 'Noctua'),
+(12, 'Fractal Design');
 SET IDENTITY_INSERT brands OFF;
 
 -- Attributes
 SET IDENTITY_INSERT attributes ON;
 INSERT INTO attributes (attribute_id, attribute_name) VALUES
+-- CPU / GPU general
 (1,  'Core Count'),
 (2,  'Thread Count'),
 (3,  'Base Clock'),
 (4,  'Boost Clock'),
 (5,  'TDP'),
 (6,  'Socket'),
+-- Memory
 (7,  'Memory Size'),
 (8,  'Memory Type'),
 (9,  'Memory Bus'),
 (10, 'Memory Speed'),
+-- Form factor / physical fit
 (11, 'Form Factor'),
+-- Storage
 (12, 'Interface'),
 (13, 'Read Speed'),
 (14, 'Write Speed'),
+-- PSU
 (15, 'Wattage'),
-(16, 'Efficiency');
+(16, 'Efficiency'),
+-- Mainboard capacity
+(17, 'Max RAM Speed'),
+(18, 'RAM Slots'),
+-- Physical dimensions (for MUST_FIT rules)
+(19, 'Max GPU Length'),    -- on CASE: max GPU length it can fit (mm)
+(20, 'Max Cooler Height'), -- on CASE: max CPU cooler height it can fit (mm)
+(21, 'GPU Length'),        -- on GPU variant: physical length (mm)
+(22, 'Cooler Height');     -- on COOLING variant: physical height (mm)
 SET IDENTITY_INSERT attributes OFF;
 
 -- Products
 SET IDENTITY_INSERT products ON;
 INSERT INTO products (product_id, name, description, base_price, category_id, brand_id) VALUES
-(1,  'Intel Core i9-14900K',          'Top-end Intel desktop CPU, 24 cores (8P+16E), LGA1700.',         559.99,  13, 1),
-(2,  'AMD Ryzen 9 7950X',             'Flagship Ryzen CPU, 16 cores / 32 threads, AM5 socket.',          699.99,  14, 2),
-(3,  'NVIDIA RTX 4090',               'Flagship Ada Lovelace GPU, 24 GB GDDR6X.',                       1599.99,  15, 3),
-(4,  'AMD Radeon RX 7900 XTX',        'High-end RDNA3 GPU, 24 GB GDDR6.',                                999.99,  16, 2),
-(5,  'ASUS ROG Strix Z790-E Gaming',  'Premium Z790 ATX motherboard for LGA1700.',                       499.99,   3, 4),
-(6,  'Corsair Vengeance DDR5',        'High-speed DDR5 memory kit.',                                      89.99,   4, 6),
-(7,  'Samsung 990 PRO NVMe SSD',      'PCIe 4.0 NVMe SSD, up to 7450 MB/s read.',                       119.99,   5, 8),
-(8,  'Corsair RM1000x',               '1000W 80+ Gold fully-modular ATX PSU.',                           189.99,   7, 6),
-(9,  'NZXT H7 Flow',                  'Mid-tower ATX case, mesh front panel.',                           109.99,   8, 10),
-(10, 'Logitech G Pro X Superlight 2', 'Ultra-light wireless gaming mouse, 60g.',                         159.99,  12, 9);
+-- CPUs
+(1,  'Intel Core i9-14900K',          'Top-end Intel desktop CPU, 24 cores (8P+16E), LGA1700, DDR5.',       559.99,  13, 1),
+(2,  'AMD Ryzen 9 7950X',             'Flagship Ryzen CPU, 16 cores / 32 threads, AM5 socket, DDR5.',        699.99,  14, 2),
+-- GPUs
+(3,  'NVIDIA RTX 4090',               'Flagship Ada Lovelace GPU, 24 GB GDDR6X.',                           1599.99,  15, 3),
+(4,  'AMD Radeon RX 7900 XTX',        'High-end RDNA3 GPU, 24 GB GDDR6.',                                    999.99,  16, 2),
+-- Mainboards                                                                                   cat=3 (Mainboard)
+(5,  'ASUS ROG Strix Z790-E Gaming',  'Premium Z790 ATX motherboard for LGA1700, DDR5, 4 DIMM slots.',       499.99,   3, 4),
+(6,  'MSI MAG X670E TOMAHAWK WIFI',   'ATX AM5 mainboard, DDR5-6000, 4 DIMM slots, PCIe 5.0.',              349.99,   3, 5),
+(7,  'ASUS TUF Gaming B450M-PLUS',    'mATX AM4 mainboard, DDR4-4400, 2 DIMM slots. (Test: AM4/DDR4)',       89.99,   3, 4),
+-- RAM                                                                                          cat=4
+(8,  'Corsair Vengeance DDR5',        'High-speed DDR5 memory kit.',                                          89.99,   4, 6),
+(9,  'Kingston Fury Beast DDR4-3200', 'Reliable DDR4 kit for AM4 platforms. (Test: DDR4 mismatch)',           39.99,   4, 7),
+-- SSD                                                                                          cat=5
+(10, 'Samsung 990 PRO NVMe SSD',      'PCIe 4.0 NVMe SSD, up to 7450 MB/s read.',                           119.99,   5, 8),
+-- PSU                                                                                          cat=7
+(11, 'Corsair RM1000x',               '1000W 80+ Gold fully-modular ATX PSU.',                               189.99,   7, 6),
+-- Case                                                                                         cat=8
+(12, 'NZXT H7 Flow',                  'Mid-tower ATX case with mesh front. Max GPU 400mm, Max Cooler 185mm.', 109.99,  8, 10),
+(13, 'Fractal Design Pop Mini Air',   'mATX Mini Tower. Max GPU 300mm, Max Cooler 160mm.',                    79.99,   8, 12),
+-- Cooling                                                                                      cat=9
+(14, 'Noctua NH-D15',                 'Dual-tower air cooler, 165mm height, compatible AM4/AM5/LGA1700.',     99.99,   9, 11),
+-- Peripherals
+(15, 'Logitech G Pro X Superlight 2', 'Ultra-light wireless gaming mouse, 60g.',                             159.99,  12, 9);
 SET IDENTITY_INSERT products OFF;
 
 -- Product Variants
 SET IDENTITY_INSERT product_variants ON;
 INSERT INTO product_variants (variant_id, product_id, sku, price, stock_quantity, variant_name) VALUES
+-- i9-14900K  (product 1, LGA1700, DDR5)
 (1,  1,  'CPU-I9-14900K-BOX',    589.99, 20, 'i9-14900K Box (with cooler)'),
 (2,  1,  'CPU-I9-14900K-TRAY',   559.99, 15, 'i9-14900K Tray (no cooler)'),
+-- Ryzen 9 7950X  (product 2, AM5, DDR5)
 (3,  2,  'CPU-R9-7950X-BOX',     699.99, 18, 'Ryzen 9 7950X Box'),
-(4,  3,  'GPU-RTX4090-ASUS',    1799.99,  8, 'ASUS ROG STRIX RTX 4090 24GB OC'),
-(5,  3,  'GPU-RTX4090-MSI',     1699.99,  6, 'MSI GAMING TRIO RTX 4090 24GB'),
-(6,  3,  'GPU-RTX4090-FE',      1599.99,  5, 'NVIDIA Founders Edition RTX 4090'),
-(7,  4,  'GPU-RX7900XTX-REF',    999.99, 12, 'AMD Reference RX 7900 XTX 24GB'),
-(8,  5,  'MB-ROGZ790E-ATX',      499.99, 25, 'ROG Strix Z790-E ATX'),
-(9,  6,  'RAM-DDR5-16G-6000',     89.99, 50, 'Corsair Vengeance DDR5 16GB 6000MHz'),
-(10, 6,  'RAM-DDR5-32G-6000',    159.99, 40, 'Corsair Vengeance DDR5 32GB 6000MHz'),
-(11, 6,  'RAM-DDR5-64G-6000',    299.99, 20, 'Corsair Vengeance DDR5 64GB 6000MHz'),
-(12, 7,  'SSD-990PRO-1TB',       119.99, 35, 'Samsung 990 PRO 1TB NVMe'),
-(13, 7,  'SSD-990PRO-2TB',       199.99, 30, 'Samsung 990 PRO 2TB NVMe'),
-(14, 7,  'SSD-990PRO-4TB',       349.99, 15, 'Samsung 990 PRO 4TB NVMe'),
-(15, 8,  'PSU-RM1000X-2024',     189.99, 30, 'Corsair RM1000x 1000W 80+ Gold'),
-(16, 9,  'CASE-H7FLOW-BLACK',    109.99, 40, 'NZXT H7 Flow Black'),
-(17, 9,  'CASE-H7FLOW-WHITE',    119.99, 25, 'NZXT H7 Flow White'),
-(18, 10, 'MOUSE-GPXSL2-BLACK',   159.99, 50, 'G Pro X Superlight 2 Black'),
-(19, 10, 'MOUSE-GPXSL2-WHITE',   159.99, 45, 'G Pro X Superlight 2 White');
+-- RTX 4090  (product 3)
+(4,  3,  'GPU-RTX4090-ASUS',    1799.99,  8, 'ASUS ROG STRIX RTX 4090 OC 24GB — 357mm'),
+(5,  3,  'GPU-RTX4090-MSI',     1699.99,  6, 'MSI GAMING TRIO RTX 4090 24GB — 340mm'),
+(6,  3,  'GPU-RTX4090-FE',      1599.99,  5, 'NVIDIA Founders Edition RTX 4090 — 336mm'),
+-- RX 7900 XTX  (product 4)
+(7,  4,  'GPU-RX7900XTX-REF',    999.99, 12, 'AMD Reference RX 7900 XTX 24GB — 287mm'),
+-- Z790-E mainboard  (product 5, LGA1700, ATX, DDR5, 4 slots)
+(8,  5,  'MB-ROGZ790E-ATX',      499.99, 25, 'ROG Strix Z790-E ATX LGA1700 DDR5'),
+-- MSI X670E mainboard  (product 6, AM5, ATX, DDR5, 4 slots)
+(9,  6,  'MB-MAGX670E-ATX',      349.99, 20, 'MSI MAG X670E TOMAHAWK WIFI AM5 DDR5'),
+-- ASUS B450M mainboard  (product 7, AM4, mATX, DDR4, 2 slots — test mismatch)
+(10, 7,  'MB-TUFB450M-MATX',      89.99, 15, 'ASUS TUF B450M-PLUS mATX AM4 DDR4'),
+-- Corsair DDR5 RAM  (product 8)
+(11, 8,  'RAM-DDR5-16G-6000',     89.99, 50, 'Corsair Vengeance DDR5 16GB 6000MHz'),
+(12, 8,  'RAM-DDR5-32G-6000',    159.99, 40, 'Corsair Vengeance DDR5 32GB 6000MHz'),
+(13, 8,  'RAM-DDR5-64G-6000',    299.99, 20, 'Corsair Vengeance DDR5 64GB 6000MHz'),
+-- Kingston DDR4 RAM  (product 9 — for AM4 / DDR4 mismatch test)
+(14, 9,  'RAM-DDR4-16G-3200',     39.99, 60, 'Kingston Fury Beast DDR4 16GB 3200MHz'),
+(15, 9,  'RAM-DDR4-32G-3200',     69.99, 40, 'Kingston Fury Beast DDR4 32GB 3200MHz'),
+-- Samsung 990 PRO SSD  (product 10)
+(16, 10, 'SSD-990PRO-1TB',       119.99, 35, 'Samsung 990 PRO 1TB NVMe PCIe 4.0'),
+(17, 10, 'SSD-990PRO-2TB',       199.99, 30, 'Samsung 990 PRO 2TB NVMe PCIe 4.0'),
+-- Corsair RM1000x PSU  (product 11)
+(18, 11, 'PSU-RM1000X-2024',     189.99, 30, 'Corsair RM1000x 1000W 80+ Gold'),
+-- NZXT H7 Flow ATX Case  (product 12)
+(19, 12, 'CASE-H7FLOW-BLACK',    109.99, 40, 'NZXT H7 Flow ATX Black'),
+(20, 12, 'CASE-H7FLOW-WHITE',    119.99, 25, 'NZXT H7 Flow ATX White'),
+-- Fractal Pop Mini Air mATX Case  (product 13)
+(21, 13, 'CASE-POPMINI-BLACK',    79.99, 30, 'Fractal Pop Mini Air mATX Black'),
+-- Noctua NH-D15 Cooler  (product 14)
+(22, 14, 'COOL-NHD15',            99.99, 25, 'Noctua NH-D15 Dual Tower Air Cooler — 165mm'),
+-- Mouse  (product 15)
+(23, 15, 'MOUSE-GPXSL2-BLACK',   159.99, 50, 'G Pro X Superlight 2 Black'),
+(24, 15, 'MOUSE-GPXSL2-WHITE',   159.99, 45, 'G Pro X Superlight 2 White');
 SET IDENTITY_INSERT product_variants OFF;
 
 -- Product Variant Attributes
+-- attr legend: 1=CoreCount 2=ThreadCount 3=BaseClock 4=BoostClock 5=TDP 6=Socket
+--              7=MemorySize 8=MemoryType 9=MemoryBus 10=MemorySpeed
+--              11=FormFactor 12=Interface 13=ReadSpeed 14=WriteSpeed
+--              15=Wattage 16=Efficiency 17=MaxRAMSpeed 18=RAMSlots
+--              19=MaxGPULength 20=MaxCoolerHeight 21=GPULength 22=CoolerHeight
 SET IDENTITY_INSERT product_variant_attributes ON;
 INSERT INTO product_variant_attributes (variant_attr_id, variant_id, attribute_id, value) VALUES
-(1,  1,  1,  '24 (8P+16E)'),  (2,  1,  2,  '32'),
-(3,  1,  3,  '3.2 GHz'),      (4,  1,  4,  '6.0 GHz'),
-(5,  1,  5,  '125W'),          (6,  1,  6,  'LGA1700'),
-(7,  2,  1,  '24 (8P+16E)'),  (8,  2,  2,  '32'),
-(9,  2,  3,  '3.2 GHz'),      (10, 2,  4,  '6.0 GHz'),
-(11, 2,  5,  '125W'),          (12, 2,  6,  'LGA1700'),
-(13, 3,  1,  '16'),            (14, 3,  2,  '32'),
-(15, 3,  3,  '4.5 GHz'),      (16, 3,  4,  '5.7 GHz'),
-(17, 3,  5,  '170W'),          (18, 3,  6,  'AM5'),
-(19, 6,  7,  '24 GB'),         (20, 6,  8,  'GDDR6X'),
-(21, 6,  9,  '384-bit'),       (22, 6,  5,  '450W'),
-(23, 7,  7,  '24 GB'),         (24, 7,  8,  'GDDR6'),
-(25, 7,  9,  '384-bit'),       (26, 7,  5,  '355W'),
-(27, 10, 7,  '32 GB'),         (28, 10, 8,  'DDR5'),
-(29, 10, 10, '6000 MHz'),
-(30, 13, 7,  '2 TB'),          (31, 13, 12, 'PCIe 4.0 NVMe M.2'),
-(32, 13, 13, '7450 MB/s'),     (33, 13, 14, '6900 MB/s'),
-(34, 15, 15, '1000W'),         (35, 15, 16, '80+ Gold');
+-- ─── CPU: i9-14900K Box (variant 1) — LGA1700, DDR5 ───
+(1,  1, 1, '24 (8P+16E)'), (2,  1, 2, '32'),
+(3,  1, 3, '3.2GHz'),      (4,  1, 4, '6.0GHz'),
+(5,  1, 5, '125W'),        (6,  1, 6, 'LGA1700'),
+(7,  1, 8, 'DDR5'),
+-- ─── CPU: i9-14900K Tray (variant 2) — LGA1700, DDR5 ───
+(8,  2, 1, '24 (8P+16E)'), (9,  2, 2, '32'),
+(10, 2, 3, '3.2GHz'),      (11, 2, 4, '6.0GHz'),
+(12, 2, 5, '125W'),        (13, 2, 6, 'LGA1700'),
+(14, 2, 8, 'DDR5'),
+-- ─── CPU: Ryzen 9 7950X (variant 3) — AM5, DDR5 ───
+(15, 3, 1, '16'),           (16, 3, 2, '32'),
+(17, 3, 3, '4.5GHz'),       (18, 3, 4, '5.7GHz'),
+(19, 3, 5, '170W'),         (20, 3, 6, 'AM5'),
+(21, 3, 8, 'DDR5'),
+-- ─── GPU: ASUS RTX 4090 (variant 4) — 357mm, 450W TDP ───
+(22, 4, 7, '24GB'),  (23, 4, 8, 'GDDR6X'),
+(24, 4, 9, '384-bit'), (25, 4, 5, '450W'),
+(26, 4, 21, '357mm'),
+-- ─── GPU: MSI RTX 4090 (variant 5) — 340mm, 450W TDP ───
+(27, 5, 7, '24GB'),  (28, 5, 8, 'GDDR6X'),
+(29, 5, 9, '384-bit'), (30, 5, 5, '450W'),
+(31, 5, 21, '340mm'),
+-- ─── GPU: NVIDIA FE RTX 4090 (variant 6) — 336mm, 450W TDP ───
+(32, 6, 7, '24GB'),  (33, 6, 8, 'GDDR6X'),
+(34, 6, 9, '384-bit'), (35, 6, 5, '450W'),
+(36, 6, 21, '336mm'),
+-- ─── GPU: RX 7900 XTX Ref (variant 7) — 287mm, 355W TDP ───
+(37, 7, 7, '24GB'),  (38, 7, 8, 'GDDR6'),
+(39, 7, 9, '384-bit'), (40, 7, 5, '355W'),
+(41, 7, 21, '287mm'),
+-- ─── Mainboard: Z790-E ATX LGA1700 (variant 8) — 4 DIMM DDR5 ───
+(42, 8,  6, 'LGA1700'), (43, 8,  8, 'DDR5'),
+(44, 8, 11, 'ATX'),     (45, 8, 17, '7200'),
+(46, 8, 18, '4'),
+-- ─── Mainboard: MSI X670E ATX AM5 (variant 9) — 4 DIMM DDR5 ───
+(47, 9,  6, 'AM5'),   (48, 9,  8, 'DDR5'),
+(49, 9, 11, 'ATX'),   (50, 9, 17, '6000'),
+(51, 9, 18, '4'),
+-- ─── Mainboard: ASUS B450M mATX AM4 (variant 10) — 2 DIMM DDR4 (test slot limit!) ───
+(52, 10,  6, 'AM4'),  (53, 10,  8, 'DDR4'),
+(54, 10, 11, 'mATX'), (55, 10, 17, '4400'),
+(56, 10, 18, '2'),
+-- ─── RAM: Corsair DDR5 16GB 6000MHz (variant 11) ───
+(57, 11, 7, '16GB'), (58, 11, 8, 'DDR5'), (59, 11, 10, '6000MHz'),
+-- ─── RAM: Corsair DDR5 32GB 6000MHz (variant 12) ───
+(60, 12, 7, '32GB'), (61, 12, 8, 'DDR5'), (62, 12, 10, '6000MHz'),
+-- ─── RAM: Corsair DDR5 64GB 6000MHz (variant 13) ───
+(63, 13, 7, '64GB'), (64, 13, 8, 'DDR5'), (65, 13, 10, '6000MHz'),
+-- ─── RAM: Kingston DDR4 16GB 3200MHz (variant 14) — DDR4 mismatch test ───
+(66, 14, 7, '16GB'), (67, 14, 8, 'DDR4'), (68, 14, 10, '3200MHz'),
+-- ─── RAM: Kingston DDR4 32GB 3200MHz (variant 15) ───
+(69, 15, 7, '32GB'), (70, 15, 8, 'DDR4'), (71, 15, 10, '3200MHz'),
+-- ─── SSD: 990 PRO 1TB (variant 16) ───
+(72, 16, 7, '1TB'), (73, 16, 12, 'PCIe 4.0 NVMe M.2'),
+(74, 16, 13, '7450MB/s'), (75, 16, 14, '6900MB/s'),
+-- ─── SSD: 990 PRO 2TB (variant 17) ───
+(76, 17, 7, '2TB'), (77, 17, 12, 'PCIe 4.0 NVMe M.2'),
+(78, 17, 13, '7450MB/s'), (79, 17, 14, '6900MB/s'),
+-- ─── PSU: RM1000x 1000W (variant 18) ───
+(80, 18, 15, '1000W'), (81, 18, 16, '80+ Gold'),
+-- ─── Case: NZXT H7 Flow ATX Black (variant 19) ───
+(82, 19, 11, 'ATX'), (83, 19, 19, '400mm'), (84, 19, 20, '185mm'),
+-- ─── Case: NZXT H7 Flow ATX White (variant 20) ───
+(85, 20, 11, 'ATX'), (86, 20, 19, '400mm'), (87, 20, 20, '185mm'),
+-- ─── Case: Fractal Pop Mini Air mATX Black (variant 21) ───
+-- Max GPU 300mm: RTX4090 (357/340/336mm) won''t fit; RX7900XTX (287mm) fits ✓
+(88, 21, 11, 'mATX'), (89, 21, 19, '300mm'), (90, 21, 20, '160mm'),
+-- ─── Cooling: Noctua NH-D15 (variant 22) — 165mm height ───
+-- Fits H7 Flow (185mm); does NOT fit Fractal Pop Mini (160mm) ✓
+(91, 22, 22, '165mm');
 SET IDENTITY_INSERT product_variant_attributes OFF;
+
+-- Compatibility Rules
+-- Drives getFilterHints(): tells the API what attributes to cross-check between component types.
+SET IDENTITY_INSERT compatibility_rules ON;
+INSERT INTO compatibility_rules
+    (rule_id, component_type_1, component_type_2, attribute_1, attribute_2, rule_type, description)
+VALUES
+-- R1: CPU ↔ Mainboard socket must match (AM5, LGA1700, AM4 …)
+(1, 'CPU', 'MAINBOARD', 'Socket', 'Socket', 'MUST_MATCH',
+    'CPU socket must match the mainboard socket (e.g. AM5 ↔ AM5)'),
+
+-- R2: Mainboard DDR gen must match RAM DDR gen (DDR4 vs DDR5)
+(2, 'MAINBOARD', 'RAM', 'Memory Type', 'Memory Type', 'MUST_MATCH',
+    'Mainboard and RAM must use the same DDR generation (DDR4 or DDR5)'),
+
+-- R3: RAM speed must not exceed mainboard max RAM speed
+--     MUST_SUPPORT: RAM.Memory Speed ≤ MAINBOARD.Max RAM Speed
+--     → filter hint: "Memory Speed lte <maxValue>" when selecting RAM
+(3, 'RAM', 'MAINBOARD', 'Memory Speed', 'Max RAM Speed', 'MUST_SUPPORT',
+    'RAM speed must not exceed the maximum RAM speed supported by the mainboard'),
+
+-- R4: GPU physical length must fit inside the case
+--     MUST_FIT: GPU.GPU Length ≤ CASE.Max GPU Length
+(4, 'GPU', 'CASE', 'GPU Length', 'Max GPU Length', 'MUST_FIT',
+    'GPU length must not exceed the case maximum GPU clearance'),
+
+-- R5: CPU cooler height must fit inside the case
+--     MUST_FIT: COOLING.Cooler Height ≤ CASE.Max Cooler Height
+(5, 'COOLING', 'CASE', 'Cooler Height', 'Max Cooler Height', 'MUST_FIT',
+    'CPU cooler height must not exceed the case maximum cooler clearance'),
+
+-- R6: Mainboard form factor must match case (ATX in ATX case, mATX in mATX case)
+--     Note: simplified as MUST_MATCH; in reality ATX cases also accept smaller boards.
+(6, 'MAINBOARD', 'CASE', 'Form Factor', 'Form Factor', 'MUST_MATCH',
+    'Mainboard form factor must be supported by the case'),
+
+-- R7: PSU MIN_WATTAGE — handled in code by summing TDP of selected components × 1.2
+--     component_type_2 = NULL, attribute_2 = NULL per RuleType definition
+(7, 'PSU', NULL, 'Wattage', NULL, 'MIN_WATTAGE',
+    'PSU wattage must cover total system TDP plus 20% headroom'),
+
+-- R8: CPU DDR generation must match Mainboard DDR generation
+--     CPU stores "Memory Type" = "DDR5" / "DDR4" (which DDR gen the CPU supports)
+--     MAINBOARD stores "Memory Type" = "DDR5" / "DDR4"
+--     → filter hint: "Memory Type eq DDR5" when selecting MAINBOARD with CPU selected
+(8, 'CPU', 'MAINBOARD', 'Memory Type', 'Memory Type', 'MUST_MATCH',
+    'CPU supported memory type must match mainboard memory type (DDR4 vs DDR5)');
+SET IDENTITY_INSERT compatibility_rules OFF;
 
 -- Product Images
 SET IDENTITY_INSERT product_images ON;
 INSERT INTO product_images (image_id, product_id, image_url, is_thumbnail) VALUES
-(1,  1,  'https://placehold.co/600x400?text=i9-14900K',      1),
-(2,  2,  'https://placehold.co/600x400?text=R9-7950X',       1),
-(3,  3,  'https://placehold.co/600x400?text=RTX-4090',       1),
-(4,  4,  'https://placehold.co/600x400?text=RX-7900-XTX',    1),
-(5,  5,  'https://placehold.co/600x400?text=Z790-E',         1),
-(6,  6,  'https://placehold.co/600x400?text=DDR5-RAM',       1),
-(7,  7,  'https://placehold.co/600x400?text=990-PRO-SSD',    1),
-(8,  8,  'https://placehold.co/600x400?text=RM1000x-PSU',    1),
-(9,  9,  'https://placehold.co/600x400?text=NZXT-H7-Flow',   1),
-(10, 10, 'https://placehold.co/600x400?text=GPX-SL2-Mouse',  1);
+(1,  1,  'https://placehold.co/600x400?text=i9-14900K',        1),
+(2,  2,  'https://placehold.co/600x400?text=R9-7950X',         1),
+(3,  3,  'https://placehold.co/600x400?text=RTX-4090',         1),
+(4,  4,  'https://placehold.co/600x400?text=RX-7900-XTX',      1),
+(5,  5,  'https://placehold.co/600x400?text=Z790-E',           1),
+(6,  6,  'https://placehold.co/600x400?text=MSI-X670E',        1),
+(7,  7,  'https://placehold.co/600x400?text=ASUS-B450M',       1),
+(8,  8,  'https://placehold.co/600x400?text=DDR5-RAM',         1),
+(9,  9,  'https://placehold.co/600x400?text=DDR4-RAM',         1),
+(10, 10, 'https://placehold.co/600x400?text=990-PRO-SSD',      1),
+(11, 11, 'https://placehold.co/600x400?text=RM1000x-PSU',      1),
+(12, 12, 'https://placehold.co/600x400?text=NZXT-H7-Flow',     1),
+(13, 13, 'https://placehold.co/600x400?text=Fractal-Pop-Mini', 1),
+(14, 14, 'https://placehold.co/600x400?text=Noctua-NH-D15',    1),
+(15, 15, 'https://placehold.co/600x400?text=GPX-SL2-Mouse',    1);
 SET IDENTITY_INSERT product_images OFF;
 
 -- Blogs
@@ -465,23 +643,69 @@ INSERT INTO promotions (promotion_id, promo_code, discount_percent, start_date, 
 (3, 'SUMMER25',    25, '2026-06-01', '2026-08-31');
 SET IDENTITY_INSERT promotions OFF;
 
--- Promotion Products
+-- Promotion Products (product IDs updated to match new catalog)
 SET IDENTITY_INSERT promotion_product ON;
 INSERT INTO promotion_product (promo_prod_id, promotion_id, product_id) VALUES
-(1, 1, 3), (2, 1, 4),
-(3, 2, 6), (4, 2, 7),
-(5, 3, 1), (6, 3, 2);
+(1, 1, 3),  -- RTX 4090
+(2, 1, 4),  -- RX 7900 XTX
+(3, 2, 8),  -- Corsair DDR5 RAM
+(4, 2, 10), -- Samsung 990 PRO SSD
+(5, 3, 1),  -- i9-14900K
+(6, 3, 2);  -- Ryzen 9 7950X
 SET IDENTITY_INSERT promotion_product OFF;
 
 -- Reviews
 SET IDENTITY_INSERT reviews ON;
 INSERT INTO reviews (review_id, user_id, product_id, rating, comment, created_at) VALUES
-(1, 3, 1, 5, 'Blazing fast CPU, handles everything at max settings.', GETDATE()),
-(2, 3, 3, 5, 'Overkill for gaming but the performance is incredible.',GETDATE()),
-(3, 4, 7, 4, 'Very fast SSD, great value for the 2TB capacity.',      GETDATE()),
-(4, 4,10, 5, 'Best wireless mouse ever. Zero noticeable latency.',    GETDATE()),
-(5, 3, 6, 4, 'Solid DDR5 kit, easy XMP/EXPO setup in BIOS.',         GETDATE());
+(1, 3, 1,  5, 'Blazing fast CPU, handles everything at max settings.', GETDATE()),
+(2, 3, 3,  5, 'Overkill for gaming but the performance is incredible.', GETDATE()),
+(3, 4, 10, 4, 'Very fast SSD, great value for the 2TB capacity.',       GETDATE()),
+(4, 4, 15, 5, 'Best wireless mouse ever. Zero noticeable latency.',     GETDATE()),
+(5, 3, 8,  4, 'Solid DDR5 kit, easy XMP/EXPO setup in BIOS.',          GETDATE());
 SET IDENTITY_INSERT reviews OFF;
+
+-- ============================================================
+-- Additional products for Build PC boundary testing
+-- ============================================================
+
+SET IDENTITY_INSERT products ON;
+INSERT INTO products (product_id, name, description, base_price, category_id, brand_id) VALUES
+(16, N'AMD Ryzen 5 5600X', N'Mid-range AM4 CPU, 6C/12T, 65W TDP, DDR4. Dùng để test build AM4/DDR4/mATX với B450M.',  149.99, 14, 2),
+(17, N'Corsair CV650',      N'650W 80+ Bronze PSU. Dùng để test MIN_WATTAGE FAIL (650W < 700W khi có i9+RTX4090).',      59.99,  7,  6),
+(18, N'Corsair RM750x',     N'750W 80+ Gold PSU. Dùng để test MIN_WATTAGE PASS boundary (750W >= 700W).',               109.99,  7,  6);
+SET IDENTITY_INSERT products OFF;
+
+SET IDENTITY_INSERT product_variants ON;
+INSERT INTO product_variants (variant_id, product_id, sku, price, stock_quantity, variant_name) VALUES
+(25, 16, N'CPU-R5-5600X-BOX',  149.99, 25, N'Ryzen 5 5600X Box (with cooler)'),
+(26, 17, N'PSU-CV650-650W',      59.99, 30, N'Corsair CV650 650W 80+ Bronze'),
+(27, 18, N'PSU-RM750X-750W',   109.99, 30, N'Corsair RM750x 750W 80+ Gold');
+SET IDENTITY_INSERT product_variants OFF;
+
+SET IDENTITY_INSERT product_variant_attributes ON;
+INSERT INTO product_variant_attributes (variant_attr_id, variant_id, attribute_id, value) VALUES
+-- Ryzen 5 5600X (variant 25): AM4, DDR4, 65W TDP
+(92,  25, 1,  N'6'),
+(93,  25, 2,  N'12'),
+(94,  25, 3,  N'3.7GHz'),
+(95,  25, 4,  N'4.6GHz'),
+(96,  25, 5,  N'65W'),
+(97,  25, 6,  N'AM4'),
+(98,  25, 8,  N'DDR4'),
+-- Corsair CV650 (variant 26): 650W
+(99,  26, 15, N'650W'),
+(100, 26, 16, N'80+ Bronze'),
+-- Corsair RM750x (variant 27): 750W
+(101, 27, 15, N'750W'),
+(102, 27, 16, N'80+ Gold');
+SET IDENTITY_INSERT product_variant_attributes OFF;
+
+SET IDENTITY_INSERT product_images ON;
+INSERT INTO product_images (image_id, product_id, image_url, is_thumbnail) VALUES
+(16, 16, N'https://placehold.co/600x400?text=Ryzen5-5600X',  1),
+(17, 17, N'https://placehold.co/600x400?text=CV650-PSU',     1),
+(18, 18, N'https://placehold.co/600x400?text=RM750x-PSU',    1);
+SET IDENTITY_INSERT product_images OFF;
 
 GO
 

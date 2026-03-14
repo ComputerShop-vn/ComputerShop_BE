@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import sp26.group3.computer.sba301_computershop.dto.request.AddToCartRequest;
 import sp26.group3.computer.sba301_computershop.dto.request.PlaceOrderRequest;
 import sp26.group3.computer.sba301_computershop.dto.request.UpdateOrderStatusRequest;
 import sp26.group3.computer.sba301_computershop.dto.response.*;
@@ -24,7 +25,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -131,6 +134,91 @@ public class OrderServiceImpl implements OrderService {
         log.info("Cleared cart after placing order | cartId={}", cart.getCartId());
 
         // 7. Handle Payment URL for FULL or INSTALLMENT
+        String paymentUrl = null;
+        if (request.getPaymentType() == PaymentType.FULL || request.getPaymentType() == PaymentType.INSTALLMENT) {
+            var paymentDto = paymentService.createVnPayPayment(servletRequest, order.getOrderId(), null);
+            paymentUrl = paymentDto.getPaymentUrl();
+        }
+
+        return toOrderResponse(order, orderItems, paymentUrl);
+    }
+
+    // ======================== PLACE ORDER FROM BUILD ITEMS ========================
+
+    @Override
+    @Transactional
+    public OrderResponse placeOrderFromItems(List<AddToCartRequest> items,
+                                             PlaceOrderRequest request,
+                                             HttpServletRequest servletRequest) {
+        User user = getCurrentUser();
+
+        // 1. Load variants and validate stock
+        Map<Integer, ProductVariant> variantMap = new HashMap<>();
+        for (AddToCartRequest item : items) {
+            ProductVariant variant = productVariantRepository.findById(item.getVariantId())
+                    .orElseThrow(() -> new AppException(ErrorCode.VARIANT_NOT_FOUND));
+            if (variant.getStockQuantity() < item.getQuantity()) {
+                throw new AppException(ErrorCode.INSUFFICIENT_STOCK);
+            }
+            variantMap.put(item.getVariantId(), variant);
+        }
+
+        // 2. Calculate total
+        double totalAmount = items.stream()
+                .mapToDouble(i -> variantMap.get(i.getVariantId()).getPrice() * i.getQuantity())
+                .sum();
+
+        // 3. Create Order
+        InstallmentPackage pack = null;
+        if (request.getPaymentType() == PaymentType.INSTALLMENT) {
+            pack = installmentPackageRepository.findById(request.getPackageId())
+                    .orElseThrow(() -> new RuntimeException("Installment package not found"));
+            if (totalAmount < pack.getMinOrderAmount()) {
+                throw new RuntimeException("Order total amount does not meet package minimum order amount");
+            }
+        }
+
+        Order order = Order.builder()
+                .user(user)
+                .totalAmount(totalAmount)
+                .status(OrderStatus.PENDING)
+                .orderDate(LocalDateTime.now())
+                .paymentType(request.getPaymentType())
+                .installmentPackage(pack)
+                .build();
+        order = orderRepository.save(order);
+        log.info("Created order from build | orderId={} totalAmount={}", order.getOrderId(), totalAmount);
+
+        // 4. Create OrderItems + ProductItems + reduce stock (no cart clearing)
+        List<OrderItem> orderItems = new ArrayList<>();
+        for (AddToCartRequest item : items) {
+            ProductVariant variant = variantMap.get(item.getVariantId());
+
+            variant.setStockQuantity(variant.getStockQuantity() - item.getQuantity());
+            productVariantRepository.save(variant);
+
+            ProductItem productItem = ProductItem.builder()
+                    .variant(variant)
+                    .serialNumber(generateSerialNumber(variant.getSku()))
+                    .build();
+            productItem = productItemRepository.save(productItem);
+
+            OrderItem orderItem = OrderItem.builder()
+                    .order(order)
+                    .productItem(productItem)
+                    .quantity(item.getQuantity())
+                    .unitPrice(variant.getPrice())
+                    .recipientName(request.getRecipientName())
+                    .recipientPhone(request.getRecipientPhone())
+                    .shippingAddress(request.getShippingAddress())
+                    .build();
+            orderItems.add(orderItemRepository.save(orderItem));
+        }
+
+        // 5. Payment schedule
+        createPaymentSchedules(order, request);
+
+        // 6. VNPay URL
         String paymentUrl = null;
         if (request.getPaymentType() == PaymentType.FULL || request.getPaymentType() == PaymentType.INSTALLMENT) {
             var paymentDto = paymentService.createVnPayPayment(servletRequest, order.getOrderId(), null);

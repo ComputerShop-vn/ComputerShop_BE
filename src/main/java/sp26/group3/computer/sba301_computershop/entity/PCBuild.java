@@ -8,9 +8,11 @@ import lombok.NoArgsConstructor;
 import sp26.group3.computer.sba301_computershop.enums.BuildStatus;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
-@Table(name = "pc_build")
+@Table(name = "pc_builds")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -29,13 +31,21 @@ public class PCBuild {
     @Column(name = "build_name")
     private String buildName;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", length = 20)
+    private BuildStatus status; // DRAFT, SAVED, ORDERED
+
     @Column(name = "total_price")
     private double totalPrice;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
-    @Enumerated(EnumType.STRING)
-    private BuildStatus status; // DRAFT, SAVED, ORDERED
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    @Builder.Default
+    @OneToMany(mappedBy = "build", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<PCBuildItem> items = new ArrayList<>();
 }
 
