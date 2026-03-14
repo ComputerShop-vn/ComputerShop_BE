@@ -2311,6 +2311,128 @@ const blog = {
 
 ---
 
+# 14. 🛡️ Warranties — `/warranties`
+
+---
+
+## GET `/warranties/{id}`
+
+**Auth:** MEMBER, STAFF, ADMIN
+
+| Case | Code |
+|------|------|
+| ✅ Tìm thấy | 1000 |
+| ❌ Không tồn tại | 404 |
+
+---
+
+## GET `/warranties/order/{orderId}`
+
+**Auth:** MEMBER, STAFF, ADMIN
+
+| Case | Code |
+|------|------|
+| ✅ Thành công | 1000, trả về list warranties |
+| ❌ Không tìm thấy order | 404 |
+
+---
+
+## PUT `/warranties/{id}/status`
+
+**Auth:** STAFF, ADMIN
+
+**Request:**
+```json
+{
+  "status": "ACTIVE"
+}
+```
+
+* `status`: `ACTIVE`, `EXPIRED`, `VOIDED`
+
+| Case | Code |
+|------|------|
+| ✅ Thành công | 1000 |
+| ❌ Không tồn tại | 404 |
+| ❌ Thiếu status | 400 |
+
+---
+
+---
+
+# 15. 🛠️ Warranty Claims — `/claims`
+
+---
+
+## POST `/claims` — Tạo claim mới
+
+**Auth:** MEMBER, STAFF, ADMIN
+
+**Request:**
+```json
+{
+  "warrantyId": 1,
+  "customerNote": "Màn hình bị sọc"
+}
+```
+
+| Field | Bắt buộc | Validation |
+|-------|----------|-----------|
+| `warrantyId` | ✅ | Phải tồn tại |
+| `customerNote` | ✅ | Không được rỗng |
+
+| Case | Code |
+|------|------|
+| ✅ Thành công | 1000 |
+| ❌ Thiếu field / Rỗng | 400 |
+
+---
+
+## GET `/claims/{id}`
+
+**Auth:** MEMBER, STAFF, ADMIN
+
+| Case | Code |
+|------|------|
+| ✅ Tìm thấy | 1000 |
+| ❌ Không tồn tại | 404 |
+
+---
+
+## GET `/claims/warranty/{warrantyId}`
+
+**Auth:** MEMBER, STAFF, ADMIN
+
+| Case | Code |
+|------|------|
+| ✅ Thành công | 1000, trả về list |
+| ❌ Không tồn tại | 404 |
+
+---
+
+## PUT `/claims/{id}` — Cập nhật claim
+
+**Auth:** STAFF, ADMIN
+
+**Request:**
+```json
+{
+  "status": "PROCESSING",
+  "technicianNote": "Đang kiểm tra",
+  "solutionType": "REPAIR"
+}
+```
+
+* `status`: `PENDING`, `PROCESSING`, `COMPLETED`, `REJECTED`
+* `solutionType`: `REPAIR`, `REPLACE`, `REFUND`
+
+| Case | Code |
+|------|------|
+| ✅ Thành công | 1000 |
+| ❌ Không tồn tại | 404 |
+
+---
+
 # 📋 Tóm tắt tất cả Endpoints
 
 | Method | Endpoint | Auth | Mô tả |
@@ -2391,6 +2513,15 @@ const blog = {
 | POST | `/roles` | ADMIN | Tạo role |
 | PUT | `/roles/{id}` | ADMIN | Cập nhật |
 | DELETE | `/roles/{id}` | ADMIN | Xoá |
+| **WARRANTIES** | | | |
+| GET | `/warranties/{id}` | Authenticated | Chi tiết warranty |
+| GET | `/warranties/order/{orderId}` | Authenticated | Warranties của đơn hàng |
+| PUT | `/warranties/{id}/status` | STAFF/ADMIN | Cập nhật trạng thái warranty |
+| **CLAIMS** | | | |
+| POST | `/claims` | Authenticated | Tạo yêu cầu bảo hành |
+| GET | `/claims/{id}` | Authenticated | Chi tiết yêu cầu bảo hành |
+| GET | `/claims/warranty/{warrantyId}` | Authenticated | Các yêu cầu bảo hành của warranty |
+| PUT | `/claims/{id}` | STAFF/ADMIN | Cập nhật yêu cầu bảo hành |
 | **PC BUILD** | | | |
 | POST | `/pc-builds/compatible-variants` | MEMBER+ | Lấy categoryId + filter hints cho loại linh kiện |
 | PUT | `/pc-builds/draft/items` | MEMBER+ | Upsert linh kiện vào draft build |
