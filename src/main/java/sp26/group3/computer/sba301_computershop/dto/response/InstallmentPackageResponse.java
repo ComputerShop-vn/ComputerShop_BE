@@ -15,5 +15,6 @@ public class InstallmentPackageResponse {
     int durationMonths;
     double interestRate;
     double minOrderAmount;
+    double downPaymentPercentage;
     boolean isActive;
 }

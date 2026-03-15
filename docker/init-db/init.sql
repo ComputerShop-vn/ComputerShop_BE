@@ -56,6 +56,7 @@ CREATE TABLE installment_package (
     duration_months INT NOT NULL,
     interest_rate FLOAT NOT NULL,
     min_order_amount FLOAT NOT NULL,
+    down_payment_percentage FLOAT NOT NULL DEFAULT 20.0,
     is_active BIT DEFAULT 1
 );
 -- users
@@ -310,30 +311,34 @@ INSERT INTO installment_package (
         duration_months,
         interest_rate,
         min_order_amount,
+        down_payment_percentage,
         is_active
     )
 VALUES (
         1,
-        N'Trả góp 3 tháng - Lãi suất 0%',
+        N'Trả góp 3 tháng - Lãi suất 0% (Trả trước 0%)',
         3,
         0.0,
         3000000.00,
+        0.0,
         1
     ),
     (
         2,
-        N'Trả góp 6 tháng - Lãi suất 0%',
+        N'Trả góp 6 tháng - Lãi suất 1% (Trả trước 10%)',
         6,
         1.0,
         5000000.00,
+        10.0,
         1
     ),
     (
         3,
-        N'Trả góp 12 tháng - Lãi suất 1.5%',
+        N'Trả góp 12 tháng - Lãi suất 1.5% (Trả trước 20%)',
         12,
         1.5,
         10000000.00,
+        20.0,
         1
     ),
     (
@@ -342,6 +347,7 @@ VALUES (
         9,
         1.5,
         5000000.00,
+        15.0,
         0
     );
 SET IDENTITY_INSERT installment_package OFF;

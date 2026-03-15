@@ -1626,12 +1626,11 @@ PENDING → PROCESSING → SHIPPING → DELIVERED
 
 **Flow thanh toán VNPay:**
 ```
-1. FE → GET /createPayment → nhận paymentUrl
+1. FE → Tạo Order → nhận paymentUrl
 2. FE → redirect user đến paymentUrl
 3. User → hoàn tất thanh toán trên VNPay
-4. VNPay → GET /callback (server xử lý)
-5. Server → redirect về URL frontend
-6. FE → GET /orders/{id} để kiểm tra trạng thái
+4. VNPay → GET /callback (FE)
+6. FE → GET /orders/{id} để hiển thị thông tin đơn hàng và trạng thái đơn hàng/thanh toán
 ```
 
 ---
@@ -1668,18 +1667,20 @@ PENDING → PROCESSING → SHIPPING → DELIVERED
   "result": [
     {
       "packageId": 1,
-      "name": "Trả góp 3 tháng - Lãi suất 0%",
+      "name": "Trả góp 3 tháng - Lãi suất 0% (Trả trước 0%)",
       "durationMonths": 3,
       "interestRate": 0.0,
       "minOrderAmount": 3000000.0,
+      "downPaymentPercentage": 0.0,
       "isActive": true
     },
     {
       "packageId": 2,
-      "name": "Trả góp 6 tháng - Lãi suất 0%",
+      "name": "Trả góp 6 tháng - Lãi suất 1% (Trả trước 10%)",
       "durationMonths": 6,
       "interestRate": 1.0,
       "minOrderAmount": 5000000.0,
+      "downPaymentPercentage": 10.0,
       "isActive": true
     }
   ]
@@ -1710,10 +1711,11 @@ PENDING → PROCESSING → SHIPPING → DELIVERED
 **Request:**
 ```json
 {
-  "name": "Trả góp 18 tháng - Lãi suất 2%",
+  "name": "Trả góp 18 tháng - Lãi suất 2% (Trả trước 25%)",
   "durationMonths": 18,
   "interestRate": 2.0,
   "minOrderAmount": 15000000.0,
+  "downPaymentPercentage": 25.0,
   "isActive": true
 }
 ```
@@ -1724,6 +1726,7 @@ PENDING → PROCESSING → SHIPPING → DELIVERED
 | `durationMonths` | ✅ | Số nguyên dương |
 | `interestRate` | ✅ | Số thực >= 0 (%) |
 | `minOrderAmount` | ✅ | Số thực >= 0 |
+| `downPaymentPercentage` | ✅ | Số thực >= 0 (%) |
 | `isActive` | ✅ | `true` hoặc `false` |
 
 | Case | Code |
@@ -1744,6 +1747,7 @@ PENDING → PROCESSING → SHIPPING → DELIVERED
   "durationMonths": 6,
   "interestRate": 0.5,
   "minOrderAmount": 5000000.0,
+  "downPaymentPercentage": 10.0,
   "isActive": false
 }
 ```
@@ -1754,6 +1758,7 @@ PENDING → PROCESSING → SHIPPING → DELIVERED
 | `durationMonths` | null = không thay đổi |
 | `interestRate` | null = không thay đổi |
 | `minOrderAmount` | null = không thay đổi |
+| `downPaymentPercentage` | null = không thay đổi |
 | `isActive` | null = không thay đổi |
 
 > **Partial update:** Mỗi field đều nullable. Gửi gì thì update nấy.
@@ -1784,6 +1789,55 @@ PENDING → PROCESSING → SHIPPING → DELIVERED
 |------|------|
 | ✅ Thành công | 1000 |
 | ❌ Không tồn tại | 404 |
+
+---
+
+## POST `/installment-packages/calculate` — Xem trước trả góp
+
+**Auth:** Public
+
+**Request:**
+```json
+{
+  "packageId": 2,
+  "orderAmount": 20000000
+}
+```
+
+**Response:**
+```json
+{
+  "code": 1000,
+  "message": null,
+  "result": {
+    "orderAmount": 20000000.0,
+    "downPaymentPercentage": 10.0,
+    "downPaymentAmount": 2000000.0,
+    "remainingBalance": 18000000.0,
+    "monthlyInstallmentAmount": 305282.0,
+    "interestRate": 1.0,
+    "durationMonths": 6,
+    "totalPayableAmount": 20305282.0,
+    "schedule": [
+      {
+        "installmentNo": 1,
+        "amount": 305282.0,
+        "dueDate": "2026-04-15"
+      },
+      {
+        "installmentNo": 2,
+        "amount": 305282.0,
+        "dueDate": "2026-05-15"
+      }
+    ]
+  }
+}
+```
+
+| Case | Code |
+|------|------|
+| ✅ Thành công | 1000 |
+| ❌ Package không tồn tại | 9999 (Uncategorized) |
 
 ---
 
