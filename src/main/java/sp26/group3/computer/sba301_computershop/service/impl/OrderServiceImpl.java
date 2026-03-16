@@ -48,6 +48,7 @@ public class OrderServiceImpl implements OrderService {
     CartItemRepository cartItemRepository;
     UserRepository userRepository;
     InstallmentPackageRepository installmentPackageRepository;
+    PromotionProductRepository promotionProductRepository;
     PaymentService paymentService;
     sp26.group3.computer.sba301_computershop.service.WarrantyService warrantyService;
 
@@ -73,9 +74,9 @@ public class OrderServiceImpl implements OrderService {
             }
         }
 
-        // 2. Calculate total
+        // 2. Calculate total (apply active promotions)
         double totalAmount = cartItems.stream()
-                .mapToDouble(item -> item.getVariant().getPrice() * item.getQuantity())
+                .mapToDouble(item -> getEffectivePrice(item.getVariant()) * item.getQuantity())
                 .sum();
 
         // 3. Create Order
@@ -115,12 +116,12 @@ public class OrderServiceImpl implements OrderService {
                     .build();
             productItem = productItemRepository.save(productItem);
 
-            // Create OrderItem
+            // Create OrderItem (unitPrice = effective price after discount)
             OrderItem orderItem = OrderItem.builder()
                     .order(order)
                     .productItem(productItem)
                     .quantity(cartItem.getQuantity())
-                    .unitPrice(variant.getPrice())
+                    .unitPrice(getEffectivePrice(variant))
                     .recipientName(request.getRecipientName())
                     .recipientPhone(request.getRecipientPhone())
                     .shippingAddress(request.getShippingAddress())
@@ -165,9 +166,9 @@ public class OrderServiceImpl implements OrderService {
             variantMap.put(item.getVariantId(), variant);
         }
 
-        // 2. Calculate total
+        // 2. Calculate total (apply active promotions)
         double totalAmount = items.stream()
-                .mapToDouble(i -> variantMap.get(i.getVariantId()).getPrice() * i.getQuantity())
+                .mapToDouble(i -> getEffectivePrice(variantMap.get(i.getVariantId())) * i.getQuantity())
                 .sum();
 
         // 3. Create Order
@@ -209,7 +210,7 @@ public class OrderServiceImpl implements OrderService {
                     .order(order)
                     .productItem(productItem)
                     .quantity(item.getQuantity())
-                    .unitPrice(variant.getPrice())
+                    .unitPrice(getEffectivePrice(variant))
                     .recipientName(request.getRecipientName())
                     .recipientPhone(request.getRecipientPhone())
                     .shippingAddress(request.getShippingAddress())
@@ -371,6 +372,16 @@ public class OrderServiceImpl implements OrderService {
 
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+    }
+
+    private double getEffectivePrice(ProductVariant variant) {
+        List<PromotionProduct> promos = promotionProductRepository
+                .findActivePromotionByProductId(variant.getProduct().getProductId());
+        if (!promos.isEmpty()) {
+            double discountPercent = promos.get(0).getPromotion().getDiscountPercent();
+            return variant.getPrice() * (1 - discountPercent / 100.0);
+        }
+        return variant.getPrice();
     }
 
     private String generateSerialNumber(String sku) {

@@ -16,7 +16,9 @@ public class CartItemResponse {
     int variantId;
     String variantName;
     String sku;
-    double price;
+    double price;              // Giá gốc
+    Double discountedPrice;    // Giá sau giảm (null nếu không có khuyến mãi)
+    double discountPercent;    // % giảm (0 nếu không có)
     int stockQuantity;
     int quantity;
 
