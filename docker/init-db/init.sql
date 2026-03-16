@@ -511,7 +511,7 @@ VALUES -- CPUs
         1,
         'Intel Core i9-14900K',
         'Top-end Intel desktop CPU, 24 cores (8P+16E), LGA1700, DDR5.',
-        559.99,
+        13990000,
         13,
         1
     ),
@@ -519,7 +519,7 @@ VALUES -- CPUs
         2,
         'AMD Ryzen 9 7950X',
         'Flagship Ryzen CPU, 16 cores / 32 threads, AM5 socket, DDR5.',
-        699.99,
+        17490000,
         14,
         2
     ),
@@ -528,7 +528,7 @@ VALUES -- CPUs
         3,
         'NVIDIA RTX 4090',
         'Flagship Ada Lovelace GPU, 24 GB GDDR6X.',
-        1599.99,
+        39990000,
         15,
         3
     ),
@@ -536,103 +536,103 @@ VALUES -- CPUs
         4,
         'AMD Radeon RX 7900 XTX',
         'High-end RDNA3 GPU, 24 GB GDDR6.',
-        999.99,
+        24990000,
         16,
         2
     ),
-    -- Mainboards                                                                                   cat=3 (Mainboard)
+    -- Mainboards                                                                                   cat=9 (Mainboard)
     (
         5,
         'ASUS ROG Strix Z790-E Gaming',
         'Premium Z790 ATX motherboard for LGA1700, DDR5, 4 DIMM slots.',
-        499.99,
-        3,
+        12490000,
+        9,
         4
     ),
     (
         6,
         'MSI MAG X670E TOMAHAWK WIFI',
         'ATX AM5 mainboard, DDR5-6000, 4 DIMM slots, PCIe 5.0.',
-        349.99,
-        3,
+        8790000,
+        9,
         5
     ),
     (
         7,
         'ASUS TUF Gaming B450M-PLUS',
         'mATX AM4 mainboard, DDR4-4400, 2 DIMM slots. (Test: AM4/DDR4)',
-        89.99,
-        3,
+        2290000,
+        9,
         4
     ),
-    -- RAM                                                                                          cat=4
+    -- RAM                                                                                          cat=10
     (
         8,
         'Corsair Vengeance DDR5',
         'High-speed DDR5 memory kit.',
-        89.99,
-        4,
+        2290000,
+        10,
         6
     ),
     (
         9,
         'Kingston Fury Beast DDR4-3200',
         'Reliable DDR4 kit for AM4 platforms. (Test: DDR4 mismatch)',
-        39.99,
-        4,
+        990000,
+        10,
         7
     ),
-    -- SSD                                                                                          cat=5
+    -- SSD                                                                                          cat=11
     (
         10,
         'Samsung 990 PRO NVMe SSD',
         'PCIe 4.0 NVMe SSD, up to 7450 MB/s read.',
-        119.99,
-        5,
+        2990000,
+        11,
         8
     ),
-    -- PSU                                                                                          cat=7
+    -- PSU                                                                                          cat=6 (Linh Kiện)
     (
         11,
         'Corsair RM1000x',
         '1000W 80+ Gold fully-modular ATX PSU.',
-        189.99,
-        7,
+        4790000,
+        6,
         6
     ),
-    -- Case                                                                                         cat=8
+    -- Case                                                                                         cat=6 (Linh Kiện)
     (
         12,
         'NZXT H7 Flow',
         'Mid-tower ATX case with mesh front. Max GPU 400mm, Max Cooler 185mm.',
-        109.99,
-        8,
+        2790000,
+        6,
         10
     ),
     (
         13,
         'Fractal Design Pop Mini Air',
         'mATX Mini Tower. Max GPU 300mm, Max Cooler 160mm.',
-        79.99,
-        8,
+        1990000,
+        6,
         12
     ),
-    -- Cooling                                                                                      cat=9
+    -- Cooling                                                                                      cat=6 (Linh Kiện)
     (
         14,
         'Noctua NH-D15',
         'Dual-tower air cooler, 165mm height, compatible AM4/AM5/LGA1700.',
-        99.99,
-        9,
+        2490000,
+        6,
         11
     ),
-    -- Peripherals
+    -- Peripherals                                                                                  cat=23 (Chuột Gaming)
     (
         15,
         'Logitech G Pro X Superlight 2',
         'Ultra-light wireless gaming mouse, 60g.',
-        159.99,
-        12,
+        3990000,
+        23,
         9
     );
 SET IDENTITY_INSERT products OFF;
@@ -651,7 +651,7 @@ VALUES -- i9-14900K  (product 1, LGA1700, DDR5)
         1,
         1,
         'CPU-I9-14900K-BOX',
-        589.99,
+        14790000,
         20,
         'i9-14900K Box (with cooler)'
     ),
@@ -659,7 +659,7 @@ VALUES -- i9-14900K  (product 1, LGA1700, DDR5)
         2,
         1,
         'CPU-I9-14900K-TRAY',
-        559.99,
+        13990000,
         15,
         'i9-14900K Tray (no cooler)'
     ),
@@ -668,7 +668,7 @@ VALUES -- i9-14900K  (product 1, LGA1700, DDR5)
         3,
         2,
         'CPU-R9-7950X-BOX',
-        699.99,
+        17490000,
         18,
         'Ryzen 9 7950X Box'
     ),
@@ -677,7 +677,7 @@ VALUES -- i9-14900K  (product 1, LGA1700, DDR5)
         4,
         3,
         'GPU-RTX4090-ASUS',
-        1799.99,
+        44990000,
         8,
         'ASUS ROG STRIX RTX 4090 OC 24GB — 357mm'
     ),
@@ -685,7 +685,7 @@ VALUES -- i9-14900K  (product 1, LGA1700, DDR5)
         5,
         3,
         'GPU-RTX4090-MSI',
-        1699.99,
+        42490000,
         6,
         'MSI GAMING TRIO RTX 4090 24GB — 340mm'
     ),
@@ -693,7 +693,7 @@ VALUES -- i9-14900K  (product 1, LGA1700, DDR5)
         6,
         3,
         'GPU-RTX4090-FE',
-        1599.99,
+        39990000,
         5,
         'NVIDIA Founders Edition RTX 4090 — 336mm'
     ),
@@ -702,7 +702,7 @@ VALUES -- i9-14900K  (product 1, LGA1700, DDR5)
         7,
         4,
         'GPU-RX7900XTX-REF',
-        999.99,
+        24990000,
         12,
         'AMD Reference RX 7900 XTX 24GB — 287mm'
     ),
@@ -711,7 +711,7 @@ VALUES -- i9-14900K  (product 1, LGA1700, DDR5)
         8,
         5,
         'MB-ROGZ790E-ATX',
-        499.99,
+        12490000,
         25,
         'ROG Strix Z790-E ATX LGA1700 DDR5'
     ),
@@ -720,7 +720,7 @@ VALUES -- i9-14900K  (product 1, LGA1700, DDR5)
         9,
         6,
         'MB-MAGX670E-ATX',
-        349.99,
+        8790000,
         20,
         'MSI MAG X670E TOMAHAWK WIFI AM5 DDR5'
     ),
@@ -729,7 +729,7 @@ VALUES -- i9-14900K  (product 1, LGA1700, DDR5)
         10,
         7,
         'MB-TUFB450M-MATX',
-        89.99,
+        2290000,
         15,
         'ASUS TUF B450M-PLUS mATX AM4 DDR4'
     ),
@@ -738,7 +738,7 @@ VALUES -- i9-14900K  (product 1, LGA1700, DDR5)
         11,
         8,
         'RAM-DDR5-16G-6000',
-        89.99,
+        2290000,
         50,
         'Corsair Vengeance DDR5 16GB 6000MHz'
     ),
@@ -746,7 +746,7 @@ VALUES -- i9-14900K  (product 1, LGA1700, DDR5)
         12,
         8,
         'RAM-DDR5-32G-6000',
-        159.99,
+        3990000,
         40,
         'Corsair Vengeance DDR5 32GB 6000MHz'
     ),
@@ -754,7 +754,7 @@ VALUES -- i9-14900K  (product 1, LGA1700, DDR5)
         13,
         8,
         'RAM-DDR5-64G-6000',
-        299.99,
+        7490000,
         20,
         'Corsair Vengeance DDR5 64GB 6000MHz'
     ),
@@ -763,7 +763,7 @@ VALUES -- i9-14900K  (product 1, LGA1700, DDR5)
         14,
         9,
         'RAM-DDR4-16G-3200',
-        39.99,
+        990000,
         60,
         'Kingston Fury Beast DDR4 16GB 3200MHz'
     ),
@@ -771,7 +771,7 @@ VALUES -- i9-14900K  (product 1, LGA1700, DDR5)
         15,
         9,
         'RAM-DDR4-32G-3200',
-        69.99,
+        1790000,
         40,
         'Kingston Fury Beast DDR4 32GB 3200MHz'
     ),
@@ -780,7 +780,7 @@ VALUES -- i9-14900K  (product 1, LGA1700, DDR5)
         16,
         10,
         'SSD-990PRO-1TB',
-        119.99,
+        2990000,
         35,
         'Samsung 990 PRO 1TB NVMe PCIe 4.0'
     ),
@@ -788,7 +788,7 @@ VALUES -- i9-14900K  (product 1, LGA1700, DDR5)
         17,
         10,
         'SSD-990PRO-2TB',
-        199.99,
+        4990000,
         30,
         'Samsung 990 PRO 2TB NVMe PCIe 4.0'
     ),
@@ -797,7 +797,7 @@ VALUES -- i9-14900K  (product 1, LGA1700, DDR5)
         18,
         11,
         'PSU-RM1000X-2024',
-        189.99,
+        4790000,
         30,
         'Corsair RM1000x 1000W 80+ Gold'
     ),
@@ -806,7 +806,7 @@ VALUES -- i9-14900K  (product 1, LGA1700, DDR5)
         19,
         12,
         'CASE-H7FLOW-BLACK',
-        109.99,
+        2790000,
         40,
         'NZXT H7 Flow ATX Black'
     ),
@@ -814,7 +814,7 @@ VALUES -- i9-14900K  (product 1, LGA1700, DDR5)
         20,
         12,
         'CASE-H7FLOW-WHITE',
-        119.99,
+        2990000,
         25,
         'NZXT H7 Flow ATX White'
     ),
@@ -823,7 +823,7 @@ VALUES -- i9-14900K  (product 1, LGA1700, DDR5)
         21,
         13,
         'CASE-POPMINI-BLACK',
-        79.99,
+        1990000,
         30,
         'Fractal Pop Mini Air mATX Black'
     ),
@@ -832,7 +832,7 @@ VALUES -- i9-14900K  (product 1, LGA1700, DDR5)
         22,
         14,
         'COOL-NHD15',
-        99.99,
+        2490000,
         25,
         'Noctua NH-D15 Dual Tower Air Cooler — 165mm'
     ),
@@ -841,7 +841,7 @@ VALUES -- i9-14900K  (product 1, LGA1700, DDR5)
         23,
         15,
         'MOUSE-GPXSL2-BLACK',
-        159.99,
+        3990000,
         50,
         'G Pro X Superlight 2 Black'
     ),
@@ -849,7 +849,7 @@ VALUES -- i9-14900K  (product 1, LGA1700, DDR5)
         24,
         15,
         'MOUSE-GPXSL2-WHITE',
-        159.99,
+        3990000,
         45,
         'G Pro X Superlight 2 White'
     );
@@ -1295,24 +1295,24 @@ VALUES (
         16,
         N'AMD Ryzen 5 5600X',
         N'Mid-range AM4 CPU, 6C/12T, 65W TDP, DDR4. Dùng để test build AM4/DDR4/mATX với B450M.',
-        149.99,
-        14,
+        3790000,
+        7,
         2
     ),
     (
         17,
         N'Corsair CV650',
         N'650W 80+ Bronze PSU. Dùng để test MIN_WATTAGE FAIL (650W < 700W khi có i9+RTX4090).',
-        59.99,
-        7,
+        1490000,
+        6,
         6
     ),
     (
         18,
         N'Corsair RM750x',
         N'750W 80+ Gold PSU. Dùng để test MIN_WATTAGE PASS boundary (750W >= 700W).',
-        109.99,
-        7,
+        2790000,
+        6,
         6
     );
 SET IDENTITY_INSERT products OFF;
@@ -1329,7 +1329,7 @@ VALUES (
         25,
         16,
         N'CPU-R5-5600X-BOX',
-        149.99,
+        3790000,
         25,
         N'Ryzen 5 5600X Box (with cooler)'
     ),
@@ -1337,7 +1337,7 @@ VALUES (
         26,
         17,
         N'PSU-CV650-650W',
-        59.99,
+        1490000,
         30,
         N'Corsair CV650 650W 80+ Bronze'
     ),
@@ -1345,7 +1345,7 @@ VALUES (
         27,
         18,
         N'PSU-RM750X-750W',
-        109.99,
+        2790000,
         30,
         N'Corsair RM750x 750W 80+ Gold'
     );
