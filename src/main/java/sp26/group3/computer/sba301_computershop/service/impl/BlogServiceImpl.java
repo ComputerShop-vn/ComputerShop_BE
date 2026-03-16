@@ -4,10 +4,13 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import sp26.group3.computer.sba301_computershop.dto.request.BlogCreationRequest;
 import sp26.group3.computer.sba301_computershop.dto.request.BlogUpdateRequest;
 import sp26.group3.computer.sba301_computershop.dto.response.BlogResponse;
+import sp26.group3.computer.sba301_computershop.dto.response.PagedResponse;
 import sp26.group3.computer.sba301_computershop.entity.Blog;
 import sp26.group3.computer.sba301_computershop.entity.User;
 import sp26.group3.computer.sba301_computershop.exception.AppException;
@@ -84,10 +87,23 @@ public class BlogServiceImpl implements BlogService {
     }
 
     @Override
+    public PagedResponse<BlogResponse> getAllBlogsPaged(Pageable pageable) {
+        Page<BlogResponse> page = blogRepository.findAll(pageable)
+                .map(blogMapper::toBlogResponse);
+        return PagedResponse.<BlogResponse>builder()
+                .content(page.getContent())
+                .page(page.getNumber())
+                .size(page.getSize())
+                .totalElements(page.getTotalElements())
+                .totalPages(page.getTotalPages())
+                .last(page.isLast())
+                .build();
+    }
+
+    @Override
     public List<BlogResponse> getBlogsByUserId(int userId) {
         log.info("Getting blogs for user id: {}", userId);
 
-        // Verify user exists
         if (!userRepository.existsById(userId)) {
             throw new AppException(ErrorCode.USER_NOT_EXISTED);
         }
@@ -96,6 +112,23 @@ public class BlogServiceImpl implements BlogService {
                 .stream()
                 .map(blogMapper::toBlogResponse)
                 .toList();
+    }
+
+    @Override
+    public PagedResponse<BlogResponse> getBlogsByUserIdPaged(int userId, Pageable pageable) {
+        if (!userRepository.existsById(userId)) {
+            throw new AppException(ErrorCode.USER_NOT_EXISTED);
+        }
+        Page<BlogResponse> page = blogRepository.findByUser_UserId(userId, pageable)
+                .map(blogMapper::toBlogResponse);
+        return PagedResponse.<BlogResponse>builder()
+                .content(page.getContent())
+                .page(page.getNumber())
+                .size(page.getSize())
+                .totalElements(page.getTotalElements())
+                .totalPages(page.getTotalPages())
+                .last(page.isLast())
+                .build();
     }
 
     @Override

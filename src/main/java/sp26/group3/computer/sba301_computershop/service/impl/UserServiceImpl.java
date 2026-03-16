@@ -4,11 +4,14 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import sp26.group3.computer.sba301_computershop.dto.request.UserCreationRequest;
 import sp26.group3.computer.sba301_computershop.dto.request.UserUpdateRequest;
+import sp26.group3.computer.sba301_computershop.dto.response.PagedResponse;
 import sp26.group3.computer.sba301_computershop.dto.response.UserResponse;
 import sp26.group3.computer.sba301_computershop.entity.Role;
 import sp26.group3.computer.sba301_computershop.entity.User;
@@ -35,28 +38,17 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponse createUser(UserCreationRequest request) {
-
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
             throw new AppException(ErrorCode.USER_EXISTED);
         }
-
         User user = userMapper.toUser(request);
         user.setPassword(passwordEncoder.encode(request.getPassword()));
-
         Role userRole = roleRepository.findByName("MEMBER")
                 .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_FOUND));
         user.setCreatedAt(LocalDateTime.now());
         user.setStatus("ACTIVE");
         user.setRole(userRole);
-
         return userMapper.toUserResponse(userRepository.save(user));
-    }
-
-    @Override
-    public UserResponse getUserById(int id) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-        return userMapper.toUserResponse(user);
     }
 
     @Override
@@ -68,8 +60,28 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserResponse updateUser(int id, UserUpdateRequest request) {
+    public PagedResponse<UserResponse> getAllUsersPaged(Pageable pageable) {
+        Page<UserResponse> page = userRepository.findByStatus("ACTIVE", pageable)
+                .map(userMapper::toUserResponse);
+        return PagedResponse.<UserResponse>builder()
+                .content(page.getContent())
+                .page(page.getNumber())
+                .size(page.getSize())
+                .totalElements(page.getTotalElements())
+                .totalPages(page.getTotalPages())
+                .last(page.isLast())
+                .build();
+    }
 
+    @Override
+    public UserResponse getUserById(int id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        return userMapper.toUserResponse(user);
+    }
+
+    @Override
+    public UserResponse updateUser(int id, UserUpdateRequest request) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
@@ -78,7 +90,6 @@ public class UserServiceImpl implements UserService {
         log.info("Old status BEFORE mapper: {}", user.getStatus());
         log.info("Request status: {}", request.getStatus());
 
-        // Gọi mapper
         userMapper.updateUser(user, request);
 
         log.info("Status AFTER mapper: {}", user.getStatus());
@@ -99,49 +110,33 @@ public class UserServiceImpl implements UserService {
     public void deleteUser(int id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-
         user.setStatus("INACTIVE");
         userRepository.save(user);
     }
 
     @Override
     public UserResponse getMyProfile() {
-        String email = SecurityContextHolder.getContext()
-                .getAuthentication()
-                .getName();
-
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-
         return userMapper.toUserResponse(user);
     }
 
     @Override
     public UserResponse updateMyProfile(UserUpdateRequest request) {
-
-        String email = SecurityContextHolder.getContext()
-                .getAuthentication()
-                .getName();
-
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
         log.info("Logged in email: " + email);
-
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-
-       log.info("User ID: " + user.getUserId());
-       log.info("Old status: " + user.getStatus());
+        log.info("User ID: " + user.getUserId());
+        log.info("Old status: " + user.getStatus());
         log.info("Request status: " + request.getStatus());
-
         if (request.getStatus() != null && !request.getStatus().isBlank()) {
             user.setStatus(request.getStatus());
         }
-
         log.info("After set status: " + user.getStatus());
-
         User savedUser = userRepository.save(user);
-
         log.info("Saved status in object: " + savedUser.getStatus());
-
         return userMapper.toUserResponse(savedUser);
     }
 }

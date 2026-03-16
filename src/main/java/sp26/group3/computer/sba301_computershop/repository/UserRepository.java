@@ -1,5 +1,7 @@
 package sp26.group3.computer.sba301_computershop.repository;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import sp26.group3.computer.sba301_computershop.entity.User;
@@ -11,5 +13,5 @@ import java.util.Optional;
 public interface UserRepository extends JpaRepository<User, Integer> {
     Optional<User> findByEmail(String email);
     List<User> findByStatus(String status);
-
+    Page<User> findByStatus(String status, Pageable pageable);
 }

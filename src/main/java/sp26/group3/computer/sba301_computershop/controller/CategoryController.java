@@ -6,11 +6,15 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import sp26.group3.computer.sba301_computershop.dto.request.CategoryRequest;
 import sp26.group3.computer.sba301_computershop.dto.response.ApiResponse;
 import sp26.group3.computer.sba301_computershop.dto.response.CategoryResponse;
+import sp26.group3.computer.sba301_computershop.dto.response.PagedResponse;
 import sp26.group3.computer.sba301_computershop.service.CategoryService;
 
 import java.util.List;
@@ -52,6 +56,20 @@ public class CategoryController {
 
         log.info("[GET] /categories - Total categories={}",
                 apiResponse.getResult().size());
+        return apiResponse;
+    }
+
+    // ================= READ ALL PAGED =================
+    @GetMapping("/paged")
+    ApiResponse<PagedResponse<CategoryResponse>> getAllCategoriesPaged(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "categoryId") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir) {
+        Sort sort = sortDir.equalsIgnoreCase("desc") ? Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
+        Pageable pageable = PageRequest.of(page, size, sort);
+        ApiResponse<PagedResponse<CategoryResponse>> apiResponse = new ApiResponse<>();
+        apiResponse.setResult(categoryService.getAllPaged(pageable));
         return apiResponse;
     }
 

@@ -300,10 +300,10 @@ SET IDENTITY_INSERT roles OFF;
 -- Installment Packages
 SET IDENTITY_INSERT installment_package ON;
 INSERT INTO installment_package (package_id, name, duration_months, interest_rate, min_order_amount, is_active) VALUES
-(1, N'Trả góp 3 tháng - Lãi suất 0%',        3,  0.0,  3000000.00, 1),
-(2, N'Trả góp 6 tháng - Lãi suất 0%',        6,  1.0,  5000000.00, 1),
-(3, N'Trả góp 12 tháng - Lãi suất 1.5%',    12,  1.5, 10000000.00, 1),
-(4, N'Trả góp 9 tháng - Không hoạt động',    9,  1.5,  5000000.00, 0);
+(1, N'Trả góp 3 tháng - Lãi suất 0%',        3,  0.0,  3000.00, 1),
+(2, N'Trả góp 6 tháng - Lãi suất 0%',        6,  1.0,  5000.00, 1),
+(3, N'Trả góp 12 tháng - Lãi suất 1.5%',    12,  1.5, 1000.00, 1),
+(4, N'Trả góp 9 tháng - Không hoạt động',    9,  1.5,  5000.00, 0);
 SET IDENTITY_INSERT installment_package OFF;
 
 -- Users  (password = Admin@123 for all)

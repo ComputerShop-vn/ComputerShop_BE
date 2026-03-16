@@ -1341,12 +1341,12 @@ formData.append("logo", logoFile);       // optional
 }
 ```
 
-| Field | Bắt buộc | Mặc định | Điều kiện |
-|-------|----------|----------|----------|
-| `recipientName` | ✅ | — | Không được rỗng |
-| `recipientPhone` | ✅ | — | Không được rỗng |
-| `shippingAddress` | ✅ | — | Không được rỗng |
-| `paymentType` | ✅ | — | `"FULL"` hoặc `"INSTALLMENT"` |
+| Field | Bắt buộc | Mặc định | Điều kiện                                                                                 |
+|-------|----------|----------|-------------------------------------------------------------------------------------------|
+| `recipientName` | ✅ | — | Không được rỗng                                                                           |
+| `recipientPhone` | ✅ | — | Không được rỗng                                                                           |
+| `shippingAddress` | ✅ | — | Không được rỗng                                                                           |
+| `paymentType` | ✅ | — | `"COD, "FULL"` hoặc `"INSTALLMENT"`                                                       |
 | `packageId` | ❌ | null | **Bắt buộc khi `paymentType = "INSTALLMENT"`**. Lấy từ `GET /installment-packages/active` |
 
 **Validation khi chọn INSTALLMENT:**
@@ -1401,7 +1401,7 @@ formData.append("logo", logoFile);       // optional
         "dueDate": "2026-04-04",
         "paidDate": null,
         "vnpTransactionNo": null,
-        "status": "PENDING"
+        "status": "UNPAID"
       },
       {
         "paymentScheduleId": 2,
@@ -1410,7 +1410,7 @@ formData.append("logo", logoFile);       // optional
         "dueDate": "2026-05-04",
         "paidDate": null,
         "vnpTransactionNo": null,
-        "status": "PENDING"
+        "status": "UNPAID"
       },
       {
         "paymentScheduleId": 3,
@@ -1419,7 +1419,7 @@ formData.append("logo", logoFile);       // optional
         "dueDate": "2026-06-04",
         "paidDate": null,
         "vnpTransactionNo": null,
-        "status": "PENDING"
+        "status": "UNPAID"
       },
       {
         "paymentScheduleId": 4,
@@ -1428,7 +1428,7 @@ formData.append("logo", logoFile);       // optional
         "dueDate": "2026-07-04",
         "paidDate": null,
         "vnpTransactionNo": null,
-        "status": "PENDING"
+        "status": "UNPAID"
       },
       {
         "paymentScheduleId": 5,
@@ -1437,7 +1437,7 @@ formData.append("logo", logoFile);       // optional
         "dueDate": "2026-08-04",
         "paidDate": null,
         "vnpTransactionNo": null,
-        "status": "PENDING"
+        "status": "UNPAID"
       },
       {
         "paymentScheduleId": 6,
@@ -1446,7 +1446,7 @@ formData.append("logo", logoFile);       // optional
         "dueDate": "2026-09-04",
         "paidDate": null,
         "vnpTransactionNo": null,
-        "status": "PENDING"
+        "status": "UNPAID"
       }
     ]
   }

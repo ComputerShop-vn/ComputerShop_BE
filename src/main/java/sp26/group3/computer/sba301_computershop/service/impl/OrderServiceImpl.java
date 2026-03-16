@@ -4,6 +4,8 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -176,6 +178,49 @@ public class OrderServiceImpl implements OrderService {
                     return toOrderResponse(order, items);
                 })
                 .toList();
+    }
+
+    // ======================== PAGED: GET MY ORDERS ========================
+
+    @Override
+    public PagedResponse<OrderResponse> getMyOrdersPaged(Pageable pageable) {
+        User user = getCurrentUser();
+        Page<Order> page = orderRepository.findByUserUserId(user.getUserId(), pageable);
+        List<OrderResponse> content = page.getContent().stream()
+                .map(order -> {
+                    List<OrderItem> items = orderItemRepository.findByOrderOrderId(order.getOrderId());
+                    return toOrderResponse(order, items);
+                })
+                .toList();
+        return PagedResponse.<OrderResponse>builder()
+                .content(content)
+                .page(page.getNumber())
+                .size(page.getSize())
+                .totalElements(page.getTotalElements())
+                .totalPages(page.getTotalPages())
+                .last(page.isLast())
+                .build();
+    }
+
+    // ======================== PAGED: GET ALL ORDERS (ADMIN/STAFF) ========================
+
+    @Override
+    public PagedResponse<OrderResponse> getAllOrdersPaged(Pageable pageable) {
+        Page<Order> page = orderRepository.findAll(pageable);
+        List<OrderResponse> content = page.getContent().stream()
+                .map(order -> {
+                    List<OrderItem> items = orderItemRepository.findByOrderOrderId(order.getOrderId());
+                    return toOrderResponse(order, items);
+                })
+                .toList();
+        return PagedResponse.<OrderResponse>builder()
+                .content(content)
+                .page(page.getNumber())
+                .size(page.getSize())
+                .totalElements(page.getTotalElements())
+                .totalPages(page.getTotalPages())
+                .last(page.isLast())
+                .build();
     }
 
     // ======================== UPDATE ORDER STATUS ========================
