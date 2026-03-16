@@ -24,6 +24,9 @@ public class InstallmentPackageRequest {
     @NotNull(message = "Minimum order amount is required")
     Double minOrderAmount;
 
+    @NotNull(message = "Down payment percentage is required")
+    Double downPaymentPercentage;
+
     @NotNull(message = "Active status is required")
     Boolean isActive;
 }

@@ -18,4 +18,6 @@ public interface InstallmentPackageService {
     InstallmentPackageResponse updatePackage(int id, InstallmentPackageRequest request);
 
     void deletePackage(int id);
+
+    sp26.group3.computer.sba301_computershop.dto.response.InstallmentPreviewResponse calculateInstallmentPreview(sp26.group3.computer.sba301_computershop.dto.request.InstallmentCalculateRequest request);
 }

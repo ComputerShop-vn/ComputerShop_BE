@@ -8,6 +8,7 @@ import sp26.group3.computer.sba301_computershop.dto.response.ProductDetailRespon
 import sp26.group3.computer.sba301_computershop.dto.response.ProductResponse;
 
 import java.util.List;
+import java.util.Map;
 
 public interface ProductService {
 
@@ -19,7 +20,12 @@ public interface ProductService {
 
     List<ProductResponse> searchProducts(String keyword);
 
-    List<ProductResponse> filterProducts(Integer categoryId, Integer brandId, Double minPrice, Double maxPrice);
+    /**
+     * @param attributes Map of attributeName → requiredValue (case-insensitive).
+     *                   A product passes if it has at least one variant satisfying ALL conditions.
+     */
+    List<ProductResponse> filterProducts(Integer categoryId, Integer brandId, Double minPrice, Double maxPrice,
+                                         Map<String, String> attributes);
 
     PagedResponse<ProductResponse> filterProductsPaged(Integer categoryId, Integer brandId, Double minPrice, Double maxPrice, Pageable pageable);
 

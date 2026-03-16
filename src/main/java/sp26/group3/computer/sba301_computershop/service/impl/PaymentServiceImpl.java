@@ -200,7 +200,8 @@ public class PaymentServiceImpl implements PaymentService {
                 if (order == null) {
                     response.put("RspCode", "01");
                     response.put("Message", "Order not found");
-                } else if (order.getPaymentType() == PaymentType.FULL && order.getStatus() == OrderStatus.PAID) {
+                } else if (order.getPaymentType() == PaymentType.FULL
+                        && order.getOrderPaymentSchedule().get(0).getStatus() == PaymentStatus.PAID) {
                     response.put("RspCode", "02");
                     response.put("Message", "Order already confirmed");
                 } else {

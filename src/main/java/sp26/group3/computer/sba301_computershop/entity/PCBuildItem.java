@@ -5,9 +5,10 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import sp26.group3.computer.sba301_computershop.enums.ComponentType;
 
 @Entity
-@Table(name = "pc_build_item")
+@Table(name = "pc_build_items")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -23,10 +24,18 @@ public class PCBuildItem {
     @JoinColumn(name = "build_id", nullable = false)
     private PCBuild build;
 
-    @ManyToOne
-    @JoinColumn(name = "product_id", nullable = false)
-    private Product product;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "component_type", nullable = false, length = 50)
+    private ComponentType componentType;
 
+    @ManyToOne
+    @JoinColumn(name = "variant_id", nullable = false)
+    private ProductVariant variant;
+
+    @Column(nullable = false)
     private int quantity;
+
+    @Column(nullable = false)
+    private double price;
 }
 

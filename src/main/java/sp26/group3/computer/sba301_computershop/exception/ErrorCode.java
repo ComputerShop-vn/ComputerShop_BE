@@ -59,12 +59,21 @@ public enum ErrorCode {
     CART_ITEM_NOT_FOUND(8002, "Cart item not found", HttpStatus.NOT_FOUND),
     CART_ITEM_ALREADY_EXISTS(8003, "Variant already exists in cart", HttpStatus.BAD_REQUEST),
     INVALID_QUANTITY(8004, "Quantity must be greater than 0", HttpStatus.BAD_REQUEST),
+    PRODUCT_OUT_OF_STOCK(8005, "Product is out of stock", HttpStatus.BAD_REQUEST),
 
     // Order errors
     ORDER_NOT_FOUND(9001, "Order not found", HttpStatus.NOT_FOUND),
     EMPTY_CART(9002, "Cart is empty, cannot place order", HttpStatus.BAD_REQUEST),
     INSUFFICIENT_STOCK(9003, "Insufficient stock for variant", HttpStatus.BAD_REQUEST),
     ORDER_ALREADY_PAID(9004, "Order is already fully paid", HttpStatus.BAD_REQUEST),
+
+    // PC Build errors
+    PC_BUILD_NOT_FOUND(10001, "PC build not found", HttpStatus.NOT_FOUND),
+    PC_BUILD_ACCESS_DENIED(10002, "You do not have access to this PC build", HttpStatus.FORBIDDEN),
+    PC_BUILD_INCOMPLETE(10003, "PC build has no items", HttpStatus.BAD_REQUEST),
+    PC_BUILD_INVALID(10004, "PC build has compatibility issues", HttpStatus.BAD_REQUEST),
+    RAM_SLOTS_EXCEEDED(10005, "Mainboard RAM slots are full", HttpStatus.BAD_REQUEST),
+    PC_BUILD_ITEM_NOT_FOUND(10006, "PC build item not found", HttpStatus.NOT_FOUND),
 
     ;
 

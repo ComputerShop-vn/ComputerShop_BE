@@ -24,6 +24,8 @@ import sp26.group3.computer.sba301_computershop.dto.response.ProductResponse;
 import sp26.group3.computer.sba301_computershop.service.ProductService;
 
 import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/products")
@@ -36,12 +38,7 @@ public class ProductController {
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasAnyRole('STAFF','ADMIN')")
-    @io.swagger.v3.oas.annotations.parameters.RequestBody(
-            content = @Content(
-                    mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
-                    encoding = @Encoding(name = "product", contentType = MediaType.APPLICATION_JSON_VALUE)
-            )
-    )
+    @io.swagger.v3.oas.annotations.parameters.RequestBody(content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE, encoding = @Encoding(name = "product", contentType = MediaType.APPLICATION_JSON_VALUE)))
     public ApiResponse<ProductResponse> createProduct(
             @RequestPart("product") @Valid ProductCreationRequest request,
             @Parameter(description = "Product images")
@@ -52,15 +49,34 @@ public class ProductController {
         return response;
     }
 
+    /**
+     * Lọc sản phẩm theo category, brand, giá, và attribute.
+     * Attribute filter formats:
+     *   attributes=Socket:AM5              → Socket = AM5 (exact, case-insensitive)
+     *   attributes=GPU Length:lte:400      → GPU Length ≤ 400 (numeric)
+     *   attributes=Wattage:gte:750         → Wattage ≥ 750 (numeric)
+     * Có thể dùng nhiều attributes cùng lúc: tất cả đều phải thỏa mãn trên cùng 1 variant.
+     */
     @GetMapping
     public ApiResponse<List<ProductResponse>> getAllProducts(
             @RequestParam(required = false) Integer categoryId,
             @RequestParam(required = false) Integer brandId,
             @RequestParam(required = false) Double minPrice,
-            @RequestParam(required = false) Double maxPrice
+            @RequestParam(required = false) Double maxPrice,
+            @RequestParam(required = false) List<String> attributes
     ) {
+        // Parse "Socket:AM5" → {"Socket": "AM5"}
+        Map<String, String> attrMap = new LinkedHashMap<>();
+        if (attributes != null) {
+            for (String attr : attributes) {
+                int idx = attr.indexOf(':');
+                if (idx > 0) {
+                    attrMap.put(attr.substring(0, idx).trim(), attr.substring(idx + 1).trim());
+                }
+            }
+        }
         ApiResponse<List<ProductResponse>> response = new ApiResponse<>();
-        response.setResult(productService.filterProducts(categoryId, brandId, minPrice, maxPrice));
+        response.setResult(productService.filterProducts(categoryId, brandId, minPrice, maxPrice, attrMap));
         return response;
     }
 
@@ -117,12 +133,7 @@ public class ProductController {
 
     @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasAnyRole('STAFF','ADMIN')")
-    @io.swagger.v3.oas.annotations.parameters.RequestBody(
-            content = @Content(
-                    mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
-                    encoding = @Encoding(name = "product", contentType = MediaType.APPLICATION_JSON_VALUE)
-            )
-    )
+    @io.swagger.v3.oas.annotations.parameters.RequestBody(content = @Content(mediaType = MediaType.MULTIPART_FORM_DATA_VALUE, encoding = @Encoding(name = "product", contentType = MediaType.APPLICATION_JSON_VALUE)))
     public ApiResponse<ProductResponse> updateProduct(
             @PathVariable int id,
             @RequestPart("product") @Valid ProductUpdateRequest request,

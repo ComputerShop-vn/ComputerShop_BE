@@ -22,6 +22,8 @@ public class ProductUpdateRequest {
 
     private Integer brandId;
 
+    private Integer warrantyMonths;
+
     @Valid
     private List<VariantUpdateDTO> variants;
 

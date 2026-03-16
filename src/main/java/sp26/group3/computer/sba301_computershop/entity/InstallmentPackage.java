@@ -30,6 +30,9 @@ public class InstallmentPackage {
     @Column(name = "min_order_amount")
     double minOrderAmount;
 
+    @Column(name = "down_payment_percentage")
+    double downPaymentPercentage;
+
     @Column(name = "is_active")
     boolean isActive;
 }

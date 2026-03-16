@@ -54,30 +54,45 @@ public class CartServiceImpl implements CartService {
         ProductVariant variant = productVariantRepository.findById(request.getVariantId())
                 .orElseThrow(() -> new AppException(ErrorCode.VARIANT_NOT_FOUND));
 
-        // Check if variant already in cart → merge quantity
+        int stock = variant.getStockQuantity();
+
         Optional<CartItem> existingItem = cartItemRepository
                 .findByCartCartIdAndVariantVariantId(cart.getCartId(), variant.getVariantId());
 
         if (existingItem.isPresent()) {
+
             CartItem item = existingItem.get();
-            item.setQuantity(item.getQuantity() + request.getQuantity());
+            int newQuantity = item.getQuantity() + request.getQuantity();
+
+            if (newQuantity > stock) {
+                throw new AppException(ErrorCode.PRODUCT_OUT_OF_STOCK);
+            }
+
+            item.setQuantity(newQuantity);
             cartItemRepository.save(item);
+
             log.info("Merged cart item | cartItemId={} newQty={}", item.getCartItemId(), item.getQuantity());
+
         } else {
+
+            if (request.getQuantity() > stock) {
+                throw new AppException(ErrorCode.PRODUCT_OUT_OF_STOCK);
+            }
+
             CartItem newItem = CartItem.builder()
                     .cart(cart)
                     .variant(variant)
                     .quantity(request.getQuantity())
                     .build();
+
             cartItemRepository.save(newItem);
+
             log.info("Added new cart item | variantId={} qty={}", variant.getVariantId(), request.getQuantity());
         }
 
-        // Reload cart to get fresh items
         cart = cartRepository.findById(cart.getCartId()).orElseThrow();
         return toCartResponse(cart);
     }
-
     // ======================== UPDATE CART ITEM ========================
 
     @Override

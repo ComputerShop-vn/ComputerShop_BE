@@ -56,7 +56,10 @@
 | 9001 | 404 | Order không tồn tại / không có quyền huỷ |
 | 9002 | 400 | Giỏ hàng rỗng |
 | 9003 | 400 | Không đủ hàng trong kho |
-| 9999 | 500 | Lỗi server không xác định |
+| 9999  | 500 | Lỗi server không xác định |
+| 10001 | 404 | PC build không tồn tại |
+| 10003 | 400 | PC build chưa có item nào (không thể lưu/đặt hàng) |
+| 10005 | 400 | Mainboard đã hết slot RAM |
 
 **Response lỗi mẫu:**
 ```json
@@ -1623,12 +1626,11 @@ PENDING → PROCESSING → SHIPPING → DELIVERED
 
 **Flow thanh toán VNPay:**
 ```
-1. FE → GET /createPayment → nhận paymentUrl
+1. FE → Tạo Order → nhận paymentUrl
 2. FE → redirect user đến paymentUrl
 3. User → hoàn tất thanh toán trên VNPay
-4. VNPay → GET /callback (server xử lý)
-5. Server → redirect về URL frontend
-6. FE → GET /orders/{id} để kiểm tra trạng thái
+4. VNPay → GET /callback (FE)
+6. FE → GET /orders/{id} để hiển thị thông tin đơn hàng và trạng thái đơn hàng/thanh toán
 ```
 
 ---
@@ -1665,18 +1667,20 @@ PENDING → PROCESSING → SHIPPING → DELIVERED
   "result": [
     {
       "packageId": 1,
-      "name": "Trả góp 3 tháng - Lãi suất 0%",
+      "name": "Trả góp 3 tháng - Lãi suất 0% (Trả trước 0%)",
       "durationMonths": 3,
       "interestRate": 0.0,
       "minOrderAmount": 3000000.0,
+      "downPaymentPercentage": 0.0,
       "isActive": true
     },
     {
       "packageId": 2,
-      "name": "Trả góp 6 tháng - Lãi suất 0%",
+      "name": "Trả góp 6 tháng - Lãi suất 1% (Trả trước 10%)",
       "durationMonths": 6,
       "interestRate": 1.0,
       "minOrderAmount": 5000000.0,
+      "downPaymentPercentage": 10.0,
       "isActive": true
     }
   ]
@@ -1707,10 +1711,11 @@ PENDING → PROCESSING → SHIPPING → DELIVERED
 **Request:**
 ```json
 {
-  "name": "Trả góp 18 tháng - Lãi suất 2%",
+  "name": "Trả góp 18 tháng - Lãi suất 2% (Trả trước 25%)",
   "durationMonths": 18,
   "interestRate": 2.0,
   "minOrderAmount": 15000000.0,
+  "downPaymentPercentage": 25.0,
   "isActive": true
 }
 ```
@@ -1721,6 +1726,7 @@ PENDING → PROCESSING → SHIPPING → DELIVERED
 | `durationMonths` | ✅ | Số nguyên dương |
 | `interestRate` | ✅ | Số thực >= 0 (%) |
 | `minOrderAmount` | ✅ | Số thực >= 0 |
+| `downPaymentPercentage` | ✅ | Số thực >= 0 (%) |
 | `isActive` | ✅ | `true` hoặc `false` |
 
 | Case | Code |
@@ -1741,6 +1747,7 @@ PENDING → PROCESSING → SHIPPING → DELIVERED
   "durationMonths": 6,
   "interestRate": 0.5,
   "minOrderAmount": 5000000.0,
+  "downPaymentPercentage": 10.0,
   "isActive": false
 }
 ```
@@ -1751,6 +1758,7 @@ PENDING → PROCESSING → SHIPPING → DELIVERED
 | `durationMonths` | null = không thay đổi |
 | `interestRate` | null = không thay đổi |
 | `minOrderAmount` | null = không thay đổi |
+| `downPaymentPercentage` | null = không thay đổi |
 | `isActive` | null = không thay đổi |
 
 > **Partial update:** Mỗi field đều nullable. Gửi gì thì update nấy.
@@ -1781,6 +1789,55 @@ PENDING → PROCESSING → SHIPPING → DELIVERED
 |------|------|
 | ✅ Thành công | 1000 |
 | ❌ Không tồn tại | 404 |
+
+---
+
+## POST `/installment-packages/calculate` — Xem trước trả góp
+
+**Auth:** Public
+
+**Request:**
+```json
+{
+  "packageId": 2,
+  "orderAmount": 20000000
+}
+```
+
+**Response:**
+```json
+{
+  "code": 1000,
+  "message": null,
+  "result": {
+    "orderAmount": 20000000.0,
+    "downPaymentPercentage": 10.0,
+    "downPaymentAmount": 2000000.0,
+    "remainingBalance": 18000000.0,
+    "monthlyInstallmentAmount": 305282.0,
+    "interestRate": 1.0,
+    "durationMonths": 6,
+    "totalPayableAmount": 20305282.0,
+    "schedule": [
+      {
+        "installmentNo": 1,
+        "amount": 305282.0,
+        "dueDate": "2026-04-15"
+      },
+      {
+        "installmentNo": 2,
+        "amount": 305282.0,
+        "dueDate": "2026-05-15"
+      }
+    ]
+  }
+}
+```
+
+| Case | Code |
+|------|------|
+| ✅ Thành công | 1000 |
+| ❌ Package không tồn tại | 9999 (Uncategorized) |
 
 ---
 
@@ -2308,6 +2365,128 @@ const blog = {
 
 ---
 
+# 14. 🛡️ Warranties — `/warranties`
+
+---
+
+## GET `/warranties/{id}`
+
+**Auth:** MEMBER, STAFF, ADMIN
+
+| Case | Code |
+|------|------|
+| ✅ Tìm thấy | 1000 |
+| ❌ Không tồn tại | 404 |
+
+---
+
+## GET `/warranties/order/{orderId}`
+
+**Auth:** MEMBER, STAFF, ADMIN
+
+| Case | Code |
+|------|------|
+| ✅ Thành công | 1000, trả về list warranties |
+| ❌ Không tìm thấy order | 404 |
+
+---
+
+## PUT `/warranties/{id}/status`
+
+**Auth:** STAFF, ADMIN
+
+**Request:**
+```json
+{
+  "status": "ACTIVE"
+}
+```
+
+* `status`: `ACTIVE`, `EXPIRED`, `VOIDED`
+
+| Case | Code |
+|------|------|
+| ✅ Thành công | 1000 |
+| ❌ Không tồn tại | 404 |
+| ❌ Thiếu status | 400 |
+
+---
+
+---
+
+# 15. 🛠️ Warranty Claims — `/claims`
+
+---
+
+## POST `/claims` — Tạo claim mới
+
+**Auth:** MEMBER, STAFF, ADMIN
+
+**Request:**
+```json
+{
+  "warrantyId": 1,
+  "customerNote": "Màn hình bị sọc"
+}
+```
+
+| Field | Bắt buộc | Validation |
+|-------|----------|-----------|
+| `warrantyId` | ✅ | Phải tồn tại |
+| `customerNote` | ✅ | Không được rỗng |
+
+| Case | Code |
+|------|------|
+| ✅ Thành công | 1000 |
+| ❌ Thiếu field / Rỗng | 400 |
+
+---
+
+## GET `/claims/{id}`
+
+**Auth:** MEMBER, STAFF, ADMIN
+
+| Case | Code |
+|------|------|
+| ✅ Tìm thấy | 1000 |
+| ❌ Không tồn tại | 404 |
+
+---
+
+## GET `/claims/warranty/{warrantyId}`
+
+**Auth:** MEMBER, STAFF, ADMIN
+
+| Case | Code |
+|------|------|
+| ✅ Thành công | 1000, trả về list |
+| ❌ Không tồn tại | 404 |
+
+---
+
+## PUT `/claims/{id}` — Cập nhật claim
+
+**Auth:** STAFF, ADMIN
+
+**Request:**
+```json
+{
+  "status": "PROCESSING",
+  "technicianNote": "Đang kiểm tra",
+  "solutionType": "REPAIR"
+}
+```
+
+* `status`: `PENDING`, `PROCESSING`, `COMPLETED`, `REJECTED`
+* `solutionType`: `REPAIR`, `REPLACE`, `REFUND`
+
+| Case | Code |
+|------|------|
+| ✅ Thành công | 1000 |
+| ❌ Không tồn tại | 404 |
+
+---
+
 # 📋 Tóm tắt tất cả Endpoints
 
 | Method | Endpoint | Auth | Mô tả |
@@ -2388,3 +2567,693 @@ const blog = {
 | POST | `/roles` | ADMIN | Tạo role |
 | PUT | `/roles/{id}` | ADMIN | Cập nhật |
 | DELETE | `/roles/{id}` | ADMIN | Xoá |
+| **WARRANTIES** | | | |
+| GET | `/warranties/{id}` | Authenticated | Chi tiết warranty |
+| GET | `/warranties/order/{orderId}` | Authenticated | Warranties của đơn hàng |
+| PUT | `/warranties/{id}/status` | STAFF/ADMIN | Cập nhật trạng thái warranty |
+| **CLAIMS** | | | |
+| POST | `/claims` | Authenticated | Tạo yêu cầu bảo hành |
+| GET | `/claims/{id}` | Authenticated | Chi tiết yêu cầu bảo hành |
+| GET | `/claims/warranty/{warrantyId}` | Authenticated | Các yêu cầu bảo hành của warranty |
+| PUT | `/claims/{id}` | STAFF/ADMIN | Cập nhật yêu cầu bảo hành |
+| **PC BUILD** | | | |
+| POST | `/pc-builds/compatible-variants` | MEMBER+ | Lấy categoryId + filter hints cho loại linh kiện |
+| PUT | `/pc-builds/draft/items` | MEMBER+ | Upsert linh kiện vào draft build |
+| PUT | `/pc-builds/draft/save` | MEMBER+ | Lưu draft với tên, chuyển sang SAVED |
+| POST | `/pc-builds/draft/order` | MEMBER+ | Đặt hàng trực tiếp từ build hiện tại |
+
+---
+
+## 12. PC Build (Build PC)
+
+Build PC là tính năng cho phép user lắp ráp cấu hình máy tính từng bước.  
+FE gọi `compatible-variants` để lấy filter hints trước mỗi lần chọn linh kiện,  
+sau đó dùng hints đó để lọc sản phẩm qua `/products`, chọn xong thì `upsert` vào draft.
+
+### Sơ đồ luồng
+
+```
+Bước 0: Đăng nhập lấy token (member)
+  │
+  ▼
+Bước 1: POST /pc-builds/compatible-variants  ← currentItems: []
+  │      → { categoryId, hints: [] }
+  │
+  ▼
+Bước 2: GET /products?categoryId={categoryId}&...hints...
+  │      → Danh sách sản phẩm phù hợp
+  │
+  ▼
+Bước 3: PUT /pc-builds/draft/items  ← chọn 1 variantId
+  │
+  └─ Lặp lại Bước 1-3 cho từng loại linh kiện (thêm item đã chọn vào currentItems)
+  │
+  ▼
+Bước 4: PUT /pc-builds/draft/save   ← đặt tên build
+  │
+  ▼
+Bước 5: POST /pc-builds/draft/order ← thông tin giao hàng + thanh toán
+```
+
+---
+
+### 12.0 Đăng nhập lấy Bearer token
+
+```http
+POST /api/v1/auth/login
+Content-Type: application/json
+```
+```json
+{
+  "email": "member1@example.com",
+  "password": "Admin@123"
+}
+```
+**Response:** `data.token` — dùng cho tất cả request tiếp theo.
+
+---
+
+### 12.1 Endpoint: Lấy compatible variants
+
+```http
+POST /api/v1/pc-builds/compatible-variants
+Authorization: Bearer {token}
+Content-Type: application/json
+```
+
+| Field | Type | Mô tả |
+|---|---|---|
+| `targetComponentType` | String (enum) | Loại linh kiện cần tìm |
+| `currentItems` | Array | Danh sách linh kiện đã chọn trước đó |
+| `currentItems[].componentType` | String | Enum: CPU, MAINBOARD, RAM, GPU, PSU, CASE, COOLING, ... |
+| `currentItems[].variantId` | Integer | ID của variant đã chọn |
+
+**Enum `targetComponentType`:** `CPU`, `MAINBOARD`, `RAM`, `GPU`, `STORAGE_PRIMARY`, `STORAGE_SECONDARY`, `PSU`, `CASE`, `COOLING`, `MONITOR`, `KEYBOARD`, `MOUSE`
+
+**Response:**
+```json
+{
+  "code": 1000,
+  "result": {
+    "categoryId": 3,
+    "hints": [
+      { "attributeName": "Socket", "requiredValue": "LGA1700", "ruleType": "MUST_MATCH", "comparison": "eq" },
+      { "attributeName": "Memory Type", "requiredValue": "DDR5", "ruleType": "MUST_MATCH", "comparison": "eq" }
+    ]
+  }
+}
+```
+
+| Field | Mô tả |
+|---|---|
+| `categoryId` | FE dùng để gọi `GET /products?categoryId={categoryId}` |
+| `hints[].attributeName` | Tên attribute để filter |
+| `hints[].requiredValue` | Giá trị filter |
+| `hints[].ruleType` | `MUST_MATCH`, `MUST_FIT`, `MUST_SUPPORT`, `MIN_WATTAGE` |
+| `hints[].comparison` | `eq` (bằng), `lte` (≤), `gte` (≥) |
+
+---
+
+### 12.2 Endpoint: Upsert item vào draft
+
+```http
+PUT /api/v1/pc-builds/draft/items
+Authorization: Bearer {token}
+Content-Type: application/json
+```
+
+| Field | Type | Mô tả |
+|---|---|---|
+| `componentType` | String (enum) | Loại linh kiện |
+| `variantId` | Integer | ID variant đã chọn |
+| `quantity` | Integer | Số lượng (MULTI_SLOT: RAM, STORAGE, ...) |
+
+**Response:** Object PCBuildResponse chứa toàn bộ build hiện tại.
+
+**Lỗi:**
+- `10005` — Mainboard đã hết slot RAM khi thêm RAM thứ (maxSlots + 1)
+
+---
+
+### 12.2a Endpoint: Xem draft hiện tại
+
+```http
+GET /api/v1/pc-builds/draft
+Authorization: Bearer {token}
+```
+
+Trả về DRAFT build hiện tại của user. Nếu chưa có DRAFT, server tự tạo mới (rỗng).
+
+**Response:**
+```json
+{
+  "code": 1000,
+  "result": {
+    "buildId": 1,
+    "status": "DRAFT",
+    "totalPrice": 15990000,
+    "createdAt": "2026-03-12T22:41:17.43",
+    "updatedAt": "2026-03-12T22:41:17.50",
+    "items": [
+      {
+        "buildItemId": 1,
+        "componentType": "CPU",
+        "componentTypeName": "Bộ xử lý (CPU)",
+        "variantId": 1,
+        "variantName": "Intel Core i9-13900K Box",
+        "sku": "CPU-I9-13900K-BOX",
+        "price": 15990000,
+        "quantity": 1,
+        "subtotal": 15990000,
+        "productId": 1,
+        "productName": "Intel Core i9-13900K",
+        "thumbnailUrl": "https://..."
+      }
+    ]
+  }
+}
+```
+
+---
+
+### 12.2b Endpoint: Xem tất cả builds của tôi
+
+```http
+GET /api/v1/pc-builds
+Authorization: Bearer {token}
+```
+
+Trả về toàn bộ builds (DRAFT, SAVED, ORDERED) của user, sắp xếp theo ngày tạo mới nhất.
+
+**Response:**
+```json
+{
+  "code": 1000,
+  "result": [
+    {
+      "buildId": 2,
+      "buildName": "Gaming PC DDR5",
+      "status": "SAVED",
+      "totalPrice": 45000000,
+      "createdAt": "...",
+      "updatedAt": "...",
+      "items": [...]
+    },
+    {
+      "buildId": 1,
+      "status": "DRAFT",
+      "totalPrice": 15990000,
+      "createdAt": "...",
+      "updatedAt": "...",
+      "items": [...]
+    }
+  ]
+}
+```
+
+---
+
+### 12.3 Endpoint: Lưu build
+
+```http
+PUT /api/v1/pc-builds/draft/save
+Authorization: Bearer {token}
+Content-Type: application/json
+```
+```json
+{ "buildName": "Intel Gaming Build 2026" }
+```
+**Response:** PCBuildResponse với `status: "SAVED"`.
+
+**Lỗi:**
+- `10003` — Build không có bất kỳ item nào
+
+---
+
+### 12.4 Endpoint: Đặt hàng từ build
+
+```http
+POST /api/v1/pc-builds/draft/order
+Authorization: Bearer {token}
+Content-Type: application/json
+```
+```json
+{
+  "paymentType": "FULL",
+  "recipientName": "Nguyen Van A",
+  "recipientPhone": "0901234567",
+  "shippingAddress": "123 Nguyen Trai, Q1, TP.HCM"
+}
+```
+**Response:** OrderResponse với `orderId`, `totalAmount`, `status: "PENDING"`.
+
+**Lỗi:**
+- `10003` — Build chưa có item
+- `9003` — Không đủ hàng trong kho
+
+---
+
+### 12.5 Hướng dẫn test toàn bộ flow (Happy Path — Intel + DDR5 + ATX)
+
+> **Dữ liệu init.sql:** Tất cả `variantId` tham chiếu dữ liệu seeded sẵn. Login bằng `member1@example.com` / `Admin@123`.
+
+#### Bước 1 — Chọn CPU
+
+**1a. Lấy hints (currentItems rỗng → không có rule nào → hints = [])**
+```json
+POST /pc-builds/compatible-variants
+{
+  "targetComponentType": "CPU",
+  "currentItems": []
+}
+```
+```json
+// Response
+{
+  "code": 1000,
+  "data": {
+    "categoryId": 1,
+    "hints": []
+  }
+}
+```
+
+**1b. Tìm CPU**
+```
+GET /api/v1/products?categoryId=1
+```
+→ Trả về tất cả CPU: i9-14900K Box (v1), i9-14900K Tray (v2), Ryzen 9 7950X (v3), Ryzen 5 5600X (v25)
+
+**1c. Chọn i9-14900K Box (variantId = 1)**
+```json
+PUT /pc-builds/draft/items
+{
+  "componentType": "CPU",
+  "variantId": 1,
+  "quantity": 1
+}
+```
+```json
+// Response (build tự tạo DRAFT nếu chưa có)
+{
+  "code": 1000,
+  "data": {
+    "buildId": 1,
+    "status": "DRAFT",
+    "totalPrice": 589.99,
+    "items": [
+      { "componentType": "CPU", "variantId": 1, "variantName": "i9-14900K Box", "price": 589.99, "quantity": 1 }
+    ]
+  }
+}
+```
+
+---
+
+#### Bước 2 — Chọn Mainboard (lọc theo socket CPU)
+
+**2a. Lấy hints (đưa CPU vào currentItems)**
+```json
+POST /pc-builds/compatible-variants
+{
+  "targetComponentType": "MAINBOARD",
+  "currentItems": [
+    { "componentType": "CPU", "variantId": 1 }
+  ]
+}
+```
+```json
+// Response
+{
+  "code": 1000,
+  "result": {
+    "categoryId": 3,
+    "hints": [
+      { "attributeName": "Socket", "requiredValue": "LGA1700", "ruleType": "MUST_MATCH", "comparison": "eq" },
+      { "attributeName": "Memory Type", "requiredValue": "DDR5", "ruleType": "MUST_MATCH", "comparison": "eq" }
+    ]
+  }
+}
+```
+
+**2b. Tìm Mainboard phù hợp**
+```
+GET /api/v1/products?categoryId=3&attributes=Socket:LGA1700&attributes=Memory Type:DDR5
+```
+→ Chỉ Z790-E (v8) khớp `Socket=LGA1700 + MemType=DDR5`.  
+X670E (v9) bị loại (AM5), B450M (v10) bị loại (AM4 + DDR4).
+
+**2c. Chọn Z790-E (variantId = 8)**
+```json
+PUT /pc-builds/draft/items
+{ "componentType": "MAINBOARD", "variantId": 8, "quantity": 1 }
+```
+
+---
+
+#### Bước 3 — Chọn RAM (lọc theo MB: DDR5, ≤ 7200 MHz)
+
+**3a. Lấy hints**
+```json
+POST /pc-builds/compatible-variants
+{
+  "targetComponentType": "RAM",
+  "currentItems": [
+    { "componentType": "CPU", "variantId": 1 },
+    { "componentType": "MAINBOARD", "variantId": 8 }
+  ]
+}
+```
+```json
+// Response
+{
+  "code": 1000,
+  "data": {
+    "categoryId": 4,
+    "hints": [
+      { "attributeName": "Memory Type", "value": "DDR5", "operator": "eq" },
+      { "attributeName": "Memory Speed", "value": "7200", "operator": "lte" }
+    ]
+  }
+}
+```
+
+**3b. Tìm RAM phù hợp**
+```
+GET /api/v1/products?categoryId=4&attributes=Memory Type:DDR5&attributes=Memory Speed:lte:7200
+```
+→ v11 (DDR5 16GB 6000MHz ✓), v12 (DDR5 32GB ✓), v13 (DDR5 64GB ✓) pass.  
+v14 (DDR4) và v15 (DDR4) **không xuất hiện** (bị lọc bởi Memory Type=DDR5).
+
+**3c. Thêm 2 thanh RAM 16GB (Z790-E có 4 slots)**
+```json
+PUT /pc-builds/draft/items
+{ "componentType": "RAM", "variantId": 11, "quantity": 1 }
+// → slot 1/4
+PUT /pc-builds/draft/items
+{ "componentType": "RAM", "variantId": 11, "quantity": 1 }
+// → slot 2/4 (cùng variantId → quantity +1)
+```
+
+**3d. Test lỗi RAM_SLOTS_EXCEEDED (4-slot B450M)**
+
+> Thay thế: nếu dùng B450M (v10, 2 slot DDR4) với Ryzen 5 5600X (v25, AM4, DDR4):
+```json
+// Thêm lần 3 vào build đang có 2 RAM và MB 2-slot → lỗi
+PUT /pc-builds/draft/items
+{ "componentType": "RAM", "variantId": 14, "quantity": 1 }
+```
+```json
+// Response lỗi
+{ "code": 10005, "message": "RAM slots exceeded" }
+```
+
+---
+
+#### Bước 4 — Chọn GPU
+
+**4a. Lấy hints (GPU chưa có rule với CPU/MB → hints có thể rỗng)**
+```json
+POST /pc-builds/compatible-variants
+{
+  "targetComponentType": "GPU",
+  "currentItems": [
+    { "componentType": "CPU", "variantId": 1 },
+    { "componentType": "MAINBOARD", "variantId": 8 },
+    { "componentType": "RAM", "variantId": 11 }
+  ]
+}
+```
+```json
+{ "code": 1000, "data": { "categoryId": 2, "hints": [] } }
+```
+
+**4b. Tìm GPU**
+```
+GET /api/v1/products?categoryId=2
+```
+
+**4c. Chọn RTX 4090 Founders Edition (variantId = 6, length = 336mm, TDP = 450W)**
+```json
+PUT /pc-builds/draft/items
+{ "componentType": "GPU", "variantId": 6, "quantity": 1 }
+```
+
+---
+
+#### Bước 5 — Chọn Case (lọc theo GPU length + MB form factor)
+
+**5a. Lấy hints**
+```json
+POST /pc-builds/compatible-variants
+{
+  "targetComponentType": "CASE",
+  "currentItems": [
+    { "componentType": "CPU", "variantId": 1 },
+    { "componentType": "MAINBOARD", "variantId": 8 },
+    { "componentType": "RAM", "variantId": 11 },
+    { "componentType": "GPU", "variantId": 6 }
+  ]
+}
+```
+```json
+{
+  "code": 1000,
+  "data": {
+    "categoryId": 8,
+    "hints": [
+      { "attributeName": "Max GPU Length", "value": "336mm", "operator": "gte" },
+      { "attributeName": "Form Factor", "value": "ATX", "operator": "eq" }
+    ]
+  }
+}
+```
+
+> `requiredValue` giữ nguyên đơn vị từ DB ("336mm"). FE truyền nguyên vào URL — server dùng `extractNumber()` để parse.
+
+**5b. Tìm Case**
+```
+GET /api/v1/products?categoryId=8&attributes=Max GPU Length:gte:336mm&attributes=Form Factor:ATX
+```
+→ H7 Flow Black (v19, ATX, 400mm ≥ 336mm ✓), H7 Flow White (v20 ✓) **pass**.  
+Fractal Pop Mini (v21, mATX + maxGPU=300mm < 336mm) **bị lọc**.
+
+**5c. Chọn H7 Flow Black (variantId = 19)**
+```json
+PUT /pc-builds/draft/items
+{ "componentType": "CASE", "variantId": 19, "quantity": 1 }
+```
+
+---
+
+#### Bước 6 — Chọn Cooling (lọc theo chiều cao tối đa của Case)
+
+**6a. Lấy hints**
+```json
+POST /pc-builds/compatible-variants
+{
+  "targetComponentType": "COOLING",
+  "currentItems": [
+    { "componentType": "CPU", "variantId": 1 },
+    { "componentType": "MAINBOARD", "variantId": 8 },
+    { "componentType": "RAM", "variantId": 11 },
+    { "componentType": "GPU", "variantId": 6 },
+    { "componentType": "CASE", "variantId": 19 }
+  ]
+}
+```
+```json
+{
+  "code": 1000,
+  "data": {
+    "categoryId": 9,
+    "hints": [
+      { "attributeName": "Cooler Height", "value": "185mm", "operator": "lte" }
+    ]
+  }
+}
+```
+
+**6b. Tìm Cooling**
+```
+GET /api/v1/products?categoryId=9&attributes=Cooler Height:lte:185mm
+```
+→ Noctua NH-D15 (v22, 165mm ≤ 185mm ✓) **pass**.
+
+**6c. Chọn Noctua NH-D15 (variantId = 22)**
+```json
+PUT /pc-builds/draft/items
+{ "componentType": "COOLING", "variantId": 22, "quantity": 1 }
+```
+
+---
+
+#### Bước 7 — Chọn PSU (MIN_WATTAGE: CPU 125W + GPU 450W = 575W → min 700W)
+
+**7a. Lấy hints**
+```json
+POST /pc-builds/compatible-variants
+{
+  "targetComponentType": "PSU",
+  "currentItems": [
+    { "componentType": "CPU", "variantId": 1 },
+    { "componentType": "MAINBOARD", "variantId": 8 },
+    { "componentType": "RAM", "variantId": 11 },
+    { "componentType": "GPU", "variantId": 6 },
+    { "componentType": "CASE", "variantId": 19 },
+    { "componentType": "COOLING", "variantId": 22 }
+  ]
+}
+```
+```json
+{
+  "code": 1000,
+  "data": {
+    "categoryId": 7,
+    "hints": [
+      { "attributeName": "Wattage", "value": "700", "operator": "gte" }
+    ]
+  }
+}
+```
+
+> **Tính toán:** TDP tổng = 125W (CPU) + 450W (GPU) = 575W → minWattage = ⌈575×1.2/50⌉×50 = ⌈13.8⌉×50 = **700W**
+
+**7b. Tìm PSU**
+```
+GET /api/v1/products?categoryId=7&attributes=Wattage:gte:700
+```
+→ RM1000x 1000W (v18 ✓), RM750x 750W (v27 ✓) **pass**.  
+CV650 650W (v26, 650 < 700) **KHÔNG xuất hiện** — đây là PSU boundary test case.
+
+**7c. Chọn RM1000x (variantId = 18)**
+```json
+PUT /pc-builds/draft/items
+{ "componentType": "PSU", "variantId": 18, "quantity": 1 }
+```
+
+---
+
+#### Bước 8 — Chọn SSD (không có rule → hints rỗng)
+
+```json
+POST /pc-builds/compatible-variants
+{
+  "targetComponentType": "STORAGE_PRIMARY",
+  "currentItems": [...]
+}
+// → { "categoryId": 5, "hints": [] }
+```
+```
+GET /api/v1/products?categoryId=5
+```
+```json
+PUT /pc-builds/draft/items
+{ "componentType": "STORAGE_PRIMARY", "variantId": 16, "quantity": 1 }
+```
+
+---
+
+#### Bước 9 — Lưu build
+
+```json
+PUT /api/v1/pc-builds/draft/save
+{
+  "buildName": "Intel Gaming Build i9 2026"
+}
+```
+```json
+// Response
+{
+  "code": 1000,
+  "data": {
+    "buildId": 1,
+    "buildName": "Intel Gaming Build i9 2026",
+    "status": "SAVED",
+    "totalPrice": 2859.93,
+    "items": [ ... ]
+  }
+}
+```
+
+---
+
+#### Bước 10 — Đặt hàng từ build
+
+```json
+POST /api/v1/pc-builds/draft/order
+{
+  "paymentType": "FULL",
+  "recipientName": "Nguyen Van A",
+  "recipientPhone": "0901234567",
+  "shippingAddress": "123 Nguyen Trai, Q1, TP.HCM"
+}
+```
+```json
+// Response
+{
+  "code": 1000,
+  "data": {
+    "orderId": 1,
+    "totalAmount": 2859.93,
+    "status": "PENDING",
+    "paymentUrl": "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html?..."
+  }
+}
+```
+
+---
+
+### 12.6 Test Cases bổ sung
+
+#### TC-01: Socket mismatch (AM4 CPU + LGA1700 Mainboard)
+Lọc hints sẽ loại Mainboard không khớp socket — lỗi xảy ra ở **bước tìm sản phẩm**, không phải khi add.
+1. Chọn CPU Ryzen 5 5600X (v25, AM4)
+2. `POST /pc-builds/compatible-variants` targetType=MAINBOARD → hints: `[{Socket, AM4, eq}]`
+3. `GET /products?categoryId=3&attributes=Socket:AM4` → Chỉ B450M (v10) xuất hiện. Z790-E (v8) và X670E (v9) bị lọc.
+
+#### TC-02: DDR4 RAM với DDR5 Mainboard
+1. Chọn CPU v1 (LGA1700, DDR5) + Mainboard v8 (DDR5)
+2. Hints cho RAM: `[{Memory Type, DDR5, eq}, {Memory Speed, 7200, lte}]`
+3. `GET /products?categoryId=4&attributes=Memory Type:DDR5` → RAM DDR4 (v14, v15) **không xuất hiện**.
+
+#### TC-03: Tràn slot RAM
+1. B450M (v10) chỉ có 2 RAM slots
+2. Add RAM lần 1 → thành công (slot 1/2)
+3. Add RAM lần 2 → thành công (slot 2/2)
+4. Add RAM lần 3 → **lỗi 10005** (RAM_SLOTS_EXCEEDED)
+
+#### TC-04: PSU không đủ wattage (650W < 700W)
+Sau khi chọn i9-14900K (125W) + RTX 4090 FE (450W):
+1. Hints PSU: `[{Wattage, 700, gte}]`
+2. `GET /products?categoryId=7&attributes=Wattage:gte:700`
+3. CV650 650W (v26) **không xuất hiện** trong kết quả — bị lọc bởi Wattage:gte:700.
+4. RM750x 750W (v27) và RM1000x 1000W (v18) xuất hiện.
+
+#### TC-05: Case quá nhỏ cho GPU
+1. Chọn GPU RTX 4090 ASUS (v4, length=357mm)
+2. Hints CASE: `[{Max GPU Length, 357mm, gte}, {Form Factor, ATX, eq}]`
+3. `GET /products?categoryId=8&attributes=Max GPU Length:gte:357mm`
+4. H7 Flow (v19, max=400mm ✓), H7 Flow White (v20 ✓) — pass.  
+   Fractal Pop Mini (v21, max=300mm < 357mm) — không xuất hiện.
+
+#### TC-06: Đặt hàng khi build chưa có item (lỗi 10003)
+```json
+POST /api/v1/pc-builds/draft/order
+{ "paymentType": "FULL", "recipientName": "A", "recipientPhone": "0900000000", "shippingAddress": "ABC" }
+// → { "code": 10003, "message": "PC build has no items" }
+```
+
+---
+
+### 12.7 Lưu ý kỹ thuật
+
+| Điểm | Chi tiết |
+|---|---|
+| **Stateless hints** | `POST /compatible-variants` không đọc DB build — FE tự giữ state `currentItems` |
+| **SINGLE_SLOT types** | CPU, MAINBOARD, GPU, PSU, CASE — chỉ 1 item mỗi loại; add lại sẽ **overwrite** |
+| **MULTI_SLOT types** | RAM, STORAGE_PRIMARY, STORAGE_SECONDARY, COOLING, MONITOR, KEYBOARD, MOUSE — có thể có nhiều |
+| **RAM slot check** | Chỉ áp dụng cho RAM. Số slot lấy từ attribute `RAM Slots` của Mainboard variant |
+| **Draft auto-create** | Nếu user chưa có DRAFT build, cả `GET /draft` lẫn `PUT /draft/items` đều tự tạo DRAFT mới rỗng |
+| **Sau khi order** | Build status chuyển sang `ORDERED`. User cần build mới nếu muốn tiếp tục |
+| **Compatibility filter** | Chỉ lọc ở tầng search — server **không** chặn add item không tương thích (trừ RAM slot) |

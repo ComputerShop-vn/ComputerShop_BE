@@ -27,6 +27,9 @@ public class ProductCreationRequest {
     @NotNull(message = "Brand ID is required")
     private Integer brandId;
 
+    @NotNull(message = "Warranty months is required")
+    private Integer warrantyMonths;
+
     @Valid
     private List<VariantCreationDTO> variants;
 

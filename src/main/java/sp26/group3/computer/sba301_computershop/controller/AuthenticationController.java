@@ -39,6 +39,19 @@ public class AuthenticationController {
     }
 
     /**
+     * GOOGLE LOGIN
+     */
+    @PostMapping("/google")
+    public ApiResponse<AuthenticationResponse> googleLogin(
+            @RequestBody @Valid GoogleLoginRequest request
+    ) {
+        log.info("Google login request");
+        return ApiResponse.<AuthenticationResponse>builder()
+                .result(authenticationService.googleLogin(request))
+                .build();
+    }
+
+    /**
      * INTROSPECT TOKEN
      */
     @PostMapping("/introspect")

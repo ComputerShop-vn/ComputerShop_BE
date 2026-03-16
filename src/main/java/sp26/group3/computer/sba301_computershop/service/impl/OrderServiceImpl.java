@@ -9,6 +9,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import sp26.group3.computer.sba301_computershop.dto.request.AddToCartRequest;
 import sp26.group3.computer.sba301_computershop.dto.request.PlaceOrderRequest;
 import sp26.group3.computer.sba301_computershop.dto.request.UpdateOrderStatusRequest;
 import sp26.group3.computer.sba301_computershop.dto.response.*;
@@ -26,7 +27,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -46,6 +49,7 @@ public class OrderServiceImpl implements OrderService {
     UserRepository userRepository;
     InstallmentPackageRepository installmentPackageRepository;
     PaymentService paymentService;
+    sp26.group3.computer.sba301_computershop.service.WarrantyService warrantyService;
 
     // ======================== PLACE ORDER ========================
 
@@ -132,6 +136,91 @@ public class OrderServiceImpl implements OrderService {
         log.info("Cleared cart after placing order | cartId={}", cart.getCartId());
 
         // 7. Handle Payment URL for FULL or INSTALLMENT
+        String paymentUrl = null;
+        if (request.getPaymentType() == PaymentType.FULL || request.getPaymentType() == PaymentType.INSTALLMENT) {
+            var paymentDto = paymentService.createVnPayPayment(servletRequest, order.getOrderId(), null);
+            paymentUrl = paymentDto.getPaymentUrl();
+        }
+
+        return toOrderResponse(order, orderItems, paymentUrl);
+    }
+
+    // ======================== PLACE ORDER FROM BUILD ITEMS ========================
+
+    @Override
+    @Transactional
+    public OrderResponse placeOrderFromItems(List<AddToCartRequest> items,
+                                             PlaceOrderRequest request,
+                                             HttpServletRequest servletRequest) {
+        User user = getCurrentUser();
+
+        // 1. Load variants and validate stock
+        Map<Integer, ProductVariant> variantMap = new HashMap<>();
+        for (AddToCartRequest item : items) {
+            ProductVariant variant = productVariantRepository.findById(item.getVariantId())
+                    .orElseThrow(() -> new AppException(ErrorCode.VARIANT_NOT_FOUND));
+            if (variant.getStockQuantity() < item.getQuantity()) {
+                throw new AppException(ErrorCode.INSUFFICIENT_STOCK);
+            }
+            variantMap.put(item.getVariantId(), variant);
+        }
+
+        // 2. Calculate total
+        double totalAmount = items.stream()
+                .mapToDouble(i -> variantMap.get(i.getVariantId()).getPrice() * i.getQuantity())
+                .sum();
+
+        // 3. Create Order
+        InstallmentPackage pack = null;
+        if (request.getPaymentType() == PaymentType.INSTALLMENT) {
+            pack = installmentPackageRepository.findById(request.getPackageId())
+                    .orElseThrow(() -> new RuntimeException("Installment package not found"));
+            if (totalAmount < pack.getMinOrderAmount()) {
+                throw new RuntimeException("Order total amount does not meet package minimum order amount");
+            }
+        }
+
+        Order order = Order.builder()
+                .user(user)
+                .totalAmount(totalAmount)
+                .status(OrderStatus.PENDING)
+                .orderDate(LocalDateTime.now())
+                .paymentType(request.getPaymentType())
+                .installmentPackage(pack)
+                .build();
+        order = orderRepository.save(order);
+        log.info("Created order from build | orderId={} totalAmount={}", order.getOrderId(), totalAmount);
+
+        // 4. Create OrderItems + ProductItems + reduce stock (no cart clearing)
+        List<OrderItem> orderItems = new ArrayList<>();
+        for (AddToCartRequest item : items) {
+            ProductVariant variant = variantMap.get(item.getVariantId());
+
+            variant.setStockQuantity(variant.getStockQuantity() - item.getQuantity());
+            productVariantRepository.save(variant);
+
+            ProductItem productItem = ProductItem.builder()
+                    .variant(variant)
+                    .serialNumber(generateSerialNumber(variant.getSku()))
+                    .build();
+            productItem = productItemRepository.save(productItem);
+
+            OrderItem orderItem = OrderItem.builder()
+                    .order(order)
+                    .productItem(productItem)
+                    .quantity(item.getQuantity())
+                    .unitPrice(variant.getPrice())
+                    .recipientName(request.getRecipientName())
+                    .recipientPhone(request.getRecipientPhone())
+                    .shippingAddress(request.getShippingAddress())
+                    .build();
+            orderItems.add(orderItemRepository.save(orderItem));
+        }
+
+        // 5. Payment schedule
+        createPaymentSchedules(order, request);
+
+        // 6. VNPay URL
         String paymentUrl = null;
         if (request.getPaymentType() == PaymentType.FULL || request.getPaymentType() == PaymentType.INSTALLMENT) {
             var paymentDto = paymentService.createVnPayPayment(servletRequest, order.getOrderId(), null);
@@ -235,6 +324,10 @@ public class OrderServiceImpl implements OrderService {
         orderRepository.save(order);
         log.info("Updated order status | orderId={} status={}", orderId, request.getStatus());
 
+        if (request.getStatus() == OrderStatus.COMPLETED) {
+            warrantyService.createWarrantiesForOrder(order);
+        }
+
         List<OrderItem> items = orderItemRepository.findByOrderOrderId(orderId);
         return toOrderResponse(order, items);
     }
@@ -286,10 +379,6 @@ public class OrderServiceImpl implements OrderService {
 
     private void createPaymentSchedules(Order order, PlaceOrderRequest request) {
         if (request.getPaymentType() == PaymentType.COD) {
-            // No payment schedule needed for COD, or maybe one for tracking?
-            // The flow says: "be to create order and navigate to payment success page"
-            // Let's create one schedule with COD status if needed, but for now, we follow
-            // the FULL/INSTALLMENT pattern.
             OrderPaymentSchedule schedule = OrderPaymentSchedule.builder()
                     .order(order)
                     .installmentNo(1)
@@ -300,7 +389,6 @@ public class OrderServiceImpl implements OrderService {
             paymentScheduleRepository.save(schedule);
             log.info("Created COD payment schedule for orderId={}", order.getOrderId());
         } else if (request.getPaymentType() == PaymentType.FULL) {
-            // Single full payment
             OrderPaymentSchedule schedule = OrderPaymentSchedule.builder()
                     .order(order)
                     .installmentNo(1)
@@ -312,23 +400,45 @@ public class OrderServiceImpl implements OrderService {
         } else {
             // Installment payments
             InstallmentPackage pack = order.getInstallmentPackage();
+            double orderAmount = order.getTotalAmount();
+            double downPaymentPercentage = pack.getDownPaymentPercentage();
+            double downPaymentAmount = orderAmount * (downPaymentPercentage / 100.0);
+            double remainingBalance = orderAmount - downPaymentAmount;
 
-            int months = pack.getDurationMonths();
-            double rate = pack.getInterestRate();
-            double totalWithInterest = order.getTotalAmount() * (1 + rate / 100);
-            double monthlyAmount = totalWithInterest / months;
+            // 1. Create Down Payment Record (Month 0)
+            OrderPaymentSchedule downPayment = OrderPaymentSchedule.builder()
+                    .order(order)
+                    .installmentNo(0) // 0 represents the down payment
+                    .amount(Math.round(downPaymentAmount * 100.0) / 100.0)
+                    .dueDate(LocalDate.now()) // Payable now
+                    .status(PaymentStatus.UNPAID)
+                    .build();
+            paymentScheduleRepository.save(downPayment);
 
-            for (int i = 1; i <= months; i++) {
+            // 2. Create Installment Records
+            double interestRatePerMonth = (pack.getInterestRate() / 100.0) / 12.0;
+            int durationMonths = pack.getDurationMonths();
+
+            double monthlyPayment;
+            if (interestRatePerMonth > 0) {
+                monthlyPayment = (remainingBalance * interestRatePerMonth * Math.pow(1 + interestRatePerMonth, durationMonths))
+                        / (Math.pow(1 + interestRatePerMonth, durationMonths) - 1);
+            } else {
+                monthlyPayment = remainingBalance / durationMonths;
+            }
+            monthlyPayment = Math.round(monthlyPayment * 100.0) / 100.0;
+
+            for (int i = 1; i <= durationMonths; i++) {
                 OrderPaymentSchedule schedule = OrderPaymentSchedule.builder()
                         .order(order)
                         .installmentNo(i)
-                        .amount(Math.round(monthlyAmount * 100.0) / 100.0)
-                        .dueDate(LocalDate.now().plusMonths(i))
+                        .amount(monthlyPayment)
+                        .dueDate(LocalDate.now().plusMonths(i)) // Requirement 6: First installment 1 month after purchase
                         .status(PaymentStatus.UNPAID)
                         .build();
                 paymentScheduleRepository.save(schedule);
             }
-            log.info("Created {} installment schedules for orderId={}", months, order.getOrderId());
+            log.info("Created down payment + {} installment schedules for orderId={}", durationMonths, order.getOrderId());
         }
     }
 

@@ -10,9 +10,11 @@ import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import jakarta.validation.Valid;
+import sp26.group3.computer.sba301_computershop.dto.request.InstallmentCalculateRequest;
 import sp26.group3.computer.sba301_computershop.dto.request.InstallmentPackageRequest;
 import sp26.group3.computer.sba301_computershop.dto.response.ApiResponse;
 import sp26.group3.computer.sba301_computershop.dto.response.InstallmentPackageResponse;
+import sp26.group3.computer.sba301_computershop.dto.response.InstallmentPreviewResponse;
 import sp26.group3.computer.sba301_computershop.dto.response.PagedResponse;
 import sp26.group3.computer.sba301_computershop.service.InstallmentPackageService;
 
@@ -84,6 +86,15 @@ public class InstallmentPackageController {
         installmentPackageService.deletePackage(id);
         ApiResponse<Void> apiResponse = new ApiResponse<>();
         apiResponse.setMessage("Installment package deleted successfully");
+        return apiResponse;
+    }
+
+    @PostMapping("/calculate")
+    public ApiResponse<InstallmentPreviewResponse> calculateInstallment(
+            @RequestBody @Valid InstallmentCalculateRequest request) {
+        log.info("[POST] /installment-packages/calculate - Calculate installment preview");
+        ApiResponse<InstallmentPreviewResponse> apiResponse = new ApiResponse<>();
+        apiResponse.setResult(installmentPackageService.calculateInstallmentPreview(request));
         return apiResponse;
     }
 }
