@@ -21,5 +21,7 @@ public interface ProductVariantMapper {
 
     @Mapping(source = "product.productId", target = "productId")
     @Mapping(target = "attributes", ignore = true)
+    @Mapping(target = "discountedPrice", ignore = true)
+    @Mapping(target = "discountPercent", ignore = true)
     ProductVariantResponse toProductVariantResponse(ProductVariant variant);
 }
