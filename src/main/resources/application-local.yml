@@ -33,6 +33,20 @@ spring:
         dialect: org.hibernate.dialect.SQLServerDialect
         format_sql: true
         use_nationalized_character_data: true
+  # ===============================
+  # VERIFY OTP EMAIL
+  # ===============================
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: "vinhhien8882004@gmail.com"
+    password: "vvps ftmw mimc aohp"
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
 
 server:
   port: 8080

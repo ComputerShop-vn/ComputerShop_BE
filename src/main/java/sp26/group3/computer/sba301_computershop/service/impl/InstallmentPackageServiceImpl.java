@@ -3,11 +3,14 @@ package sp26.group3.computer.sba301_computershop.service.impl;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import sp26.group3.computer.sba301_computershop.dto.request.InstallmentCalculateRequest;
 import sp26.group3.computer.sba301_computershop.dto.request.InstallmentPackageRequest;
 import sp26.group3.computer.sba301_computershop.dto.response.InstallmentPackageResponse;
 import sp26.group3.computer.sba301_computershop.dto.response.InstallmentPreviewResponse;
+import sp26.group3.computer.sba301_computershop.dto.response.PagedResponse;
 import sp26.group3.computer.sba301_computershop.dto.response.PaymentScheduleResponse;
 import sp26.group3.computer.sba301_computershop.entity.InstallmentPackage;
 import sp26.group3.computer.sba301_computershop.exception.AppException;
@@ -39,6 +42,19 @@ public class InstallmentPackageServiceImpl implements InstallmentPackageService 
         return installmentPackageRepository.findAll().stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public PagedResponse<InstallmentPackageResponse> getAllPackagesPaged(Pageable pageable) {
+        Page<InstallmentPackage> page = installmentPackageRepository.findAll(pageable);
+        return PagedResponse.<InstallmentPackageResponse>builder()
+                .content(page.getContent().stream().map(this::toResponse).toList())
+                .page(page.getNumber())
+                .size(page.getSize())
+                .totalElements(page.getTotalElements())
+                .totalPages(page.getTotalPages())
+                .last(page.isLast())
+                .build();
     }
 
     @Override

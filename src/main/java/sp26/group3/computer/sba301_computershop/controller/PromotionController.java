@@ -5,6 +5,9 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import sp26.group3.computer.sba301_computershop.dto.request.AddPromotionToBrandRequest;
@@ -13,6 +16,7 @@ import sp26.group3.computer.sba301_computershop.dto.request.AddPromotionToProduc
 import sp26.group3.computer.sba301_computershop.dto.request.PromotionCreationRequest;
 import sp26.group3.computer.sba301_computershop.dto.request.PromotionUpdateRequest;
 import sp26.group3.computer.sba301_computershop.dto.response.ApiResponse;
+import sp26.group3.computer.sba301_computershop.dto.response.PagedResponse;
 import sp26.group3.computer.sba301_computershop.dto.response.PromotionResponse;
 import sp26.group3.computer.sba301_computershop.service.PromotionService;
 
@@ -53,6 +57,23 @@ public class PromotionController {
 
         ApiResponse<List<PromotionResponse>> response = new ApiResponse<>();
         response.setResult(result);
+        return response;
+    }
+
+    // ================= READ ALL PAGED =================
+    @GetMapping("/paged")
+    public ApiResponse<PagedResponse<PromotionResponse>> getAllPromotionsPaged(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "promotionId") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir
+    ) {
+        Sort sort = sortDir.equalsIgnoreCase("desc")
+                ? Sort.by(sortBy).descending()
+                : Sort.by(sortBy).ascending();
+        Pageable pageable = PageRequest.of(page, size, sort);
+        ApiResponse<PagedResponse<PromotionResponse>> response = new ApiResponse<>();
+        response.setResult(promotionService.getAllPromotionsPaged(pageable));
         return response;
     }
 

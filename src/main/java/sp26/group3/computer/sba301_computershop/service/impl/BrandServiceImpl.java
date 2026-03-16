@@ -4,11 +4,14 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import sp26.group3.computer.sba301_computershop.dto.request.BrandCreationRequest;
 import sp26.group3.computer.sba301_computershop.dto.request.BrandUpdateRequest;
 import sp26.group3.computer.sba301_computershop.dto.response.BrandResponse;
+import sp26.group3.computer.sba301_computershop.dto.response.PagedResponse;
 import sp26.group3.computer.sba301_computershop.entity.Brand;
 import sp26.group3.computer.sba301_computershop.exception.AppException;
 import sp26.group3.computer.sba301_computershop.exception.ErrorCode;
@@ -93,11 +96,24 @@ public class BrandServiceImpl implements BrandService {
     @Override
     public List<BrandResponse> getAllBrands() {
         log.info("Getting all brands");
-
         return brandRepository.findAll()
                 .stream()
                 .map(brandMapper::toBrandResponse)
                 .toList();
+    }
+
+    @Override
+    public PagedResponse<BrandResponse> getAllBrandsPaged(Pageable pageable) {
+        log.info("Getting brands paged: page={}, size={}", pageable.getPageNumber(), pageable.getPageSize());
+        Page<Brand> page = brandRepository.findAll(pageable);
+        return PagedResponse.<BrandResponse>builder()
+                .content(page.getContent().stream().map(brandMapper::toBrandResponse).toList())
+                .page(page.getNumber())
+                .size(page.getSize())
+                .totalElements(page.getTotalElements())
+                .totalPages(page.getTotalPages())
+                .last(page.isLast())
+                .build();
     }
 
     @Override

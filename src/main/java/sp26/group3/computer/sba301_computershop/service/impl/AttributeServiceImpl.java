@@ -4,10 +4,13 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import sp26.group3.computer.sba301_computershop.dto.request.AttributeCreationRequest;
 import sp26.group3.computer.sba301_computershop.dto.request.AttributeUpdateRequest;
 import sp26.group3.computer.sba301_computershop.dto.response.AttributeResponse;
+import sp26.group3.computer.sba301_computershop.dto.response.PagedResponse;
 import sp26.group3.computer.sba301_computershop.entity.Attribute;
 import sp26.group3.computer.sba301_computershop.exception.AppException;
 import sp26.group3.computer.sba301_computershop.exception.ErrorCode;
@@ -78,11 +81,24 @@ public class AttributeServiceImpl implements AttributeService {
     @Override
     public List<AttributeResponse> getAllAttributes() {
         log.info("Getting all attributes");
-
         return attributeRepository.findAll()
                 .stream()
                 .map(attributeMapper::toAttributeResponse)
                 .toList();
+    }
+
+    @Override
+    public PagedResponse<AttributeResponse> getAllAttributesPaged(Pageable pageable) {
+        log.info("Getting attributes paged: page={}, size={}", pageable.getPageNumber(), pageable.getPageSize());
+        Page<Attribute> page = attributeRepository.findAll(pageable);
+        return PagedResponse.<AttributeResponse>builder()
+                .content(page.getContent().stream().map(attributeMapper::toAttributeResponse).toList())
+                .page(page.getNumber())
+                .size(page.getSize())
+                .totalElements(page.getTotalElements())
+                .totalPages(page.getTotalPages())
+                .last(page.isLast())
+                .build();
     }
 
     @Override

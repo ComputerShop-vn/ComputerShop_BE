@@ -5,12 +5,16 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import sp26.group3.computer.sba301_computershop.dto.request.BlogCreationRequest;
 import sp26.group3.computer.sba301_computershop.dto.request.BlogUpdateRequest;
 import sp26.group3.computer.sba301_computershop.dto.response.ApiResponse;
 import sp26.group3.computer.sba301_computershop.dto.response.BlogResponse;
+import sp26.group3.computer.sba301_computershop.dto.response.PagedResponse;
 import sp26.group3.computer.sba301_computershop.service.BlogService;
 
 import java.util.List;
@@ -24,91 +28,76 @@ public class BlogController {
 
     BlogService blogService;
 
-    // ================= CREATE =================
     @PostMapping
     @PreAuthorize("hasAnyRole('MEMBER','STAFF','ADMIN')")
     public ApiResponse<BlogResponse> createBlog(@RequestBody @Valid BlogCreationRequest request) {
-        log.info("[POST] /blogs - Create blog");
-
         BlogResponse result = blogService.createBlog(request);
-
-        log.info("[POST] /blogs - SUCCESS | blogId={}", result.getBlogId());
-
         ApiResponse<BlogResponse> response = new ApiResponse<>();
         response.setResult(result);
         return response;
     }
 
-    // ================= READ ALL =================
     @GetMapping
     public ApiResponse<List<BlogResponse>> getAllBlogs() {
-        log.info("[GET] /blogs - Get all blogs");
-
-        List<BlogResponse> result = blogService.getAllBlogs();
-
-        log.info("[GET] /blogs - Total blogs={}", result.size());
-
         ApiResponse<List<BlogResponse>> response = new ApiResponse<>();
-        response.setResult(result);
+        response.setResult(blogService.getAllBlogs());
         return response;
     }
 
-    // ================= READ BY ID =================
+    @GetMapping("/paged")
+    public ApiResponse<PagedResponse<BlogResponse>> getAllBlogsPaged(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "blogId") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir
+    ) {
+        Sort sort = sortDir.equalsIgnoreCase("desc")
+                ? Sort.by(sortBy).descending()
+                : Sort.by(sortBy).ascending();
+        Pageable pageable = PageRequest.of(page, size, sort);
+        ApiResponse<PagedResponse<BlogResponse>> response = new ApiResponse<>();
+        response.setResult(blogService.getAllBlogsPaged(pageable));
+        return response;
+    }
+
     @GetMapping("/{id}")
     public ApiResponse<BlogResponse> getBlogById(@PathVariable int id) {
-        log.info("[GET] /blogs/{} - Get blog by id", id);
-
-        BlogResponse result = blogService.getBlogById(id);
-
-        log.info("[GET] /blogs/{} - SUCCESS | title={}", id, result.getTitle());
-
         ApiResponse<BlogResponse> response = new ApiResponse<>();
-        response.setResult(result);
+        response.setResult(blogService.getBlogById(id));
         return response;
     }
 
-    // ================= READ BY USER ID =================
     @GetMapping("/user/{userId}")
     public ApiResponse<List<BlogResponse>> getBlogsByUserId(@PathVariable int userId) {
-        log.info("[GET] /blogs/user/{} - Get blogs by user id", userId);
-
-        List<BlogResponse> result = blogService.getBlogsByUserId(userId);
-
-        log.info("[GET] /blogs/user/{} - Total blogs={}", userId, result.size());
-
         ApiResponse<List<BlogResponse>> response = new ApiResponse<>();
-        response.setResult(result);
+        response.setResult(blogService.getBlogsByUserId(userId));
         return response;
     }
 
-    // ================= UPDATE =================
+    @GetMapping("/user/{userId}/paged")
+    public ApiResponse<PagedResponse<BlogResponse>> getBlogsByUserIdPaged(
+            @PathVariable int userId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("blogId").descending());
+        ApiResponse<PagedResponse<BlogResponse>> response = new ApiResponse<>();
+        response.setResult(blogService.getBlogsByUserIdPaged(userId, pageable));
+        return response;
+    }
+
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('MEMBER','STAFF','ADMIN')")
-    public ApiResponse<BlogResponse> updateBlog(
-            @PathVariable int id,
-            @RequestBody @Valid BlogUpdateRequest request
-    ) {
-        log.info("[PUT] /blogs/{} - Update blog", id);
-
-        BlogResponse result = blogService.updateBlog(id, request);
-
-        log.info("[PUT] /blogs/{} - Update SUCCESS", id);
-
+    public ApiResponse<BlogResponse> updateBlog(@PathVariable int id, @RequestBody @Valid BlogUpdateRequest request) {
         ApiResponse<BlogResponse> response = new ApiResponse<>();
-        response.setResult(result);
+        response.setResult(blogService.updateBlog(id, request));
         return response;
     }
 
-    // ================= DELETE =================
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('STAFF','ADMIN')")
     public ApiResponse<Void> deleteBlog(@PathVariable int id) {
-        log.warn("[DELETE] /blogs/{} - Delete blog", id);
-
         blogService.deleteBlog(id);
-
-        log.warn("[DELETE] /blogs/{} - SUCCESS", id);
-
         return new ApiResponse<>();
     }
 }

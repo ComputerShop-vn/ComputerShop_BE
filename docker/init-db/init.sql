@@ -305,6 +305,7 @@ VALUES (1, 'ADMIN'),
 SET IDENTITY_INSERT roles OFF;
 -- Installment Packages
 SET IDENTITY_INSERT installment_package ON;
+
 INSERT INTO installment_package (
         package_id,
         name,

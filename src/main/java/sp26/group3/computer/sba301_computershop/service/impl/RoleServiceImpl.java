@@ -4,9 +4,12 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import sp26.group3.computer.sba301_computershop.dto.request.RoleCreationRequest;
 import sp26.group3.computer.sba301_computershop.dto.request.RoleUpdateRequest;
+import sp26.group3.computer.sba301_computershop.dto.response.PagedResponse;
 import sp26.group3.computer.sba301_computershop.dto.response.RoleResponse;
 import sp26.group3.computer.sba301_computershop.entity.Role;
 import sp26.group3.computer.sba301_computershop.exception.AppException;
@@ -57,6 +60,19 @@ public class RoleServiceImpl implements RoleService {
                 .stream()
                 .map(roleMapper::toRoleResponse)
                 .toList();
+    }
+
+    @Override
+    public PagedResponse<RoleResponse> getAllRolesPaged(Pageable pageable) {
+        Page<Role> page = roleRepository.findAll(pageable);
+        return PagedResponse.<RoleResponse>builder()
+                .content(page.getContent().stream().map(roleMapper::toRoleResponse).toList())
+                .page(page.getNumber())
+                .size(page.getSize())
+                .totalElements(page.getTotalElements())
+                .totalPages(page.getTotalPages())
+                .last(page.isLast())
+                .build();
     }
 
     // ================= UPDATE =================

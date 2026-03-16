@@ -31,7 +31,10 @@ public class SecurityConfig {
             "/auth/introspect",
             "/auth/refresh",
             "/auth/logout",
-            "/users"
+            "/users",
+            "/otp-verification/send-otp",
+            "/otp-verification/verify-otp",
+            "/forgot-password/reset/**",
     };
 
     private final String[] PUBLIC_ENDPOINTS_GET = {
