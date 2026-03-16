@@ -75,6 +75,9 @@ public enum ErrorCode {
     RAM_SLOTS_EXCEEDED(10005, "Mainboard RAM slots are full", HttpStatus.BAD_REQUEST),
     PC_BUILD_ITEM_NOT_FOUND(10006, "PC build item not found", HttpStatus.NOT_FOUND),
 
+    //reset password errors
+    PASSWORD_MISMATCH(1014, "The verification password does not match", HttpStatus.BAD_REQUEST),
+    PASSWORD_SAME_AS_OLD(1015, "The new password must not be the same as the old password", HttpStatus.BAD_REQUEST),
     ;
 
     private final int code;

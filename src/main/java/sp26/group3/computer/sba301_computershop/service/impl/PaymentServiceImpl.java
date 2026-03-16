@@ -10,13 +10,17 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import sp26.group3.computer.sba301_computershop.config.VNPayConfig;
 import sp26.group3.computer.sba301_computershop.dto.response.PaymentDTO;
+import sp26.group3.computer.sba301_computershop.entity.Cart;
 import sp26.group3.computer.sba301_computershop.entity.Order;
 import sp26.group3.computer.sba301_computershop.entity.OrderPaymentSchedule;
+import sp26.group3.computer.sba301_computershop.entity.User;
 import sp26.group3.computer.sba301_computershop.enums.PaymentStatus;
 import sp26.group3.computer.sba301_computershop.enums.PaymentType;
 import sp26.group3.computer.sba301_computershop.enums.OrderStatus;
 import sp26.group3.computer.sba301_computershop.exception.AppException;
 import sp26.group3.computer.sba301_computershop.exception.ErrorCode;
+import sp26.group3.computer.sba301_computershop.repository.CartItemRepository;
+import sp26.group3.computer.sba301_computershop.repository.CartRepository;
 import sp26.group3.computer.sba301_computershop.repository.OrderPaymentScheduleRepository;
 import sp26.group3.computer.sba301_computershop.repository.OrderRepository;
 import sp26.group3.computer.sba301_computershop.service.PaymentService;
@@ -38,7 +42,8 @@ public class PaymentServiceImpl implements PaymentService {
     VNPayConfig vnPayConfig;
     OrderRepository orderRepository;
     OrderPaymentScheduleRepository orderPaymentScheduleRepository;
-
+    CartRepository cartRepository;
+    CartItemRepository cartItemRepository;
     @Override
     public PaymentDTO createVnPayPayment(HttpServletRequest request, int orderId, String bankCode) {
         Order order = orderRepository.findById(orderId)
@@ -129,18 +134,21 @@ public class PaymentServiceImpl implements PaymentService {
     @Override
     @Transactional
     public String handleVnPayCallback(HttpServletRequest request) {
+
         log.info("Received VNPay Callback return url hit");
 
         Map<String, String> fields = new HashMap<>();
         for (Enumeration<String> params = request.getParameterNames(); params.hasMoreElements();) {
             String fieldName = params.nextElement();
             String fieldValue = request.getParameter(fieldName);
-            if ((fieldValue != null) && (fieldValue.length() > 0)) {
+
+            if (fieldValue != null && fieldValue.length() > 0) {
                 fields.put(fieldName, fieldValue);
             }
         }
 
-        String vnp_SecureHash = request.getParameter("vnp_SecureHash");
+        String vnpSecureHash = request.getParameter("vnp_SecureHash");
+
         fields.remove("vnp_SecureHashType");
         fields.remove("vnp_SecureHash");
 
@@ -149,21 +157,51 @@ public class PaymentServiceImpl implements PaymentService {
         String successUrl = "http://localhost:3000/payment-success";
         String failUrl = "http://localhost:3000/payment-failed";
 
-        if (signValue.equals(vnp_SecureHash)) {
-            if ("00".equals(request.getParameter("vnp_ResponseCode"))) {
-                log.info("Thanh toán thành công: {}, TransactionNo: {}", request.getParameter("vnp_TxnRef"),
-                        request.getParameter("vnp_TransactionNo"));
+        if (signValue.equals(vnpSecureHash)) {
+
+            String responseCode = request.getParameter("vnp_ResponseCode");
+            String orderIdStr = request.getParameter("vnp_TxnRef");
+
+            if ("00".equals(responseCode)) {
+
+                log.info("Thanh toán thành công OrderId={}", orderIdStr);
+
+                Integer orderId = Integer.parseInt(orderIdStr);
+
+                Order order = orderRepository.findById(orderId)
+                        .orElseThrow(() -> new RuntimeException("Order not found"));
+
+                // Update order status
+                order.setStatus(OrderStatus.PAID);
+                orderRepository.save(order);
+
+                // Clear cart
+                User user = order.getUser();
+
+                Cart cart = cartRepository.findByUserUserId(user.getUserId())
+                        .orElse(null);
+
+                if (cart != null) {
+                    cartItemRepository.deleteAllByCartCartId(cart.getCartId());
+                    log.info("Cart cleared after successful payment | cartId={}", cart.getCartId());
+                }
+
                 return successUrl;
+
             } else {
-                log.warn("Thanh toán không thành công, ResponseCode: {}", request.getParameter("vnp_ResponseCode"));
+
+                log.warn("Thanh toán thất bại ResponseCode={}", responseCode);
+
                 return failUrl;
             }
+
         } else {
-            log.error("CẢNH BÁO: Chữ ký VNPAY không hợp lệ (Checksum fail)");
+
+            log.error("VNPay checksum invalid");
+
             return failUrl;
         }
     }
-
     @Override
     @Transactional
     public Map<String, String> handleVnPayIpn(HttpServletRequest request) {

@@ -133,8 +133,8 @@ public class OrderServiceImpl implements OrderService {
         createPaymentSchedules(order, request);
 
         // 6. Clear cart
-        cartItemRepository.deleteAllByCartCartId(cart.getCartId());
-        log.info("Cleared cart after placing order | cartId={}", cart.getCartId());
+//        cartItemRepository.deleteAllByCartCartId(cart.getCartId());
+//        log.info("Cleared cart after placing order | cartId={}", cart.getCartId());
 
         // 7. Handle Payment URL for FULL or INSTALLMENT
         String paymentUrl = null;

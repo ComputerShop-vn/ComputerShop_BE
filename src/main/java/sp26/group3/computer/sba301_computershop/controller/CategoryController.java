@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import sp26.group3.computer.sba301_computershop.dto.request.CategoryRequest;
 import sp26.group3.computer.sba301_computershop.dto.response.ApiResponse;
 import sp26.group3.computer.sba301_computershop.dto.response.CategoryResponse;
+import sp26.group3.computer.sba301_computershop.dto.response.CategoryResponse2;
 import sp26.group3.computer.sba301_computershop.dto.response.PagedResponse;
 import sp26.group3.computer.sba301_computershop.service.CategoryService;
 
@@ -114,5 +115,28 @@ public class CategoryController {
 
         log.warn("[DELETE] /categories/{} - SUCCESS", id);
         return new ApiResponse<>();
+    }
+
+    @GetMapping("/tree")
+    ApiResponse<List<CategoryResponse2>> getCategoryTree(){
+
+        log.info("[GET] /categories/tree - Get category tree");
+
+        ApiResponse<List<CategoryResponse2>> apiResponse = new ApiResponse<>();
+        apiResponse.setResult(categoryService.getCategoryTree());
+
+        return apiResponse;
+    }
+    @GetMapping("/parents")
+    ApiResponse<List<CategoryResponse2>> getParentCategories(){
+        ApiResponse<List<CategoryResponse2>> apiResponse = new ApiResponse<>();
+        apiResponse.setResult(categoryService.getParentCategories());
+        return apiResponse;
+    }
+    @GetMapping("/{id}/children")
+    ApiResponse<List<CategoryResponse2>> getChildren(@PathVariable int id){
+        ApiResponse<List<CategoryResponse2>> apiResponse = new ApiResponse<>();
+        apiResponse.setResult(categoryService.getChildrenByParentId(id));
+        return apiResponse;
     }
 }
