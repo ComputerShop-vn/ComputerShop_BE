@@ -19,12 +19,7 @@ public class ProductItem {
     @Column(name = "item_id")
     private int itemId;
 
-    @Deprecated
-    @ManyToOne
-    @JoinColumn(name = "product_id")
-    private Product product;
-
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "variant_id")
     private ProductVariant variant;
 

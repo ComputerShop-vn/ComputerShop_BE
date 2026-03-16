@@ -33,6 +33,7 @@ public class CartServiceImpl implements CartService {
     ProductVariantRepository productVariantRepository;
     ProductImageRepository productImageRepository;
     UserRepository userRepository;
+    PromotionProductRepository promotionProductRepository;
 
     // ======================== GET MY CART ========================
 
@@ -192,7 +193,10 @@ public class CartServiceImpl implements CartService {
                 .toList();
 
         double totalPrice = itemResponses.stream()
-                .mapToDouble(i -> i.getPrice() * i.getQuantity())
+                .mapToDouble(i -> {
+                    double effectivePrice = i.getDiscountedPrice() != null ? i.getDiscountedPrice() : i.getPrice();
+                    return effectivePrice * i.getQuantity();
+                })
                 .sum();
 
         int totalItems = itemResponses.stream()
@@ -218,12 +222,25 @@ public class CartServiceImpl implements CartService {
                 .map(ProductImage::getImageUrl)
                 .orElse(null);
 
+        // Apply active promotion if any
+        Double discountedPrice = null;
+        double discountPercent = 0.0;
+        List<PromotionProduct> promos = promotionProductRepository
+                .findActivePromotionByProductId(product.getProductId());
+        if (!promos.isEmpty()) {
+            Promotion promo = promos.get(0).getPromotion();
+            discountPercent = promo.getDiscountPercent();
+            discountedPrice = variant.getPrice() * (1 - discountPercent / 100.0);
+        }
+
         return CartItemResponse.builder()
                 .cartItemId(item.getCartItemId())
                 .variantId(variant.getVariantId())
                 .variantName(variant.getVariantName())
                 .sku(variant.getSku())
                 .price(variant.getPrice())
+                .discountedPrice(discountedPrice)
+                .discountPercent(discountPercent)
                 .stockQuantity(variant.getStockQuantity())
                 .quantity(item.getQuantity())
                 .productId(product.getProductId())

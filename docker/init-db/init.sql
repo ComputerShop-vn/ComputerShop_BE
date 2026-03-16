@@ -137,14 +137,11 @@ CREATE TABLE product_variant_attributes (
     FOREIGN KEY (variant_id) REFERENCES product_variants(variant_id),
     FOREIGN KEY (attribute_id) REFERENCES attributes(attribute_id)
 );
--- product_items  (physical units / serial numbers)
---   product_id is legacy/deprecated (nullable), variant_id is current
+-- product_items  (physical units / serial numbers — 1 unit = 1 OrderItem via OneToOne)
 CREATE TABLE product_items (
     item_id INT IDENTITY(1, 1) PRIMARY KEY,
-    product_id INT NULL,
     variant_id INT NULL,
     serial_number NVARCHAR(255) NOT NULL UNIQUE,
-    FOREIGN KEY (product_id) REFERENCES products(product_id),
     FOREIGN KEY (variant_id) REFERENCES product_variants(variant_id)
 );
 -- product_images
@@ -208,11 +205,11 @@ CREATE TABLE orders (
     FOREIGN KEY (user_id) REFERENCES users(user_id),
     FOREIGN KEY (installment_package_id) REFERENCES installment_package(package_id)
 );
--- order_items
+-- order_items  (item_id is UNIQUE — OneToOne with product_items, 1 physical unit sold once)
 CREATE TABLE order_items (
     order_item_id INT IDENTITY(1, 1) PRIMARY KEY,
     order_id INT NOT NULL,
-    item_id INT NOT NULL,
+    item_id INT NOT NULL UNIQUE,
     quantity INT NOT NULL,
     unit_price FLOAT NOT NULL,
     recipient_name NVARCHAR(200),
