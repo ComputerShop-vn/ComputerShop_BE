@@ -406,23 +406,44 @@ VALUES (
 SET IDENTITY_INSERT users OFF;
 -- Categories
 SET IDENTITY_INSERT categories ON;
+
 INSERT INTO categories (category_id, category_name, parent_category_id)
-VALUES (1, 'CPU', NULL),
-    (2, 'GPU', NULL),
-    (3, 'Mainboard', NULL),
-    (4, 'RAM', NULL),
-    (5, 'SSD', NULL),
-    (6, 'HDD', NULL),
-    (7, 'PSU', NULL),
-    (8, 'Case', NULL),
-    (9, 'Cooling', NULL),
-    (10, 'Monitor', NULL),
-    (11, 'Keyboard', NULL),
-    (12, 'Mouse', NULL),
-    (13, 'Intel CPU', 1),
-    (14, 'AMD CPU', 1),
-    (15, 'NVIDIA GPU', 2),
-    (16, 'AMD GPU', 2);
+VALUES
+-- ===== Laptop =====
+(1, N'Laptop', NULL),
+(2, N'Laptop Gaming', 1),
+(3, N'Laptop Văn Phòng', 1),
+(4, N'MacBook', 1),
+(5, N'Laptop Đồ Họa', 1),
+
+-- ===== Linh Kiện =====
+(6, N'Linh Kiện', NULL),
+(7, N'CPU - Vi xử lý', 6),
+(8, N'VGA - Card màn hình', 6),
+(9, N'Mainboard - Bo mạch chủ', 6),
+(10, N'RAM - Bộ nhớ trong', 6),
+(11, N'SSD - Ổ cứng', 6),
+
+-- ===== Build PC =====
+(12, N'Build PC', NULL),
+(13, N'PC Gaming', 12),
+(14, N'PC Văn Phòng', 12),
+(15, N'Workstation', 12),
+(16, N'PC Custom Water Cooling', 12),
+
+-- ===== Màn hình =====
+(17, N'Màn hình', NULL),
+(18, N'Màn hình Gaming', 17),
+(19, N'Màn hình Đồ Họa', 17),
+(20, N'Màn hình Cong', 17),
+
+-- ===== Phụ kiện =====
+(21, N'Phụ Kiện', NULL),
+(22, N'Bàn phím cơ', 21),
+(23, N'Chuột Gaming', 21),
+(24, N'Tai Nghe', 21),
+(25, N'Ghế Gaming', 21);
+
 SET IDENTITY_INSERT categories OFF;
 -- Brands
 SET IDENTITY_INSERT brands ON;

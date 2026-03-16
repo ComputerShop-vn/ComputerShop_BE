@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import sp26.group3.computer.sba301_computershop.dto.request.CategoryRequest;
 import sp26.group3.computer.sba301_computershop.dto.response.CategoryResponse;
+import sp26.group3.computer.sba301_computershop.dto.response.CategoryResponse2;
 import sp26.group3.computer.sba301_computershop.entity.Category;
 import sp26.group3.computer.sba301_computershop.exception.AppException;
 import sp26.group3.computer.sba301_computershop.exception.ErrorCode;
@@ -15,6 +16,7 @@ import sp26.group3.computer.sba301_computershop.repository.CategoryRepository;
 import sp26.group3.computer.sba301_computershop.service.CategoryService;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -97,5 +99,65 @@ public class CategoryServiceImpl implements CategoryService {
         }
 
         categoryRepository.delete(category);
+    }
+
+    // ================= CATEGORY TREE =================
+    @Override
+    public List<CategoryResponse2> getCategoryTree() {
+
+        List<Category> parents = categoryRepository.findByParentCategoryIsNull();
+
+        return parents.stream().map(parent -> {
+
+            CategoryResponse2 parentResponse = mapToResponse2(parent);
+
+            List<CategoryResponse2> children =
+                    categoryRepository.findByParentCategory_CategoryId(parent.getCategoryId())
+                            .stream()
+                            .map(this::mapToResponse2)
+                            .toList();
+
+            parentResponse.setChildren(children);
+
+            return parentResponse;
+
+        }).toList();
+    }
+
+    // ================= PARENT CATEGORY =================
+    @Override
+    public List<CategoryResponse2> getParentCategories() {
+
+        return categoryRepository.findByParentCategoryIsNull()
+                .stream()
+                .map(this::mapToResponse2)
+                .collect(Collectors.toList());
+    }
+
+    // ================= CHILDREN =================
+    @Override
+    public List<CategoryResponse2> getChildrenByParentId(int parentId) {
+
+        return categoryRepository.findByParentCategory_CategoryId(parentId)
+                .stream()
+                .map(this::mapToResponse2)
+                .collect(Collectors.toList());
+    }
+
+
+    // ================= MAPPER =================
+    private CategoryResponse2 mapToResponse2(Category category) {
+
+        Integer parentId = null;
+
+        if (category.getParentCategory() != null) {
+            parentId = category.getParentCategory().getCategoryId();
+        }
+
+        return CategoryResponse2.builder()
+                .categoryId(category.getCategoryId())
+                .categoryName(category.getCategoryName())
+                .parentCategoryId(parentId)
+                .build();
     }
 }
