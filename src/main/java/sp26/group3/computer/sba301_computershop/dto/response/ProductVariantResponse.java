@@ -12,7 +12,9 @@ public class ProductVariantResponse {
     private int variantId;
     private int productId;
     private String sku;
-    private double price;
+    private double price;           // Giá gốc
+    private Double discountedPrice; // Giá sau giảm (null nếu không có KM)
+    private double discountPercent; // % giảm (0 nếu không có)
     private int stockQuantity;
     private String variantName;
     private List<VariantAttributeResponse> attributes;

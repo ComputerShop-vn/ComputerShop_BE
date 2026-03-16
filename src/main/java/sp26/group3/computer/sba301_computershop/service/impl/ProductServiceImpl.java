@@ -474,24 +474,34 @@ public class ProductServiceImpl implements ProductService {
     }
 
     private void populateVariants(ProductResponse response) {
+        double discountPercent = 0.0;
+        List<PromotionProduct> promos = promotionProductRepository
+                .findActivePromotionByProductId(response.getProductId());
+        if (!promos.isEmpty()) {
+            discountPercent = promos.get(0).getPromotion().getDiscountPercent();
+        }
+        final double dp = discountPercent;
+
         List<ProductVariant> variants = productVariantRepository
                 .findByProductProductId(response.getProductId());
         List<ProductVariantResponse> variantResponses = variants.stream()
-                .map(v -> toVariantResponseWithAttributes(v))
+                .map(v -> toVariantResponseWithAttributes(v, dp))
                 .collect(Collectors.toList());
         response.setVariants(variantResponses);
     }
 
     private void populateVariants(ProductDetailResponse response) {
+        double discountPercent = response.getDiscountPercent() != null ? response.getDiscountPercent() : 0.0;
+
         List<ProductVariant> variants = productVariantRepository
                 .findByProductProductId(response.getProductId());
         List<ProductVariantResponse> variantResponses = variants.stream()
-                .map(v -> toVariantResponseWithAttributes(v))
+                .map(v -> toVariantResponseWithAttributes(v, discountPercent))
                 .collect(Collectors.toList());
         response.setVariants(variantResponses);
     }
 
-    private ProductVariantResponse toVariantResponseWithAttributes(ProductVariant variant) {
+    private ProductVariantResponse toVariantResponseWithAttributes(ProductVariant variant, double discountPercent) {
         ProductVariantResponse res = productVariantMapper.toProductVariantResponse(variant);
         List<ProductVariantAttribute> attrs = productVariantAttributeRepository
                 .findByVariantVariantId(variant.getVariantId());
@@ -503,6 +513,10 @@ public class ProductServiceImpl implements ProductService {
                         .build())
                 .collect(Collectors.toList());
         res.setAttributes(attrList);
+        res.setDiscountPercent(discountPercent);
+        if (discountPercent > 0) {
+            res.setDiscountedPrice(variant.getPrice() * (1 - discountPercent / 100.0));
+        }
         return res;
     }
 
