@@ -1626,12 +1626,11 @@ PENDING → PROCESSING → SHIPPING → DELIVERED
 
 **Flow thanh toán VNPay:**
 ```
-1. FE → GET /createPayment → nhận paymentUrl
+1. FE → Tạo Order → nhận paymentUrl
 2. FE → redirect user đến paymentUrl
 3. User → hoàn tất thanh toán trên VNPay
-4. VNPay → GET /callback (server xử lý)
-5. Server → redirect về URL frontend
-6. FE → GET /orders/{id} để kiểm tra trạng thái
+4. VNPay → GET /callback (FE)
+6. FE → GET /orders/{id} để hiển thị thông tin đơn hàng và trạng thái đơn hàng/thanh toán
 ```
 
 ---
@@ -1668,18 +1667,20 @@ PENDING → PROCESSING → SHIPPING → DELIVERED
   "result": [
     {
       "packageId": 1,
-      "name": "Trả góp 3 tháng - Lãi suất 0%",
+      "name": "Trả góp 3 tháng - Lãi suất 0% (Trả trước 0%)",
       "durationMonths": 3,
       "interestRate": 0.0,
       "minOrderAmount": 3000000.0,
+      "downPaymentPercentage": 0.0,
       "isActive": true
     },
     {
       "packageId": 2,
-      "name": "Trả góp 6 tháng - Lãi suất 0%",
+      "name": "Trả góp 6 tháng - Lãi suất 1% (Trả trước 10%)",
       "durationMonths": 6,
       "interestRate": 1.0,
       "minOrderAmount": 5000000.0,
+      "downPaymentPercentage": 10.0,
       "isActive": true
     }
   ]
@@ -1710,10 +1711,11 @@ PENDING → PROCESSING → SHIPPING → DELIVERED
 **Request:**
 ```json
 {
-  "name": "Trả góp 18 tháng - Lãi suất 2%",
+  "name": "Trả góp 18 tháng - Lãi suất 2% (Trả trước 25%)",
   "durationMonths": 18,
   "interestRate": 2.0,
   "minOrderAmount": 15000000.0,
+  "downPaymentPercentage": 25.0,
   "isActive": true
 }
 ```
@@ -1724,6 +1726,7 @@ PENDING → PROCESSING → SHIPPING → DELIVERED
 | `durationMonths` | ✅ | Số nguyên dương |
 | `interestRate` | ✅ | Số thực >= 0 (%) |
 | `minOrderAmount` | ✅ | Số thực >= 0 |
+| `downPaymentPercentage` | ✅ | Số thực >= 0 (%) |
 | `isActive` | ✅ | `true` hoặc `false` |
 
 | Case | Code |
@@ -1744,6 +1747,7 @@ PENDING → PROCESSING → SHIPPING → DELIVERED
   "durationMonths": 6,
   "interestRate": 0.5,
   "minOrderAmount": 5000000.0,
+  "downPaymentPercentage": 10.0,
   "isActive": false
 }
 ```
@@ -1754,6 +1758,7 @@ PENDING → PROCESSING → SHIPPING → DELIVERED
 | `durationMonths` | null = không thay đổi |
 | `interestRate` | null = không thay đổi |
 | `minOrderAmount` | null = không thay đổi |
+| `downPaymentPercentage` | null = không thay đổi |
 | `isActive` | null = không thay đổi |
 
 > **Partial update:** Mỗi field đều nullable. Gửi gì thì update nấy.
@@ -1784,6 +1789,55 @@ PENDING → PROCESSING → SHIPPING → DELIVERED
 |------|------|
 | ✅ Thành công | 1000 |
 | ❌ Không tồn tại | 404 |
+
+---
+
+## POST `/installment-packages/calculate` — Xem trước trả góp
+
+**Auth:** Public
+
+**Request:**
+```json
+{
+  "packageId": 2,
+  "orderAmount": 20000000
+}
+```
+
+**Response:**
+```json
+{
+  "code": 1000,
+  "message": null,
+  "result": {
+    "orderAmount": 20000000.0,
+    "downPaymentPercentage": 10.0,
+    "downPaymentAmount": 2000000.0,
+    "remainingBalance": 18000000.0,
+    "monthlyInstallmentAmount": 305282.0,
+    "interestRate": 1.0,
+    "durationMonths": 6,
+    "totalPayableAmount": 20305282.0,
+    "schedule": [
+      {
+        "installmentNo": 1,
+        "amount": 305282.0,
+        "dueDate": "2026-04-15"
+      },
+      {
+        "installmentNo": 2,
+        "amount": 305282.0,
+        "dueDate": "2026-05-15"
+      }
+    ]
+  }
+}
+```
+
+| Case | Code |
+|------|------|
+| ✅ Thành công | 1000 |
+| ❌ Package không tồn tại | 9999 (Uncategorized) |
 
 ---
 
@@ -2311,6 +2365,128 @@ const blog = {
 
 ---
 
+# 14. 🛡️ Warranties — `/warranties`
+
+---
+
+## GET `/warranties/{id}`
+
+**Auth:** MEMBER, STAFF, ADMIN
+
+| Case | Code |
+|------|------|
+| ✅ Tìm thấy | 1000 |
+| ❌ Không tồn tại | 404 |
+
+---
+
+## GET `/warranties/order/{orderId}`
+
+**Auth:** MEMBER, STAFF, ADMIN
+
+| Case | Code |
+|------|------|
+| ✅ Thành công | 1000, trả về list warranties |
+| ❌ Không tìm thấy order | 404 |
+
+---
+
+## PUT `/warranties/{id}/status`
+
+**Auth:** STAFF, ADMIN
+
+**Request:**
+```json
+{
+  "status": "ACTIVE"
+}
+```
+
+* `status`: `ACTIVE`, `EXPIRED`, `VOIDED`
+
+| Case | Code |
+|------|------|
+| ✅ Thành công | 1000 |
+| ❌ Không tồn tại | 404 |
+| ❌ Thiếu status | 400 |
+
+---
+
+---
+
+# 15. 🛠️ Warranty Claims — `/claims`
+
+---
+
+## POST `/claims` — Tạo claim mới
+
+**Auth:** MEMBER, STAFF, ADMIN
+
+**Request:**
+```json
+{
+  "warrantyId": 1,
+  "customerNote": "Màn hình bị sọc"
+}
+```
+
+| Field | Bắt buộc | Validation |
+|-------|----------|-----------|
+| `warrantyId` | ✅ | Phải tồn tại |
+| `customerNote` | ✅ | Không được rỗng |
+
+| Case | Code |
+|------|------|
+| ✅ Thành công | 1000 |
+| ❌ Thiếu field / Rỗng | 400 |
+
+---
+
+## GET `/claims/{id}`
+
+**Auth:** MEMBER, STAFF, ADMIN
+
+| Case | Code |
+|------|------|
+| ✅ Tìm thấy | 1000 |
+| ❌ Không tồn tại | 404 |
+
+---
+
+## GET `/claims/warranty/{warrantyId}`
+
+**Auth:** MEMBER, STAFF, ADMIN
+
+| Case | Code |
+|------|------|
+| ✅ Thành công | 1000, trả về list |
+| ❌ Không tồn tại | 404 |
+
+---
+
+## PUT `/claims/{id}` — Cập nhật claim
+
+**Auth:** STAFF, ADMIN
+
+**Request:**
+```json
+{
+  "status": "PROCESSING",
+  "technicianNote": "Đang kiểm tra",
+  "solutionType": "REPAIR"
+}
+```
+
+* `status`: `PENDING`, `PROCESSING`, `COMPLETED`, `REJECTED`
+* `solutionType`: `REPAIR`, `REPLACE`, `REFUND`
+
+| Case | Code |
+|------|------|
+| ✅ Thành công | 1000 |
+| ❌ Không tồn tại | 404 |
+
+---
+
 # 📋 Tóm tắt tất cả Endpoints
 
 | Method | Endpoint | Auth | Mô tả |
@@ -2391,6 +2567,15 @@ const blog = {
 | POST | `/roles` | ADMIN | Tạo role |
 | PUT | `/roles/{id}` | ADMIN | Cập nhật |
 | DELETE | `/roles/{id}` | ADMIN | Xoá |
+| **WARRANTIES** | | | |
+| GET | `/warranties/{id}` | Authenticated | Chi tiết warranty |
+| GET | `/warranties/order/{orderId}` | Authenticated | Warranties của đơn hàng |
+| PUT | `/warranties/{id}/status` | STAFF/ADMIN | Cập nhật trạng thái warranty |
+| **CLAIMS** | | | |
+| POST | `/claims` | Authenticated | Tạo yêu cầu bảo hành |
+| GET | `/claims/{id}` | Authenticated | Chi tiết yêu cầu bảo hành |
+| GET | `/claims/warranty/{warrantyId}` | Authenticated | Các yêu cầu bảo hành của warranty |
+| PUT | `/claims/{id}` | STAFF/ADMIN | Cập nhật yêu cầu bảo hành |
 | **PC BUILD** | | | |
 | POST | `/pc-builds/compatible-variants` | MEMBER+ | Lấy categoryId + filter hints cho loại linh kiện |
 | PUT | `/pc-builds/draft/items` | MEMBER+ | Upsert linh kiện vào draft build |

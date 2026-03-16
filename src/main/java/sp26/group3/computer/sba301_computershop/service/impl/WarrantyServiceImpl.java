@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import sp26.group3.computer.sba301_computershop.dto.request.UpdateWarrantyStatusRequest;
+import sp26.group3.computer.sba301_computershop.dto.response.ClaimResponse;
 import sp26.group3.computer.sba301_computershop.dto.response.WarrantyResponse;
 import sp26.group3.computer.sba301_computershop.entity.Order;
 import sp26.group3.computer.sba301_computershop.entity.OrderItem;
@@ -66,6 +67,7 @@ public class WarrantyServiceImpl implements WarrantyService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public WarrantyResponse getWarrantyById(int id) {
         Warranty warranty = warrantyRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Warranty not found with id: " + id));
@@ -73,8 +75,19 @@ public class WarrantyServiceImpl implements WarrantyService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<WarrantyResponse> getWarrantiesByOrderId(int orderId) {
         return warrantyRepository.findByOrderItem_Order_OrderId(orderId)
+                .stream()
+                .map(this::toWarrantyResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<WarrantyResponse> getWarrantiesByPhoneNumber(String phoneNumber) {
+        log.info("Getting warranties for phoneNumber={}", phoneNumber);
+        return warrantyRepository.findByOrderItem_Order_User_PhoneNumber(phoneNumber)
                 .stream()
                 .map(this::toWarrantyResponse)
                 .collect(Collectors.toList());
@@ -95,6 +108,23 @@ public class WarrantyServiceImpl implements WarrantyService {
 
     private WarrantyResponse toWarrantyResponse(Warranty warranty) {
         Product product = warranty.getOrderItem().getProductItem().getVariant().getProduct();
+
+        List<ClaimResponse> claimResponses = null;
+        if (warranty.getClaims() != null) {
+            claimResponses = warranty.getClaims().stream()
+                    .map(claim -> ClaimResponse.builder()
+                            .claimId(claim.getClaimId())
+                            .warrantyId(claim.getWarranty().getId())
+                            .claimDate(claim.getClaimDate())
+                            .customerNote(claim.getCustomerNote())
+                            .technicianNote(claim.getTechnicianNote())
+                            .status(claim.getStatus())
+                            .solutionType(claim.getSolutionType())
+                            .returnDate(claim.getReturnDate())
+                            .build())
+                    .collect(Collectors.toList());
+        }
+
         return WarrantyResponse.builder()
                 .id(warranty.getId())
                 .orderItemId(warranty.getOrderItem().getOrderItemId())
@@ -106,6 +136,7 @@ public class WarrantyServiceImpl implements WarrantyService {
                 .description(warranty.getDescription())
                 .status(warranty.getStatus())
                 .type(warranty.getType())
+                .claims(claimResponses)
                 .build();
     }
 }

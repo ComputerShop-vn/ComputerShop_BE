@@ -6,6 +6,7 @@ import sp26.group3.computer.sba301_computershop.enums.WarrantyStatus;
 import sp26.group3.computer.sba301_computershop.enums.WarrantyType;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Entity
 @Table(name = "warranties")
@@ -22,6 +23,9 @@ public class Warranty {
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_item_id", nullable = false)
     private OrderItem orderItem;
+
+    @OneToMany(mappedBy = "warranty", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<WarrantyClaim> claims;
 
     @Column(name = "serial_number")
     private String serialNumber;

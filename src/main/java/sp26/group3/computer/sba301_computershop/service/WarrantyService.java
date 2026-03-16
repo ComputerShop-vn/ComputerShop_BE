@@ -13,5 +13,7 @@ public interface WarrantyService {
 
     List<WarrantyResponse> getWarrantiesByOrderId(int orderId);
 
+    List<WarrantyResponse> getWarrantiesByPhoneNumber(String phoneNumber);
+
     WarrantyResponse updateWarrantyStatus(int id, UpdateWarrantyStatusRequest request);
 }

@@ -334,10 +334,6 @@ public class OrderServiceImpl implements OrderService {
 
     private void createPaymentSchedules(Order order, PlaceOrderRequest request) {
         if (request.getPaymentType() == PaymentType.COD) {
-            // No payment schedule needed for COD, or maybe one for tracking?
-            // The flow says: "be to create order and navigate to payment success page"
-            // Let's create one schedule with COD status if needed, but for now, we follow
-            // the FULL/INSTALLMENT pattern.
             OrderPaymentSchedule schedule = OrderPaymentSchedule.builder()
                     .order(order)
                     .installmentNo(1)
@@ -348,7 +344,6 @@ public class OrderServiceImpl implements OrderService {
             paymentScheduleRepository.save(schedule);
             log.info("Created COD payment schedule for orderId={}", order.getOrderId());
         } else if (request.getPaymentType() == PaymentType.FULL) {
-            // Single full payment
             OrderPaymentSchedule schedule = OrderPaymentSchedule.builder()
                     .order(order)
                     .installmentNo(1)
@@ -360,23 +355,45 @@ public class OrderServiceImpl implements OrderService {
         } else {
             // Installment payments
             InstallmentPackage pack = order.getInstallmentPackage();
+            double orderAmount = order.getTotalAmount();
+            double downPaymentPercentage = pack.getDownPaymentPercentage();
+            double downPaymentAmount = orderAmount * (downPaymentPercentage / 100.0);
+            double remainingBalance = orderAmount - downPaymentAmount;
 
-            int months = pack.getDurationMonths();
-            double rate = pack.getInterestRate();
-            double totalWithInterest = order.getTotalAmount() * (1 + rate / 100);
-            double monthlyAmount = totalWithInterest / months;
+            // 1. Create Down Payment Record (Month 0)
+            OrderPaymentSchedule downPayment = OrderPaymentSchedule.builder()
+                    .order(order)
+                    .installmentNo(0) // 0 represents the down payment
+                    .amount(Math.round(downPaymentAmount * 100.0) / 100.0)
+                    .dueDate(LocalDate.now()) // Payable now
+                    .status(PaymentStatus.UNPAID)
+                    .build();
+            paymentScheduleRepository.save(downPayment);
 
-            for (int i = 1; i <= months; i++) {
+            // 2. Create Installment Records
+            double interestRatePerMonth = (pack.getInterestRate() / 100.0) / 12.0;
+            int durationMonths = pack.getDurationMonths();
+
+            double monthlyPayment;
+            if (interestRatePerMonth > 0) {
+                monthlyPayment = (remainingBalance * interestRatePerMonth * Math.pow(1 + interestRatePerMonth, durationMonths))
+                        / (Math.pow(1 + interestRatePerMonth, durationMonths) - 1);
+            } else {
+                monthlyPayment = remainingBalance / durationMonths;
+            }
+            monthlyPayment = Math.round(monthlyPayment * 100.0) / 100.0;
+
+            for (int i = 1; i <= durationMonths; i++) {
                 OrderPaymentSchedule schedule = OrderPaymentSchedule.builder()
                         .order(order)
                         .installmentNo(i)
-                        .amount(Math.round(monthlyAmount * 100.0) / 100.0)
-                        .dueDate(LocalDate.now().plusMonths(i))
+                        .amount(monthlyPayment)
+                        .dueDate(LocalDate.now().plusMonths(i)) // Requirement 6: First installment 1 month after purchase
                         .status(PaymentStatus.UNPAID)
                         .build();
                 paymentScheduleRepository.save(schedule);
             }
-            log.info("Created {} installment schedules for orderId={}", months, order.getOrderId());
+            log.info("Created down payment + {} installment schedules for orderId={}", durationMonths, order.getOrderId());
         }
     }
 
