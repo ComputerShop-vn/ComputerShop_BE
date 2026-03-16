@@ -2,6 +2,7 @@ package sp26.group3.computer.sba301_computershop.service;
 
 import com.nimbusds.jose.JOSEException;
 import sp26.group3.computer.sba301_computershop.dto.request.AuthenticationRequest;
+import sp26.group3.computer.sba301_computershop.dto.request.GoogleLoginRequest;
 import sp26.group3.computer.sba301_computershop.dto.request.IntrospectRequest;
 import sp26.group3.computer.sba301_computershop.dto.request.LogoutRequest;
 import sp26.group3.computer.sba301_computershop.dto.request.RefreshRequest;
@@ -12,6 +13,7 @@ import java.text.ParseException;
 
 public interface AuthenticationService {
     AuthenticationResponse authenticated(AuthenticationRequest request);
+    AuthenticationResponse googleLogin(GoogleLoginRequest request);
 
     IntrospectResponse introspect(IntrospectRequest request)
             throws ParseException, JOSEException;

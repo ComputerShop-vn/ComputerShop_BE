@@ -21,8 +21,18 @@ import sp26.group3.computer.sba301_computershop.entity.User;
 import sp26.group3.computer.sba301_computershop.exception.AppException;
 import sp26.group3.computer.sba301_computershop.exception.ErrorCode;
 import sp26.group3.computer.sba301_computershop.repository.InvalidatedTokenRepository;
+import sp26.group3.computer.sba301_computershop.repository.RoleRepository;
 import sp26.group3.computer.sba301_computershop.repository.UserRepository;
 import sp26.group3.computer.sba301_computershop.service.AuthenticationService;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
+
+import java.time.LocalDateTime;
+import java.util.Map;
+import sp26.group3.computer.sba301_computershop.entity.Role;
 
 import java.text.ParseException;
 import java.util.Date;
@@ -37,6 +47,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     UserRepository userRepository;
     PasswordEncoder passwordEncoder;
     InvalidatedTokenRepository invalidatedTokenRepository;
+    RoleRepository roleRepository;
 
     @Value("${jwt.signer-key}")
     @NonFinal
@@ -67,6 +78,64 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .token(token)
                 .authenticated(true)
                 .build();
+    }
+
+    // ================= GOOGLE LOGIN =================
+    @Override
+    public AuthenticationResponse googleLogin(GoogleLoginRequest request) {
+        RestTemplate restTemplate = new RestTemplate();
+        String url;
+        HttpEntity<String> entity;
+
+        if (request.getToken().startsWith("ya29.")) {
+            // Access Token
+            url = "https://www.googleapis.com/oauth2/v3/userinfo";
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("Authorization", "Bearer " + request.getToken());
+            entity = new HttpEntity<>("", headers);
+        } else {
+            // ID Token
+            url = "https://oauth2.googleapis.com/tokeninfo?id_token=" + request.getToken();
+            entity = new HttpEntity<>("");
+        }
+
+        try {
+            ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.GET, entity, Map.class);
+            Map<String, Object> payload = response.getBody();
+            if (payload == null || !payload.containsKey("email")) {
+                throw new AppException(ErrorCode.UNAUTHENTICATED);
+            }
+
+            String email = (String) payload.get("email");
+            String defaultName = payload.containsKey("name") ? (String) payload.get("name") : email;
+
+            User user = userRepository.findByEmail(email).orElse(null);
+            if (user == null) {
+                // Tạo user mới nếu chưa tồn tại
+                Role userRole = roleRepository.findByName("USER")
+                        .orElseThrow(() -> new AppException(ErrorCode.UNCATEGORIZED_EXCEPTION)); // Cần có role USER trong DB
+
+                user = User.builder()
+                        .email(email)
+                        .username(email)
+                        .password(passwordEncoder.encode(java.util.UUID.randomUUID().toString()))
+                        .role(userRole)
+                        .status("ACTIVE")
+                        .createdAt(LocalDateTime.now())
+                        .build();
+                user = userRepository.save(user);
+            }
+
+            String token = generateToken(user);
+            return AuthenticationResponse.builder()
+                    .token(token)
+                    .authenticated(true)
+                    .build();
+
+        } catch (Exception e) {
+            log.error("Google verify token failed", e);
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
     }
 
     // ================= GENERATE JWT =================
