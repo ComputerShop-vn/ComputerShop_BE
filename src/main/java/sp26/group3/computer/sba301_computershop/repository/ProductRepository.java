@@ -33,7 +33,9 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
             @Param("maxPrice") Double maxPrice);
 
     @Query("SELECT p FROM Product p WHERE "
-            + "(:categoryId IS NULL OR p.category.categoryId = :categoryId) "
+            + "(:categoryId IS NULL "
+            + " OR p.category.categoryId = :categoryId "
+            + " OR p.category IN (SELECT c FROM Category c WHERE c.parentCategory.categoryId = :categoryId)) "
             + "AND (:brandId IS NULL OR p.brand.brandId = :brandId) "
             + "AND (:minPrice IS NULL OR p.basePrice >= :minPrice) "
             + "AND (:maxPrice IS NULL OR p.basePrice <= :maxPrice)")
