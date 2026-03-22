@@ -44,4 +44,8 @@ public class OrderPaymentSchedule {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     private PaymentStatus status; // UNPAID, PAID, OVERDUE
+
+    @Column(name = "penalty_amount")
+    @Builder.Default
+    private double penaltyAmount = 0; // The total accumulated penalty fee
 }

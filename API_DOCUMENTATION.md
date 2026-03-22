@@ -1630,7 +1630,7 @@ PENDING → PROCESSING → SHIPPING → DELIVERED
 2. FE → redirect user đến paymentUrl
 3. User → hoàn tất thanh toán trên VNPay
 4. VNPay → GET /callback (FE)
-6. FE → GET /orders/{id} để hiển thị thông tin đơn hàng và trạng thái đơn hàng/thanh toán
+5. FE → GET /orders/{id} để hiển thị thông tin đơn hàng và trạng thái đơn hàng/thanh toán
 ```
 
 ---

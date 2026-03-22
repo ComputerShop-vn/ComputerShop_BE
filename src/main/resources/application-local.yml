@@ -1,7 +1,21 @@
 spring:
   application:
     name: SBA301_ComputerShop
-
+  # ===============================
+  # EMAIL CONFIG
+  # ===============================
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${EMAIL_ADDRESS}
+    password: ${PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
   # ===============================
   # FILE UPLOAD LIMITS
   # ===============================

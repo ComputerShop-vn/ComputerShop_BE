@@ -50,6 +50,7 @@ public class InstallmentPackageServiceImpl implements InstallmentPackageService 
                 .minOrderAmount(request.getMinOrderAmount())
                 .downPaymentPercentage(request.getDownPaymentPercentage())
                 .isActive(request.getIsActive())
+                .annualPenaltyRate(request.getAnnualPenaltyRate())
                 .build();
         return toResponse(installmentPackageRepository.save(pkg));
     }
@@ -76,6 +77,9 @@ public class InstallmentPackageServiceImpl implements InstallmentPackageService 
         }
         if (request.getIsActive() != null) {
             pkg.setActive(request.getIsActive());
+        }
+        if (request.getAnnualPenaltyRate() != null) {
+            pkg.setAnnualPenaltyRate(request.getAnnualPenaltyRate());
         }
 
         return toResponse(installmentPackageRepository.save(pkg));
@@ -140,6 +144,7 @@ public class InstallmentPackageServiceImpl implements InstallmentPackageService 
                 .interestRate(pkg.getInterestRate())
                 .durationMonths(durationMonths)
                 .totalPayableAmount(Math.round(totalPayableAmount * 100.0) / 100.0)
+                .annualPenaltyRate(pkg.getAnnualPenaltyRate())
                 .schedule(schedule)
                 .build();
     }
@@ -153,6 +158,7 @@ public class InstallmentPackageServiceImpl implements InstallmentPackageService 
                 .minOrderAmount(pkg.getMinOrderAmount())
                 .downPaymentPercentage(pkg.getDownPaymentPercentage())
                 .isActive(pkg.isActive())
+                .annualPenaltyRate(pkg.getAnnualPenaltyRate())
                 .build();
     }
 }

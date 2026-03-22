@@ -57,7 +57,8 @@ CREATE TABLE installment_package (
     interest_rate FLOAT NOT NULL,
     min_order_amount FLOAT NOT NULL,
     down_payment_percentage FLOAT NOT NULL DEFAULT 20.0,
-    is_active BIT DEFAULT 1
+    is_active BIT DEFAULT 1,
+    annual_penalty_rate FLOAT DEFAULT 0.0 -- The annual penalty interest rate (e.g., 0.365 represents 36.5%/year)
 );
 -- users
 CREATE TABLE users (
@@ -231,6 +232,7 @@ CREATE TABLE order_payment_schedule (
     paid_date DATE,
     vnp_transaction_no NVARCHAR(255),
     status NVARCHAR(20) NOT NULL,
+    penalty_amount FLOAT DEFAULT 0.0, -- The total accumulated penalty fee
     FOREIGN KEY (order_id) REFERENCES orders(order_id)
 );
 -- pc_builds  (replaces old pc_build — note updated_at added)
@@ -312,43 +314,48 @@ INSERT INTO installment_package (
         interest_rate,
         min_order_amount,
         down_payment_percentage,
-        is_active
+        is_active,
+        annual_penalty_rate
     )
 VALUES (
         1,
         N'Trả góp 3 tháng - Lãi suất 0% (Trả trước 0%)',
         3,
         0.0,
-        3000000.00,
+        500000.00,
         0.0,
-        1
+        1,
+        0.365
     ),
     (
         2,
         N'Trả góp 6 tháng - Lãi suất 1% (Trả trước 10%)',
         6,
         1.0,
-        5000000.00,
+        1000000.00,
         10.0,
-        1
+        1,
+        0.365
     ),
     (
         3,
         N'Trả góp 12 tháng - Lãi suất 1.5% (Trả trước 20%)',
         12,
         1.5,
-        10000000.00,
+        3000000.00,
         20.0,
-        1
+        1,
+        0.365
     ),
     (
         4,
         N'Trả góp 9 tháng - Không hoạt động',
         9,
         1.5,
-        5000000.00,
+        2000000.00,
         15.0,
-        0
+        0,
+        0.365
     );
 SET IDENTITY_INSERT installment_package OFF;
 -- Users  (password = Admin@123 for all)
