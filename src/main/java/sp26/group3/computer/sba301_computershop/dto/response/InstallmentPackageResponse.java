@@ -17,4 +17,5 @@ public class InstallmentPackageResponse {
     double minOrderAmount;
     double downPaymentPercentage;
     boolean isActive;
+    double annualPenaltyRate;
 }

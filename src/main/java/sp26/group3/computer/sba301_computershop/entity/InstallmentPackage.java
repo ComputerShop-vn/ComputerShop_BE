@@ -35,4 +35,7 @@ public class InstallmentPackage {
 
     @Column(name = "is_active")
     boolean isActive;
+
+    @Column(name = "annual_penalty_rate")
+    double annualPenaltyRate; // The annual penalty interest rate (e.g., 0.365 represents 36.5%/year)
 }
