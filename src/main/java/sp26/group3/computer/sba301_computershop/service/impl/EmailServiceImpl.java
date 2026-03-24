@@ -7,6 +7,9 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import sp26.group3.computer.sba301_computershop.service.EmailService;
 import jakarta.mail.internet.MimeMessage;
+import org.thymeleaf.TemplateEngine;
+import org.thymeleaf.context.Context;
+import java.time.LocalDate;
 
 @Slf4j
 @Service
@@ -14,35 +17,52 @@ import jakarta.mail.internet.MimeMessage;
 public class EmailServiceImpl implements EmailService {
 
     private final JavaMailSender mailSender;
+    private final TemplateEngine templateEngine;
 
     @Override
-    public void sendNearDueReminder(String email, String customerName, String installmentNo, double amount,
-            String dueDate) {
+    public void sendNearDueReminder(String email, String customerName, String orderId, String installmentNo,
+            double amount, LocalDate dueDate) {
         String subject = "[Thông báo] Nhắc nhở thanh toán trả góp kỳ #" + installmentNo;
-        String content = String.format(
-                "<h3>Xin chào %s,</h3>" +
-                        "<p>Đây là email nhắc nhở khoản thanh toán trả góp kỳ <b>#%s</b> của bạn với số tiền <b>%,.0f VNĐ</b> sẽ đến hạn vào ngày <b>%s</b>.</p>"
-                        +
-                        "<p>Vui lòng sắp xếp thanh toán đúng hạn để tránh phát sinh thêm các khoản phí phạt trễ hạn.</p>"
-                        +
-                        "<p>Trân trọng,<br/>Đội ngũ vitinh.com</p>",
-                customerName, installmentNo, amount, dueDate);
-        sendEmail(email, subject, content);
+        String title = "Nhắc nhở thanh toán (Sắp đến hạn)";
+        String message = String.format(
+                "Đây là email nhắc nhở khoản thanh toán trả góp kỳ <b>#%s</b> của bạn sắp đến hạn.",
+                installmentNo);
+
+        Context context = new Context();
+        context.setVariable("title", title);
+        context.setVariable("customerName", customerName);
+        context.setVariable("orderId", orderId);
+        context.setVariable("message", message);
+        context.setVariable("installmentNo", "#" + installmentNo);
+        context.setVariable("amount", amount);
+        context.setVariable("dueDate", dueDate);
+
+        String processContent = templateEngine.process("email-template", context);
+        sendEmail(email, subject, processContent);
     }
 
     @Override
-    public void sendOverdueNotification(String email, String customerName, String installmentNo, double amount,
-            String dueDate) {
+    public void sendOverdueNotification(String email, String customerName, String orderId, String installmentNo,
+            double amount, LocalDate dueDate) {
         String subject = "[QUAN TRỌNG] Thông báo QUÁ HẠN thanh toán trả góp kỳ #" + installmentNo;
-        String content = String.format(
-                "<h3>Xin chào %s,</h3>" +
-                        "<p>Khoản thanh toán trả góp kỳ <b>#%s</b> của bạn với số tiền <b>%,.0f VNĐ</b> (hạn chót ngày <b>%s</b>) hiện đã <b>QUÁ HẠN</b>.</p>"
-                        +
-                        "<p>Hệ thống đang áp dụng phí phạt trễ hạn cộng dồn mỗi ngày lên tài khoản của bạn. Vui lòng thanh toán NGAY LẬP TỨC để tránh phát sinh thêm chi phí phạt và bị khóa tài khoản mua hàng.</p>"
-                        +
-                        "<p>Trân trọng,<br/>Đội ngũ vitinh.com</p>",
-                customerName, installmentNo, amount, dueDate);
-        sendEmail(email, subject, content);
+        String title = "CẢNH BÁO QUÁ HẠN THANH TOÁN";
+        String message = String.format(
+                "Khoản thanh toán trả góp kỳ <b>#%s</b> của bạn đã <b>QUÁ HẠN</b>.<br/>" +
+                "Hệ thống đang áp dụng phí phạt trễ hạn cộng dồn mỗi ngày lên tài khoản của bạn. " +
+                "Vui lòng thanh toán NGAY LẬP TỨC để tránh phát sinh thêm chi phí phạt.",
+                installmentNo);
+
+        Context context = new Context();
+        context.setVariable("title", title);
+        context.setVariable("customerName", customerName);
+        context.setVariable("orderId", orderId);
+        context.setVariable("message", message);
+        context.setVariable("installmentNo", "#" + installmentNo);
+        context.setVariable("amount", amount);
+        context.setVariable("dueDate", dueDate);
+
+        String processContent = templateEngine.process("email-template", context);
+        sendEmail(email, subject, processContent);
     }
 
     private void sendEmail(String to, String subject, String content) {

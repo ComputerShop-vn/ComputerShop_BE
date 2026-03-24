@@ -48,9 +48,10 @@ public class PaymentScheduleJobServiceImpl implements PaymentScheduleJobService 
                 emailService.sendNearDueReminder(
                         schedule.getOrder().getUser().getEmail(),
                         schedule.getOrder().getUser().getUsername(),
+                        schedule.getOrder().getOrderId(),
                         String.valueOf(schedule.getInstallmentNo()),
                         schedule.getAmount(),
-                        schedule.getDueDate().toString()
+                        schedule.getDueDate()
                 );
             } catch (Exception e) {
                 log.error("Failed to send near-due reminder for schedule ID {}: {}", schedule.getPaymentScheduleId(), e.getMessage());
@@ -75,9 +76,10 @@ public class PaymentScheduleJobServiceImpl implements PaymentScheduleJobService 
                 emailService.sendOverdueNotification(
                         schedule.getOrder().getUser().getEmail(),
                         schedule.getOrder().getUser().getUsername(),
+                        schedule.getOrder().getOrderId(),
                         String.valueOf(schedule.getInstallmentNo()),
                         schedule.getAmount(),
-                        schedule.getDueDate().toString()
+                        schedule.getDueDate()
                 );
             } catch (Exception e) {
                 log.error("Failed to mark schedule ID {} as overdue: {}", schedule.getPaymentScheduleId(), e.getMessage());
