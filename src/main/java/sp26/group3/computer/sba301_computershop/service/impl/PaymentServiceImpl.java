@@ -153,7 +153,7 @@ public class PaymentServiceImpl implements PaymentService {
         fields.remove("vnp_SecureHash");
 
         String signValue = vnPayConfig.hashAllFields(fields);
-
+        String returnUrl = "http://localhost:3000/orders/" + request.getParameter("vnp_TxnRef");
         String successUrl = "http://localhost:3000/payment-success";
         String failUrl = "http://localhost:3000/payment-failed";
 
@@ -186,20 +186,20 @@ public class PaymentServiceImpl implements PaymentService {
                     log.info("Cart cleared after successful payment | cartId={}", cart.getCartId());
                 }
 
-                return successUrl;
+                return returnUrl;
 
             } else {
 
                 log.warn("Thanh toán thất bại ResponseCode={}", responseCode);
 
-                return failUrl;
+                return returnUrl;
             }
 
         } else {
 
             log.error("VNPay checksum invalid");
 
-            return failUrl;
+            return returnUrl;
         }
     }
     @Override
