@@ -179,7 +179,7 @@ public class PromotionServiceImpl implements PromotionService {
         categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_FOUND));
 
-        List<Product> products = productRepository.findByCategoryCategoryId(categoryId);
+        List<Product> products = productRepository.filterProducts(categoryId, null, null, null);
 
         int addedCount = 0;
         for (Product product : products) {
