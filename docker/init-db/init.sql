@@ -1,4 +1,4 @@
-﻿-- ===============================
+-- ===============================
 -- SBA301 Computer Shop - Database Initialization
 -- SQL Server - matches Hibernate entity model (ddl-auto: validate)
 -- ===============================
@@ -202,7 +202,8 @@ CREATE TABLE orders (
     user_id INT NOT NULL,
     total_amount FLOAT,
     status NVARCHAR(50),
-    payment_type NVARCHAR(20),
+    payment_method NVARCHAR(20),
+    payment_mode NVARCHAR(20),
     installment_package_id INT NULL,
     order_date DATETIME2,
     FOREIGN KEY (user_id) REFERENCES users(user_id),

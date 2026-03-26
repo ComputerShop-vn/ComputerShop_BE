@@ -15,7 +15,8 @@ import sp26.group3.computer.sba301_computershop.entity.Order;
 import sp26.group3.computer.sba301_computershop.entity.OrderPaymentSchedule;
 import sp26.group3.computer.sba301_computershop.entity.User;
 import sp26.group3.computer.sba301_computershop.enums.PaymentStatus;
-import sp26.group3.computer.sba301_computershop.enums.PaymentType;
+import sp26.group3.computer.sba301_computershop.enums.PaymentMethod;
+import sp26.group3.computer.sba301_computershop.enums.PaymentMode;
 import sp26.group3.computer.sba301_computershop.enums.OrderStatus;
 import sp26.group3.computer.sba301_computershop.exception.AppException;
 import sp26.group3.computer.sba301_computershop.exception.ErrorCode;
@@ -44,20 +45,31 @@ public class PaymentServiceImpl implements PaymentService {
     OrderPaymentScheduleRepository orderPaymentScheduleRepository;
     CartRepository cartRepository;
     CartItemRepository cartItemRepository;
+
     @Override
-    public PaymentDTO createVnPayPayment(HttpServletRequest request, int orderId, String bankCode) {
+    public PaymentDTO createVnPayPayment(HttpServletRequest request, int orderId, String bankCode, Integer installmentNo) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
 
         BigDecimal amount;
-        if (order.getPaymentType() == PaymentType.INSTALLMENT) {
+        int finalInstallmentNo = 0;
+        if (order.getPaymentMode() == PaymentMode.INSTALLMENT) {
             List<OrderPaymentSchedule> schedules = orderPaymentScheduleRepository
                     .findByOrderOrderIdOrderByInstallmentNoAsc(orderId);
-            OrderPaymentSchedule nextPayment = schedules.stream()
-                    .filter(schedule -> schedule.getStatus() == PaymentStatus.UNPAID)
-                    .findFirst()
-                    .orElseThrow(() -> new AppException(ErrorCode.ORDER_ALREADY_PAID));
-            amount = BigDecimal.valueOf(nextPayment.getAmount());
+            OrderPaymentSchedule targetPayment;
+            if (installmentNo != null) {
+                targetPayment = schedules.stream()
+                        .filter(s -> s.getInstallmentNo() == installmentNo)
+                        .findFirst()
+                        .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
+            } else {
+                targetPayment = schedules.stream()
+                        .filter(schedule -> schedule.getStatus() == PaymentStatus.UNPAID)
+                        .findFirst()
+                        .orElseThrow(() -> new AppException(ErrorCode.ORDER_ALREADY_PAID));
+            }
+            amount = BigDecimal.valueOf(targetPayment.getAmount() + targetPayment.getPenaltyAmount());
+            finalInstallmentNo = targetPayment.getInstallmentNo();
         } else {
             amount = BigDecimal.valueOf(order.getTotalAmount());
         }
@@ -66,7 +78,7 @@ public class PaymentServiceImpl implements PaymentService {
                 .setScale(0, RoundingMode.HALF_UP)
                 .longValue();
         // long finalAmount = amount * 100L;
-        String vnp_TxnRef = VNPayUtil.getRandomNumber(8) + "_" + orderId;
+        String vnp_TxnRef = VNPayUtil.getRandomNumber(8) + "_" + orderId + "_" + finalInstallmentNo;
         String vnp_IpAddr = VNPayUtil.getIpAddress(request);
 
         Map<String, String> vnp_Params = new HashMap<>();
@@ -153,14 +165,16 @@ public class PaymentServiceImpl implements PaymentService {
         fields.remove("vnp_SecureHash");
 
         String signValue = vnPayConfig.hashAllFields(fields);
-        String returnUrl = "http://localhost:3000/orders/" + request.getParameter("vnp_TxnRef");
-        String successUrl = "http://localhost:3000/payment-success";
-        String failUrl = "http://localhost:3000/payment-failed";
+
+        String txnRef = request.getParameter("vnp_TxnRef");
+        String[] parts = (txnRef != null) ? txnRef.split("_") : new String[0];
+        String orderIdStr = (parts.length > 1) ? parts[1] : "";
+        String instNoStr = (parts.length > 2) ? parts[2] : "0";
+        String returnUrl = "http://localhost:3000/payment-result?orderId=" + orderIdStr + "&installmentNo=" + instNoStr;
 
         if (signValue.equals(vnpSecureHash)) {
 
             String responseCode = request.getParameter("vnp_ResponseCode");
-            String orderIdStr = request.getParameter("vnp_TxnRef");
 
             if ("00".equals(responseCode)) {
 
@@ -171,20 +185,21 @@ public class PaymentServiceImpl implements PaymentService {
                 Order order = orderRepository.findById(orderId)
                         .orElseThrow(() -> new RuntimeException("Order not found"));
 
-                // Update order status
-                order.setStatus(OrderStatus.PAID);
-                orderRepository.save(order);
+                // // Update order status
+                // order.setStatus(OrderStatus.PAID);
+                // orderRepository.save(order);
 
-                // Clear cart
-                User user = order.getUser();
+                // // Clear cart
+                // User user = order.getUser();
 
-                Cart cart = cartRepository.findByUserUserId(user.getUserId())
-                        .orElse(null);
+                // Cart cart = cartRepository.findByUserUserId(user.getUserId())
+                // .orElse(null);
 
-                if (cart != null) {
-                    cartItemRepository.deleteAllByCartCartId(cart.getCartId());
-                    log.info("Cart cleared after successful payment | cartId={}", cart.getCartId());
-                }
+                // if (cart != null) {
+                // cartItemRepository.deleteAllByCartCartId(cart.getCartId());
+                // log.info("Cart cleared after successful payment | cartId={}",
+                // cart.getCartId());
+                // }
 
                 return returnUrl;
 
@@ -202,6 +217,7 @@ public class PaymentServiceImpl implements PaymentService {
             return returnUrl;
         }
     }
+
     @Override
     @Transactional
     public Map<String, String> handleVnPayIpn(HttpServletRequest request) {
@@ -232,42 +248,34 @@ public class PaymentServiceImpl implements PaymentService {
             String vnpTransactionNo = request.getParameter("vnp_TransactionNo");
 
             try {
-                int orderId = Integer.parseInt(txnRef.split("_")[1]);
+                String[] parts = txnRef.split("_");
+                int orderId = Integer.parseInt(parts[1]);
+                int installmentNo = Integer.parseInt(parts[2]);
                 Order order = orderRepository.findById(orderId).orElse(null);
 
                 if (order == null) {
                     response.put("RspCode", "01");
                     response.put("Message", "Order not found");
-                } else if (order.getPaymentType() == PaymentType.FULL
+                } else if (order.getPaymentMode() == PaymentMode.FULL
                         && order.getOrderPaymentSchedule().get(0).getStatus() == PaymentStatus.PAID) {
                     response.put("RspCode", "02");
                     response.put("Message", "Order already confirmed");
                 } else {
                     if ("00".equals(responseCode)) {
-                        // Update payment schedule
-                        List<OrderPaymentSchedule> schedules = orderPaymentScheduleRepository
-                                .findByOrderOrderIdOrderByInstallmentNoAsc(orderId);
-                        boolean allPaid = true;
-                        if (schedules != null && !schedules.isEmpty()) {
-                            boolean scheduleUpdated = false;
-                            for (OrderPaymentSchedule schedule : schedules) {
-                                if (!scheduleUpdated && schedule.getStatus() == PaymentStatus.UNPAID) {
-                                    schedule.setStatus(PaymentStatus.PAID);
-                                    schedule.setPaidDate(java.time.LocalDate.now());
-                                    schedule.setVnpTransactionNo(vnpTransactionNo);
-                                    orderPaymentScheduleRepository.save(schedule);
-                                    scheduleUpdated = true;
-                                    // We don't break here because we need to check if all are paid
-                                } else if (schedule.getStatus() != PaymentStatus.PAID) {
-                                    allPaid = false;
-                                }
-                            }
-                        } else {
-                            allPaid = false;
+                        // Update specific payment schedule
+                        OrderPaymentSchedule schedule = orderPaymentScheduleRepository
+                                .findByOrderOrderIdAndInstallmentNo(orderId, installmentNo)
+                                .orElse(null);
+
+                        if (schedule != null && schedule.getStatus() == PaymentStatus.UNPAID) {
+                            schedule.setStatus(PaymentStatus.PAID);
+                            schedule.setPaidDate(java.time.LocalDate.now());
+                            schedule.setVnpTransactionNo(vnpTransactionNo);
+                            orderPaymentScheduleRepository.save(schedule);
                         }
 
                         // Update status for installment payment ONLY when all durations are paid
-                        // if (order.getPaymentType() == PaymentType.INSTALLMENT) {
+                        // if (order.getPaymentMode() == PaymentMode.INSTALLMENT) {
                         // if (allPaid) {
                         // //order.setStatus(OrderStatus.PAID);
                         // orderRepository.save(order);
@@ -283,24 +291,18 @@ public class PaymentServiceImpl implements PaymentService {
                         // }
                     } else {
                         log.warn("Giao dịch VNPay thất bại cho Order ID: {}. Mã lỗi: {}", orderId, responseCode);
-                        // Only set FAILED if it's not already PAID
-                        // if (order.getStatus() != OrderStatus.PAID) {
-                        // order.setStatus(OrderStatus.FAILED);
-                        // orderRepository.save(order);
-                        // }
-                        // log.info("Order {} marked as FAILED via IPN", orderId);
 
-                        // List<OrderPaymentSchedule> schedules = orderPaymentScheduleRepository
-                        // .findByOrderOrderIdOrderByInstallmentNoAsc(orderId);
-                        // if (schedules != null && !schedules.isEmpty()) {
-                        // for (OrderPaymentSchedule schedule : schedules) {
-                        // if (schedule.getStatus() == PaymentStatus.UNPAID) {
-                        // schedule.setVnpTransactionNo(vnpTransactionNo);
-                        // orderPaymentScheduleRepository.save(schedule);
-                        // break;
-                        // }
-                        // }
-                        // }
+                        log.info("Order {} marked as FAILED via IPN", orderId);
+
+                        OrderPaymentSchedule schedule = orderPaymentScheduleRepository
+                                .findByOrderOrderIdAndInstallmentNo(orderId, installmentNo)
+                                .orElse(null);
+
+                        if (schedule != null && schedule.getStatus() == PaymentStatus.UNPAID) {
+                            schedule.setVnpTransactionNo(vnpTransactionNo);
+                            schedule.setStatus(PaymentStatus.FAILED);
+                            orderPaymentScheduleRepository.save(schedule);
+                        }
                     }
                     response.put("RspCode", "00");
                     response.put("Message", "Confirm Success");

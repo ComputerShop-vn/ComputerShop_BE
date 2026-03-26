@@ -11,9 +11,13 @@ import sp26.group3.computer.sba301_computershop.enums.PaymentStatus;
 import java.time.LocalDate;
 import java.util.List;
 
+import java.util.Optional;
+
 @Repository
 public interface OrderPaymentScheduleRepository extends JpaRepository<OrderPaymentSchedule, Integer> {
     List<OrderPaymentSchedule> findByOrderOrderIdOrderByInstallmentNoAsc(int orderId);
+
+    Optional<OrderPaymentSchedule> findByOrderOrderIdAndInstallmentNo(int orderId, int installmentNo);
 
     // Task 1: Find records UNPAID and due exactly in 3 days
     List<OrderPaymentSchedule> findByStatusAndDueDate(PaymentStatus status, LocalDate dueDate);

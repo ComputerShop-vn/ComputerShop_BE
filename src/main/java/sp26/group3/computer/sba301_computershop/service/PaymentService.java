@@ -6,7 +6,7 @@ import sp26.group3.computer.sba301_computershop.dto.response.PaymentDTO;
 import java.util.Map;
 
 public interface PaymentService {
-    PaymentDTO createVnPayPayment(HttpServletRequest request, int orderId, String bankCode);
+    PaymentDTO createVnPayPayment(HttpServletRequest request, int orderId, String bankCode, Integer installmentNo);
 
     String handleVnPayCallback(HttpServletRequest request);
 

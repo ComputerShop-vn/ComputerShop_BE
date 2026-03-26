@@ -1323,34 +1323,37 @@ formData.append("logo", logoFile);       // optional
 
 > Đặt hàng lấy **toàn bộ sản phẩm** hiện có trong giỏ hàng. Sau khi đặt thành công, **giỏ hàng bị xoá**.
 
-**Request — Thanh toán một lần (FULL):**
+**Request — Thanh toán một lần (FULL) qua COD:**
 ```json
 {
   "recipientName": "Nguyễn Văn A",
   "recipientPhone": "0901234567",
   "shippingAddress": "123 Đường ABC, Q1, TP.HCM",
-  "paymentType": "FULL"
+  "paymentMethod": "COD",
+  "paymentMode": "FULL"
 }
 ```
 
-**Request — Trả góp (INSTALLMENT):**
+**Request — Trả góp (INSTALLMENT) qua VNPAY:**
 ```json
 {
   "recipientName": "Nguyễn Văn A",
   "recipientPhone": "0901234567",
   "shippingAddress": "123 Đường ABC, Q1, TP.HCM",
-  "paymentType": "INSTALLMENT",
+  "paymentMethod": "VNPAY",
+  "paymentMode": "INSTALLMENT",
   "packageId": 2
 }
 ```
 
-| Field | Bắt buộc | Mặc định | Điều kiện                                                                                 |
-|-------|----------|----------|-------------------------------------------------------------------------------------------|
-| `recipientName` | ✅ | — | Không được rỗng                                                                           |
-| `recipientPhone` | ✅ | — | Không được rỗng                                                                           |
-| `shippingAddress` | ✅ | — | Không được rỗng                                                                           |
-| `paymentType` | ✅ | — | `"COD, "FULL"` hoặc `"INSTALLMENT"`                                                       |
-| `packageId` | ❌ | null | **Bắt buộc khi `paymentType = "INSTALLMENT"`**. Lấy từ `GET /installment-packages/active` |
+| Field | Bắt buộc | Mặc định | Điều kiện |
+|-------|----------|----------|-----------|
+| `recipientName` | ✅ | — | Không được rỗng |
+| `recipientPhone` | ✅ | — | Không được rỗng |
+| `shippingAddress` | ✅ | — | Không được rỗng |
+| `paymentMethod` | ✅ | — | `"COD"` hoặc `"VNPAY"` |
+| `paymentMode` | ✅ | — | `"FULL"` hoặc `"INSTALLMENT"` |
+| `packageId` | ❌ | null | **Bắt buộc khi `paymentMode = "INSTALLMENT"`**. Lấy từ `GET /installment-packages/active` |
 
 **Validation khi chọn INSTALLMENT:**
 - `packageId` phải tồn tại và `isActive = true`
@@ -1368,7 +1371,8 @@ formData.append("logo", logoFile);       // optional
     "username": "nguyenvana",
     "totalAmount": 24000000.0,
     "status": "PENDING",
-    "paymentType": "INSTALLMENT",
+    "paymentMethod": "VNPAY",
+    "paymentMode": "INSTALLMENT",
     "orderDate": "2026-03-04T10:30:00",
     "installmentPackage": {
       "packageId": 2,
@@ -1478,7 +1482,7 @@ formData.append("logo", logoFile);       // optional
 **Flow sau khi đặt hàng:**
 1. Validate stock cho TẤT CẢ items trước khi tạo bất kỳ thứ gì
 2. Nếu INSTALLMENT: validate `packageId` hợp lệ và `totalAmount >= minOrderAmount`
-3. Tạo Order (lưu `payment_type` và `installment_package_id`)
+3. Tạo Order (lưu `paymentMethod`, `paymentMode` và `installmentPackageId`)
 4. Giảm stock của từng variant (`stockQuantity -= quantity`)
 5. Tạo `ProductItem` với `serialNumber = "{sku}-{8 ký tự đầu UUID}"`
 6. Tạo `OrderItem` cho từng sản phẩm
@@ -1491,9 +1495,9 @@ formData.append("logo", logoFile);       // optional
 | ✅ Thành công (INSTALLMENT) | 1000, N payment records |
 | ❌ Giỏ hàng rỗng | 9002 "Cart is empty, cannot place order" |
 | ❌ Bất kỳ item nào không đủ stock | 9003 "Insufficient stock for variant" (không tạo order) |
-| ❌ `paymentType` null | 400 validation |
+| ❌ `paymentMethod` hoặc `paymentMode` null | 400 validation |
 | ❌ Thiếu recipientName/Phone/Address | 400 validation |
-| ❌ `paymentType = INSTALLMENT` nhưng thiếu `packageId` | 400 validation |
+| ❌ `paymentMode = INSTALLMENT` nhưng thiếu `packageId` | 400 validation |
 | ❌ `packageId` không tồn tại hoặc `isActive = false` | 400 hoặc custom error |
 | ❌ `totalAmount < minOrderAmount` của gói trả góp | 400 hoặc custom error |
 
@@ -1602,10 +1606,11 @@ PENDING → PROCESSING → SHIPPING → DELIVERED
 |-------|----------|-------|
 | `orderId` | ✅ | ID đơn hàng cần thanh toán |
 | `bankCode` | ❌ | Mã ngân hàng VD: `NCB`, `VIETINBANK`, `VCB`. Null = hiện màn hình chọn ngân hàng |
+| `installmentNo` | ❌ | Kỳ trả góp cần thanh toán (1, 2, ...). Null = hệ thống tự tìm kỳ chưa thanh toán tiếp theo. |
 
 **Ví dụ:**
 - `GET /orders/payment/createPayment?orderId=10` → VNPay hiện page chọn ngân hàng
-- `GET /orders/payment/createPayment?orderId=10&bankCode=NCB` → Thẳng vào thanh toán NCB
+- `GET /orders/payment/createPayment?orderId=10&installmentNo=1` → Thanh toán kỳ 1
 
 **Response:**
 ```json
@@ -1626,12 +1631,41 @@ PENDING → PROCESSING → SHIPPING → DELIVERED
 
 **Flow thanh toán VNPay:**
 ```
-1. FE → Tạo Order → nhận paymentUrl
-2. FE → redirect user đến paymentUrl
-3. User → hoàn tất thanh toán trên VNPay
-4. VNPay → GET /callback (FE)
-5. FE → GET /orders/{id} để hiển thị thông tin đơn hàng và trạng thái đơn hàng/thanh toán
+1. FE → Tạo Order hoặc chọn kỳ thanh toán
+2. FE → Gọi createPayment (nếu trả góp, gửi kèm installmentNo) → nhận paymentUrl
+3. FE → redirect user đến paymentUrl
+4. User → hoàn tất thanh toán trên VNPay
+5. VNPay → GET /callback (Backend) → Backend redirect FE: localhost:3000/payment-result?orderId=...&installmentNo=...
+6. FE → Gọi GET /orders/{id}/payment-result?installmentNo=... để kiểm tra kết quả cuối cùng
 ```
+
+---
+
+## GET `/orders/{id}/payment-result`
+
+**Auth:** Authenticated
+
+**Query params:**
+- `installmentNo` (optional): Kỳ thanh toán cần kiểm tra kết quả. Nếu trả góp kỳ 1, gửi `1`. Nếu thanh toán FULL (hoặc down payment), có thể bỏ qua hoặc gửi `0`.
+
+**Response:**
+```json
+{
+  "code": 1000,
+  "message": null,
+  "result": {
+    "orderId": 10,
+    "amount": 4040000.0,
+    "status": "success",
+    "installmentNo": 2
+  }
+}
+```
+
+| Field | Mô tả |
+|-------|-------|
+| `status` | `"success"` (đã thanh toán) hoặc `"failed"` (chưa thanh toán / lỗi) |
+| `installmentNo` | Trả về kỳ vừa thanh toán. Sẽ là `null` nếu là thanh toán FULL hoặc trả trước. |
 
 ---
 

@@ -7,7 +7,8 @@ import lombok.experimental.FieldDefaults;
 import java.time.LocalDateTime;
 import java.util.List;
 import sp26.group3.computer.sba301_computershop.enums.OrderStatus;
-import sp26.group3.computer.sba301_computershop.enums.PaymentType;
+import sp26.group3.computer.sba301_computershop.enums.PaymentMethod;
+import sp26.group3.computer.sba301_computershop.enums.PaymentMode;
 
 @Data
 @NoArgsConstructor
@@ -22,7 +23,8 @@ public class OrderResponse {
     String username;
     double totalAmount;
     OrderStatus status;
-    PaymentType paymentType;
+    PaymentMethod paymentMethod;
+    PaymentMode paymentMode;
     LocalDateTime orderDate;
     List<OrderItemResponse> items;
     List<PaymentScheduleResponse> payments;

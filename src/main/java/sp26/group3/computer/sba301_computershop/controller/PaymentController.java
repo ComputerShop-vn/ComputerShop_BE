@@ -26,10 +26,11 @@ public class PaymentController {
     public ApiResponse<PaymentDTO> createPayment(
             @RequestParam int orderId,
             @RequestParam(required = false) String bankCode,
+            @RequestParam(required = false) Integer installmentNo,
             HttpServletRequest request) {
 
         ApiResponse<PaymentDTO> response = new ApiResponse<>();
-        response.setResult(paymentService.createVnPayPayment(request, orderId, bankCode));
+        response.setResult(paymentService.createVnPayPayment(request, orderId, bankCode, installmentNo));
         return response;
     }
 

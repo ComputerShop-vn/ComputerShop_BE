@@ -15,7 +15,8 @@ import sp26.group3.computer.sba301_computershop.dto.request.UpdateOrderStatusReq
 import sp26.group3.computer.sba301_computershop.dto.response.*;
 import sp26.group3.computer.sba301_computershop.entity.*;
 import sp26.group3.computer.sba301_computershop.enums.PaymentStatus;
-import sp26.group3.computer.sba301_computershop.enums.PaymentType;
+import sp26.group3.computer.sba301_computershop.enums.PaymentMethod;
+import sp26.group3.computer.sba301_computershop.enums.PaymentMode;
 import sp26.group3.computer.sba301_computershop.enums.OrderStatus;
 import sp26.group3.computer.sba301_computershop.exception.AppException;
 import sp26.group3.computer.sba301_computershop.exception.ErrorCode;
@@ -81,7 +82,7 @@ public class OrderServiceImpl implements OrderService {
 
         // 3. Create Order
         InstallmentPackage pack = null;
-        if (request.getPaymentType() == PaymentType.INSTALLMENT) {
+        if (request.getPaymentMode() == PaymentMode.INSTALLMENT) {
             pack = installmentPackageRepository.findById(request.getPackageId())
                     .orElseThrow(() -> new RuntimeException("Installment package not found"));
             if (totalAmount < pack.getMinOrderAmount()) {
@@ -94,7 +95,8 @@ public class OrderServiceImpl implements OrderService {
                 .totalAmount(totalAmount)
                 .status(OrderStatus.PENDING)
                 .orderDate(LocalDateTime.now())
-                .paymentType(request.getPaymentType())
+                .paymentMethod(request.getPaymentMethod())
+                .paymentMode(request.getPaymentMode())
                 .installmentPackage(pack)
                 .build();
         order = orderRepository.save(order);
@@ -136,10 +138,10 @@ public class OrderServiceImpl implements OrderService {
 //        cartItemRepository.deleteAllByCartCartId(cart.getCartId());
 //        log.info("Cleared cart after placing order | cartId={}", cart.getCartId());
 
-        // 7. Handle Payment URL for FULL or INSTALLMENT
+        // 7. Handle Payment URL for VNPAY
         String paymentUrl = null;
-        if (request.getPaymentType() == PaymentType.FULL || request.getPaymentType() == PaymentType.INSTALLMENT) {
-            var paymentDto = paymentService.createVnPayPayment(servletRequest, order.getOrderId(), null);
+        if (request.getPaymentMethod() == PaymentMethod.VNPAY) {
+            var paymentDto = paymentService.createVnPayPayment(servletRequest, order.getOrderId(), null, null);
             paymentUrl = paymentDto.getPaymentUrl();
         }
 
@@ -173,7 +175,7 @@ public class OrderServiceImpl implements OrderService {
 
         // 3. Create Order
         InstallmentPackage pack = null;
-        if (request.getPaymentType() == PaymentType.INSTALLMENT) {
+        if (request.getPaymentMode() == PaymentMode.INSTALLMENT) {
             pack = installmentPackageRepository.findById(request.getPackageId())
                     .orElseThrow(() -> new RuntimeException("Installment package not found"));
             if (totalAmount < pack.getMinOrderAmount()) {
@@ -186,7 +188,8 @@ public class OrderServiceImpl implements OrderService {
                 .totalAmount(totalAmount)
                 .status(OrderStatus.PENDING)
                 .orderDate(LocalDateTime.now())
-                .paymentType(request.getPaymentType())
+                .paymentMethod(request.getPaymentMethod())
+                .paymentMode(request.getPaymentMode())
                 .installmentPackage(pack)
                 .build();
         order = orderRepository.save(order);
@@ -223,8 +226,8 @@ public class OrderServiceImpl implements OrderService {
 
         // 6. VNPay URL
         String paymentUrl = null;
-        if (request.getPaymentType() == PaymentType.FULL || request.getPaymentType() == PaymentType.INSTALLMENT) {
-            var paymentDto = paymentService.createVnPayPayment(servletRequest, order.getOrderId(), null);
+        if (request.getPaymentMethod() == PaymentMethod.VNPAY) {
+            var paymentDto = paymentService.createVnPayPayment(servletRequest, order.getOrderId(), null, null);
             paymentUrl = paymentDto.getPaymentUrl();
         }
 
@@ -363,6 +366,36 @@ public class OrderServiceImpl implements OrderService {
         log.info("Cancelled order | orderId={}", orderId);
     }
 
+    @Override
+    public OrderPaymentResultResponse getOrderPaymentResult(int orderId, Integer installmentNo) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
+
+        List<OrderPaymentSchedule> schedules = paymentScheduleRepository
+                .findByOrderOrderIdOrderByInstallmentNoAsc(orderId);
+
+        boolean isPaid;
+        double amount;
+        if (installmentNo != null && installmentNo > 0) {
+            OrderPaymentSchedule specific = schedules.stream()
+                    .filter(s -> s.getInstallmentNo() == installmentNo)
+                    .findFirst()
+                    .orElseThrow(() -> new RuntimeException("Installment not found"));
+            isPaid = (specific.getStatus() == PaymentStatus.PAID);
+            amount = specific.getAmount() + specific.getPenaltyAmount();
+        } else {
+            isPaid = schedules.stream().anyMatch(s -> s.getStatus() == PaymentStatus.PAID);
+            amount = order.getTotalAmount();
+        }
+
+        return OrderPaymentResultResponse.builder()
+                .orderId(order.getOrderId())
+                .amount(amount)
+                .status(isPaid ? "success" : "failed")
+                .installmentNo((installmentNo == null || installmentNo == 0) ? null : installmentNo)
+                .build();
+    }
+
     // ======================== HELPER METHODS ========================
 
     private User getCurrentUser() {
@@ -389,7 +422,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     private void createPaymentSchedules(Order order, PlaceOrderRequest request) {
-        if (request.getPaymentType() == PaymentType.COD) {
+        if (request.getPaymentMethod() == PaymentMethod.COD) {
             OrderPaymentSchedule schedule = OrderPaymentSchedule.builder()
                     .order(order)
                     .installmentNo(1)
@@ -399,7 +432,7 @@ public class OrderServiceImpl implements OrderService {
                     .build();
             paymentScheduleRepository.save(schedule);
             log.info("Created COD payment schedule for orderId={}", order.getOrderId());
-        } else if (request.getPaymentType() == PaymentType.FULL) {
+        } else if (request.getPaymentMode() == PaymentMode.FULL) {
             OrderPaymentSchedule schedule = OrderPaymentSchedule.builder()
                     .order(order)
                     .installmentNo(1)
@@ -470,7 +503,8 @@ public class OrderServiceImpl implements OrderService {
                 .username(order.getUser().getUsername())
                 .totalAmount(order.getTotalAmount())
                 .status(order.getStatus())
-                .paymentType(order.getPaymentType())
+                .paymentMethod(order.getPaymentMethod())
+                .paymentMode(order.getPaymentMode())
                 .orderDate(order.getOrderDate())
                 .items(itemResponses)
                 .payments(paymentResponses)
