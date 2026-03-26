@@ -47,7 +47,8 @@ public class PaymentServiceImpl implements PaymentService {
     CartItemRepository cartItemRepository;
 
     @Override
-    public PaymentDTO createVnPayPayment(HttpServletRequest request, int orderId, String bankCode, Integer installmentNo) {
+    public PaymentDTO createVnPayPayment(HttpServletRequest request, int orderId, String bankCode,
+            Integer installmentNo) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
 
@@ -68,7 +69,7 @@ public class PaymentServiceImpl implements PaymentService {
                         .findFirst()
                         .orElseThrow(() -> new AppException(ErrorCode.ORDER_ALREADY_PAID));
             }
-            amount = BigDecimal.valueOf(targetPayment.getAmount() + targetPayment.getPenaltyAmount());
+            amount = BigDecimal.valueOf(targetPayment.getAmount());
             finalInstallmentNo = targetPayment.getInstallmentNo();
         } else {
             amount = BigDecimal.valueOf(order.getTotalAmount());
