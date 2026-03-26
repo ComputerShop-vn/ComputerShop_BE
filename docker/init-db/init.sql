@@ -1237,12 +1237,12 @@ SET IDENTITY_INSERT cart_items OFF;
 --   Order 3 (PENDING, CASH): item 46 (Samsung 990 PRO 1TB v16)
 --   Order 4 (CANCELLED): item 88 (ROG Strix G16 RTX4070 v30)
 SET IDENTITY_INSERT orders ON;
-INSERT INTO orders (order_id, user_id, total_amount, status, payment_type, installment_package_id, order_date)
+INSERT INTO orders (order_id, user_id, total_amount, status, payment_method, payment_mode, installment_package_id, order_date)
 VALUES
-(1, 4, 59780000,  'DELIVERED',  'VNPAY',        NULL, DATEADD(day,-30,GETDATE())),
-(2, 5, 49990000,  'PROCESSING', 'INSTALLMENT',  3,    DATEADD(day,-10,GETDATE())),
-(3, 6, 2990000,   'PENDING',    'CASH',         NULL, DATEADD(day, -2,GETDATE())),
-(4, 4, 42990000,  'CANCELLED',  'VNPAY',        NULL, DATEADD(day,-20,GETDATE()));
+(1, 4, 59780000,  'DELIVERED',  'VNPAY', 'FULL',        NULL, DATEADD(day,-30,GETDATE())),
+(2, 5, 49990000,  'PROCESSING', 'VNPAY', 'INSTALLMENT',  3,    DATEADD(day,-10,GETDATE())),
+(3, 6, 2990000,   'PENDING',    'COD',   'FULL',         NULL, DATEADD(day, -2,GETDATE())),
+(4, 4, 42990000,  'CANCELLED',  'VNPAY', 'FULL',        NULL, DATEADD(day,-20,GETDATE()));
 SET IDENTITY_INSERT orders OFF;
 
 SET IDENTITY_INSERT order_items ON;
@@ -1266,17 +1266,17 @@ SET IDENTITY_INSERT order_payment_schedule ON;
 INSERT INTO order_payment_schedule (payment_schedule_id, order_id, installment_no, amount, due_date, paid_date, vnp_transaction_no, status)
 VALUES
 (1,  2,  1,  9998000, DATEADD(day,-10,CAST(GETDATE() AS DATE)), DATEADD(day,-10,CAST(GETDATE() AS DATE)), 'VNP-TXN-20260310-001', 'PAID'),
-(2,  2,  2,  3332667, DATEADD(month, 1,DATEADD(day,-10,CAST(GETDATE() AS DATE))), NULL, NULL, 'PENDING'),
-(3,  2,  3,  3332667, DATEADD(month, 2,DATEADD(day,-10,CAST(GETDATE() AS DATE))), NULL, NULL, 'PENDING'),
-(4,  2,  4,  3332667, DATEADD(month, 3,DATEADD(day,-10,CAST(GETDATE() AS DATE))), NULL, NULL, 'PENDING'),
-(5,  2,  5,  3332667, DATEADD(month, 4,DATEADD(day,-10,CAST(GETDATE() AS DATE))), NULL, NULL, 'PENDING'),
-(6,  2,  6,  3332667, DATEADD(month, 5,DATEADD(day,-10,CAST(GETDATE() AS DATE))), NULL, NULL, 'PENDING'),
-(7,  2,  7,  3332667, DATEADD(month, 6,DATEADD(day,-10,CAST(GETDATE() AS DATE))), NULL, NULL, 'PENDING'),
-(8,  2,  8,  3332667, DATEADD(month, 7,DATEADD(day,-10,CAST(GETDATE() AS DATE))), NULL, NULL, 'PENDING'),
-(9,  2,  9,  3332667, DATEADD(month, 8,DATEADD(day,-10,CAST(GETDATE() AS DATE))), NULL, NULL, 'PENDING'),
-(10, 2, 10,  3332667, DATEADD(month, 9,DATEADD(day,-10,CAST(GETDATE() AS DATE))), NULL, NULL, 'PENDING'),
-(11, 2, 11,  3332667, DATEADD(month,10,DATEADD(day,-10,CAST(GETDATE() AS DATE))), NULL, NULL, 'PENDING'),
-(12, 2, 12,  3332331, DATEADD(month,11,DATEADD(day,-10,CAST(GETDATE() AS DATE))), NULL, NULL, 'PENDING');
+(2,  2,  2,  3332667, DATEADD(month, 1,DATEADD(day,-10,CAST(GETDATE() AS DATE))), NULL, NULL, 'UNPAID'),
+(3,  2,  3,  3332667, DATEADD(month, 2,DATEADD(day,-10,CAST(GETDATE() AS DATE))), NULL, NULL, 'UNPAID'),
+(4,  2,  4,  3332667, DATEADD(month, 3,DATEADD(day,-10,CAST(GETDATE() AS DATE))), NULL, NULL, 'UNPAID'),
+(5,  2,  5,  3332667, DATEADD(month, 4,DATEADD(day,-10,CAST(GETDATE() AS DATE))), NULL, NULL, 'UNPAID'),
+(6,  2,  6,  3332667, DATEADD(month, 5,DATEADD(day,-10,CAST(GETDATE() AS DATE))), NULL, NULL, 'UNPAID'),
+(7,  2,  7,  3332667, DATEADD(month, 6,DATEADD(day,-10,CAST(GETDATE() AS DATE))), NULL, NULL, 'UNPAID'),
+(8,  2,  8,  3332667, DATEADD(month, 7,DATEADD(day,-10,CAST(GETDATE() AS DATE))), NULL, NULL, 'UNPAID'),
+(9,  2,  9,  3332667, DATEADD(month, 8,DATEADD(day,-10,CAST(GETDATE() AS DATE))), NULL, NULL, 'UNPAID'),
+(10, 2, 10,  3332667, DATEADD(month, 9,DATEADD(day,-10,CAST(GETDATE() AS DATE))), NULL, NULL, 'UNPAID'),
+(11, 2, 11,  3332667, DATEADD(month,10,DATEADD(day,-10,CAST(GETDATE() AS DATE))), NULL, NULL, 'UNPAID'),
+(12, 2, 12,  3332331, DATEADD(month,11,DATEADD(day,-10,CAST(GETDATE() AS DATE))), NULL, NULL, 'UNPAID');
 SET IDENTITY_INSERT order_payment_schedule OFF;
 
 -- ── Warranties (cho Order 1 - DELIVERED) ─────────────────────────────────────
@@ -1441,7 +1441,7 @@ GO
 --   3. Doanh thu tra gop (PAID / UNPAID / OVERDUE)
 --
 -- Fix existing data: order_payment_schedule dung 'PENDING' khong dung enum
-UPDATE order_payment_schedule SET status = 'UNPAID' WHERE status = 'PENDING';
+-- (Fixed in INSERT statements above)
 
 -- ── Orders 5-13: COMPLETED, trai deu Jan / Feb / Mar 2026 ─────────────────
 -- item_id da su dung: 1, 10, 82, 46, 88
@@ -1449,26 +1449,26 @@ UPDATE order_payment_schedule SET status = 'UNPAID' WHERE status = 'PENDING';
 -- Feb 2026 (day -48, -38, -28): order 8, 9, 10
 -- Mar 2026 (day -20, -10, -5) : order 11, 12, 13
 SET IDENTITY_INSERT orders ON;
-INSERT INTO orders (order_id, user_id, total_amount, status, payment_type, installment_package_id, order_date)
+INSERT INTO orders (order_id, user_id, total_amount, status, payment_method, payment_mode, installment_package_id, order_date)
 VALUES
 -- Thang 1
-(5,  4, 44990000, 'COMPLETED', 'FULL',        NULL, DATEADD(day,-79,GETDATE())),  -- RTX 4090 ASUS
-(6,  5, 14790000, 'COMPLETED', 'FULL',        NULL, DATEADD(day,-69,GETDATE())),  -- i9-14900K Box
-(7,  6, 18990000, 'COMPLETED', 'COD',         NULL, DATEADD(day,-59,GETDATE())),  -- Acer Nitro V15
+(5,  4, 44990000, 'COMPLETED', 'VNPAY',       'FULL',        NULL, DATEADD(day,-79,GETDATE())),  -- RTX 4090 ASUS
+(6,  5, 14790000, 'COMPLETED', 'VNPAY',       'FULL',        NULL, DATEADD(day,-69,GETDATE())),  -- i9-14900K Box
+(7,  6, 18990000, 'COMPLETED', 'COD',         'FULL',         NULL, DATEADD(day,-59,GETDATE())),  -- Acer Nitro V15
 -- Thang 2
-(8,  4, 49990000, 'COMPLETED', 'FULL',        NULL, DATEADD(day,-48,GETDATE())),  -- MacBook Pro M3 18GB
-(9,  5, 45990000, 'COMPLETED', 'FULL',        NULL, DATEADD(day,-38,GETDATE())),  -- Dell XPS 15 OLED
-(10, 6,  4990000, 'COMPLETED', 'COD',         NULL, DATEADD(day,-28,GETDATE())),  -- Samsung 990 PRO 2TB
+(8,  4, 49990000, 'COMPLETED', 'VNPAY',       'FULL',        NULL, DATEADD(day,-48,GETDATE())),  -- MacBook Pro M3 18GB
+(9,  5, 45990000, 'COMPLETED', 'VNPAY',       'FULL',        NULL, DATEADD(day,-38,GETDATE())),  -- Dell XPS 15 OLED
+(10, 6,  4990000, 'COMPLETED', 'COD',         'FULL',         NULL, DATEADD(day,-28,GETDATE())),  -- Samsung 990 PRO 2TB
 -- Thang 3
-(11, 4, 42990000, 'COMPLETED', 'FULL',        NULL, DATEADD(day,-20,GETDATE())),  -- ROG Strix G16 4070
-(12, 5, 17490000, 'COMPLETED', 'FULL',        NULL, DATEADD(day,-10,GETDATE())),  -- Ryzen 9 7950X
-(13, 6,  3790000, 'COMPLETED', 'COD',         NULL, DATEADD(day, -5,GETDATE())),  -- Ryzen 5 5600X
+(11, 4, 42990000, 'COMPLETED', 'VNPAY',       'FULL',        NULL, DATEADD(day,-20,GETDATE())),  -- ROG Strix G16 4070
+(12, 5, 17490000, 'COMPLETED', 'VNPAY',       'FULL',        NULL, DATEADD(day,-10,GETDATE())),  -- Ryzen 9 7950X
+(13, 6,  3790000, 'COMPLETED', 'COD',         'FULL',         NULL, DATEADD(day, -5,GETDATE())),  -- Ryzen 5 5600X
 -- Tra gop: Order 14 — dang tra (4 PAID, 1 OVERDUE, 7 UNPAID)
 -- MacBook Pro 14 M3 36GB, goi 12 thang, dat 4 thang truoc
-(14, 5, 64990000, 'CONFIRMED', 'INSTALLMENT', 3,    DATEADD(month,-4,GETDATE())),
+(14, 5, 64990000, 'CONFIRMED', 'VNPAY', 'INSTALLMENT', 3,    DATEADD(month,-4,GETDATE())),
 -- Tra gop: Order 15 — da tat toan (6/6 PAID)
 -- ROG Strix G16 RTX4060, goi 6 thang, dat 7 thang truoc
-(15, 6, 34990000, 'PAID',      'INSTALLMENT', 2,    DATEADD(month,-7,GETDATE()));
+(15, 6, 34990000, 'COMPLETED',      'VNPAY', 'INSTALLMENT', 2,    DATEADD(month,-7,GETDATE()));
 SET IDENTITY_INSERT orders OFF;
 
 -- ── Order Items cho orders 5-15 ────────────────────────────────────────────
