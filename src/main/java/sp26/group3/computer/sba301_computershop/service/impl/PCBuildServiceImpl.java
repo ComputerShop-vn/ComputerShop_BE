@@ -185,6 +185,26 @@ public class PCBuildServiceImpl implements PCBuildService {
         return compatibilityService.getFilterHints(items, targetType);
     }
 
+    // ======================== REMOVE ITEM ========================
+
+    @Override
+    @Transactional
+    public PCBuildResponse removeItem(int buildItemId) {
+        User user = getCurrentUser();
+        PCBuildItem item = pcBuildItemRepository.findById(buildItemId)
+                .orElseThrow(() -> new AppException(ErrorCode.PC_BUILD_NOT_FOUND));
+
+        PCBuild build = item.getBuild();
+        if (build.getStatus() != BuildStatus.DRAFT
+                || build.getUser().getUserId() != user.getUserId()) {
+            throw new AppException(ErrorCode.PC_BUILD_NOT_FOUND);
+        }
+
+        pcBuildItemRepository.delete(item);
+        log.info("[PCBuild] Removed item | buildItemId={} buildId={}", buildItemId, build.getBuildId());
+        return reloadAndUpdate(build);
+    }
+
     // ======================== PRIVATE HELPERS ========================
 
     private User getCurrentUser() {

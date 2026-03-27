@@ -63,6 +63,14 @@ public class PCBuildController {
         return response;
     }
 
+    @DeleteMapping("/draft/items/{buildItemId}")
+    ApiResponse<PCBuildResponse> removeItem(@PathVariable int buildItemId) {
+        log.info("[DELETE] /pc-builds/draft/items/{}", buildItemId);
+        ApiResponse<PCBuildResponse> response = new ApiResponse<>();
+        response.setResult(pcBuildService.removeItem(buildItemId));
+        return response;
+    }
+
     @PutMapping("/draft/save")
     ApiResponse<PCBuildResponse> saveBuild(
             @RequestBody @Valid SaveBuildNameRequest request) {
