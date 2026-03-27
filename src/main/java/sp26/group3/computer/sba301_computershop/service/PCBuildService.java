@@ -24,4 +24,6 @@ public interface PCBuildService {
 
     CompatibleVariantsResponse getCompatibleVariants(
             List<CompatibleVariantsRequest.ItemHint> items, ComponentType targetType);
+
+    PCBuildResponse removeItem(int buildItemId);
 }

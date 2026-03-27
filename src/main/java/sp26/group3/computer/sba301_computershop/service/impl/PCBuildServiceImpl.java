@@ -56,15 +56,9 @@ public class PCBuildServiceImpl implements PCBuildService {
         ProductVariant variant = productVariantRepository.findById(request.getVariantId())
                 .orElseThrow(() -> new AppException(ErrorCode.VARIANT_NOT_FOUND));
 
-        // RAM slot check: nếu thêm RAM mới (không phải update quantity), kiểm tra mainboard còn slot không
+        // RAM slot check: kiểm tra tổng quantity sau khi upsert không vượt quá slot mainboard
         if (request.getComponentType() == ComponentType.RAM) {
-            boolean alreadyInBuild = pcBuildItemRepository
-                    .findByBuildBuildIdAndComponentTypeAndVariantVariantId(
-                            build.getBuildId(), ComponentType.RAM, request.getVariantId())
-                    .isPresent();
-            if (!alreadyInBuild) {
-                validateRamSlots(build);
-            }
+            validateRamSlots(build, request.getVariantId(), request.getQuantity());
         }
 
         boolean isMultiSlot = request.getComponentType().isMultiSlot();
@@ -185,6 +179,26 @@ public class PCBuildServiceImpl implements PCBuildService {
         return compatibilityService.getFilterHints(items, targetType);
     }
 
+    // ======================== REMOVE ITEM ========================
+
+    @Override
+    @Transactional
+    public PCBuildResponse removeItem(int buildItemId) {
+        User user = getCurrentUser();
+        PCBuildItem item = pcBuildItemRepository.findById(buildItemId)
+                .orElseThrow(() -> new AppException(ErrorCode.PC_BUILD_NOT_FOUND));
+
+        PCBuild build = item.getBuild();
+        if (build.getStatus() != BuildStatus.DRAFT
+                || build.getUser().getUserId() != user.getUserId()) {
+            throw new AppException(ErrorCode.PC_BUILD_NOT_FOUND);
+        }
+
+        pcBuildItemRepository.delete(item);
+        log.info("[PCBuild] Removed item | buildItemId={} buildId={}", buildItemId, build.getBuildId());
+        return reloadAndUpdate(build);
+    }
+
     // ======================== PRIVATE HELPERS ========================
 
     private User getCurrentUser() {
@@ -193,7 +207,7 @@ public class PCBuildServiceImpl implements PCBuildService {
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
     }
 
-    private void validateRamSlots(PCBuild build) {
+    private void validateRamSlots(PCBuild build, int upsertVariantId, int newQuantity) {
         Optional<PCBuildItem> mainboardOpt = pcBuildItemRepository
                 .findByBuildBuildIdAndComponentType(build.getBuildId(), ComponentType.MAINBOARD);
         if (mainboardOpt.isEmpty()) return; // chưa có mainboard → chưa biết giới hạn
@@ -205,7 +219,7 @@ public class PCBuildServiceImpl implements PCBuildService {
                 .map(ProductVariantAttribute::getValue)
                 .findFirst()
                 .orElse(null);
-        if (ramSlotsStr == null) return; // mainboard không có thông tin slot
+        if (ramSlotsStr == null) return;
 
         int maxSlots;
         try {
@@ -214,13 +228,17 @@ public class PCBuildServiceImpl implements PCBuildService {
             return;
         }
 
-        long currentRamCount = pcBuildItemRepository
+        // Tính tổng quantity của tất cả RAM hiện tại, trừ variant đang upsert (sẽ bị overwrite)
+        int usedSlots = pcBuildItemRepository
                 .findAllByBuildBuildIdAndComponentType(build.getBuildId(), ComponentType.RAM)
-                .size();
+                .stream()
+                .filter(i -> i.getVariant().getVariantId() != upsertVariantId)
+                .mapToInt(PCBuildItem::getQuantity)
+                .sum();
 
-        if (currentRamCount >= maxSlots) {
-            log.warn("[PCBuild] RAM slots full: buildId={} maxSlots={} currentCount={}",
-                    build.getBuildId(), maxSlots, currentRamCount);
+        if (usedSlots + newQuantity > maxSlots) {
+            log.warn("[PCBuild] RAM slots exceeded: buildId={} maxSlots={} usedSlots={} newQty={}",
+                    build.getBuildId(), maxSlots, usedSlots, newQuantity);
             throw new AppException(ErrorCode.RAM_SLOTS_EXCEEDED);
         }
     }

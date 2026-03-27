@@ -34,7 +34,7 @@ public interface OrderPaymentScheduleRepository extends JpaRepository<OrderPayme
                    "SUM(CASE WHEN ops.status = 'OVERDUE' THEN ops.amount ELSE 0 END) as totalOverdue " +
                    "FROM order_payment_schedule ops " +
                    "JOIN orders o ON ops.order_id = o.order_id " +
-                   "WHERE o.payment_type = 'INSTALLMENT'",
+                   "WHERE o.payment_mode = 'INSTALLMENT'",
            nativeQuery = true)
     InstallmentSummaryProjection getInstallmentSummary();
 
@@ -46,7 +46,7 @@ public interface OrderPaymentScheduleRepository extends JpaRepository<OrderPayme
                    "FROM orders o " +
                    "JOIN order_payment_schedule ops ON o.order_id = ops.order_id " +
                    "JOIN users u ON o.user_id = u.user_id " +
-                   "WHERE o.payment_type = 'INSTALLMENT' " +
+                   "WHERE o.payment_mode = 'INSTALLMENT' " +
                    "GROUP BY o.order_id, u.username, o.total_amount " +
                    "ORDER BY o.order_id DESC",
            nativeQuery = true)

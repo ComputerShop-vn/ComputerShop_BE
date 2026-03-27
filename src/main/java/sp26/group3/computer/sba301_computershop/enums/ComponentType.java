@@ -1,5 +1,6 @@
 package sp26.group3.computer.sba301_computershop.enums;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -27,4 +28,20 @@ public enum ComponentType {
     private final boolean multiSlot;
     /** true = bắt buộc phải có trong build hoàn chỉnh */
     private final boolean required;
+
+    /** Cho phép deserialize bằng enum name hoặc categoryName (vd: "SSD" → STORAGE_PRIMARY) */
+    @JsonCreator
+    public static ComponentType fromString(String value) {
+        if (value == null) return null;
+        String v = value.trim().toUpperCase();
+        // Thử match theo enum name trước
+        for (ComponentType t : values()) {
+            if (t.name().equals(v)) return t;
+        }
+        // Fallback: match theo categoryName (case-insensitive)
+        for (ComponentType t : values()) {
+            if (t.categoryName.equalsIgnoreCase(value.trim())) return t;
+        }
+        throw new IllegalArgumentException("Unknown ComponentType: " + value);
+    }
 }
