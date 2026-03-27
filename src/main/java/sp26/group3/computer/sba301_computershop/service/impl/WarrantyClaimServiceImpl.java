@@ -74,7 +74,7 @@ public class WarrantyClaimServiceImpl implements WarrantyClaimService {
             claim.setSolutionType(request.getSolutionType());
         }
 
-        if (request.getStatus() == ClaimStatus.COMPLETED || request.getStatus() == ClaimStatus.REJECTED) {
+        if (request.getStatus() == ClaimStatus.RESOLVED || request.getStatus() == ClaimStatus.REJECTED) {
             if (claim.getReturnDate() == null) {
                 claim.setReturnDate(LocalDate.now());
             }

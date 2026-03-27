@@ -1,4 +1,4 @@
-﻿-- ===============================
+-- ===============================
 -- SBA301 Computer Shop - Database Initialization
 -- SQL Server - matches Hibernate entity model (ddl-auto: validate)
 -- ===============================
