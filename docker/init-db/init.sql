@@ -1478,23 +1478,23 @@ SET IDENTITY_INSERT orders ON;
 INSERT INTO orders (order_id, user_id, total_amount, status, payment_method, payment_mode, installment_package_id, order_date)
 VALUES
 -- Thang 1
-(5,  4, 44990000, 'COMPLETED', 'VNPAY',       'FULL',        NULL, DATEADD(day,-79,GETDATE())),  -- RTX 4090 ASUS
-(6,  5, 14790000, 'COMPLETED', 'VNPAY',       'FULL',        NULL, DATEADD(day,-69,GETDATE())),  -- i9-14900K Box
-(7,  6, 18990000, 'COMPLETED', 'COD',         'FULL',         NULL, DATEADD(day,-59,GETDATE())),  -- Acer Nitro V15
+(5,  4, 44990000, 'DELIVERED', 'VNPAY',       'FULL',        NULL, DATEADD(day,-79,GETDATE())),  -- RTX 4090 ASUS
+(6,  5, 14790000, 'DELIVERED', 'VNPAY',       'FULL',        NULL, DATEADD(day,-69,GETDATE())),  -- i9-14900K Box
+(7,  6, 18990000, 'DELIVERED', 'COD',         'FULL',         NULL, DATEADD(day,-59,GETDATE())),  -- Acer Nitro V15
 -- Thang 2
-(8,  4, 49990000, 'COMPLETED', 'VNPAY',       'FULL',        NULL, DATEADD(day,-48,GETDATE())),  -- MacBook Pro M3 18GB
-(9,  5, 45990000, 'COMPLETED', 'VNPAY',       'FULL',        NULL, DATEADD(day,-38,GETDATE())),  -- Dell XPS 15 OLED
-(10, 6,  4990000, 'COMPLETED', 'COD',         'FULL',         NULL, DATEADD(day,-28,GETDATE())),  -- Samsung 990 PRO 2TB
+(8,  4, 49990000, 'DELIVERED', 'VNPAY',       'FULL',        NULL, DATEADD(day,-48,GETDATE())),  -- MacBook Pro M3 18GB
+(9,  5, 45990000, 'DELIVERED', 'VNPAY',       'FULL',        NULL, DATEADD(day,-38,GETDATE())),  -- Dell XPS 15 OLED
+(10, 6,  4990000, 'DELIVERED', 'COD',         'FULL',         NULL, DATEADD(day,-28,GETDATE())),  -- Samsung 990 PRO 2TB
 -- Thang 3
-(11, 4, 42990000, 'COMPLETED', 'VNPAY',       'FULL',        NULL, DATEADD(day,-20,GETDATE())),  -- ROG Strix G16 4070
-(12, 5, 17490000, 'COMPLETED', 'VNPAY',       'FULL',        NULL, DATEADD(day,-10,GETDATE())),  -- Ryzen 9 7950X
-(13, 6,  3790000, 'COMPLETED', 'COD',         'FULL',         NULL, DATEADD(day, -5,GETDATE())),  -- Ryzen 5 5600X
+(11, 4, 42990000, 'DELIVERED', 'VNPAY',       'FULL',        NULL, DATEADD(day,-20,GETDATE())),  -- ROG Strix G16 4070
+(12, 5, 17490000, 'DELIVERED', 'VNPAY',       'FULL',        NULL, DATEADD(day,-10,GETDATE())),  -- Ryzen 9 7950X
+(13, 6,  3790000, 'DELIVERED', 'COD',         'FULL',         NULL, DATEADD(day, -5,GETDATE())),  -- Ryzen 5 5600X
 -- Tra gop: Order 14 — dang tra (4 PAID, 1 OVERDUE, 7 UNPAID)
 -- MacBook Pro 14 M3 36GB, goi 12 thang, dat 4 thang truoc
 (14, 5, 64990000, 'CONFIRMED', 'VNPAY', 'INSTALLMENT', 3,    DATEADD(month,-4,GETDATE())),
 -- Tra gop: Order 15 — da tat toan (6/6 PAID)
 -- ROG Strix G16 RTX4060, goi 6 thang, dat 7 thang truoc
-(15, 6, 34990000, 'COMPLETED',      'VNPAY', 'INSTALLMENT', 2,    DATEADD(month,-7,GETDATE()));
+(15, 6, 34990000, 'DELIVERED',      'VNPAY', 'INSTALLMENT', 2,    DATEADD(month,-7,GETDATE()));
 SET IDENTITY_INSERT orders OFF;
 
 -- ── Order Items cho orders 5-15 ────────────────────────────────────────────
@@ -1564,7 +1564,7 @@ SET IDENTITY_INSERT order_payment_schedule OFF;
 
 PRINT '========================================';
 PRINT 'REPORT TEST DATA INSERTED OK';
-PRINT '  Orders 5-13  : COMPLETED (Jan/Feb/Mar 2026)';
+PRINT '  Orders 5-13  : DELIVERED (Jan/Feb/Mar 2026)';
 PRINT '  Order  14    : INSTALLMENT - 4 PAID, 1 OVERDUE, 7 UNPAID';
 PRINT '  Order  15    : INSTALLMENT - 6/6 PAID (tat toan)';
 PRINT '========================================';
