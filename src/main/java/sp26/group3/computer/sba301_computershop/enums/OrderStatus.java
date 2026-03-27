@@ -9,4 +9,5 @@ public enum OrderStatus {
     COMPLETED,
     CANCELLED,
     FAILED,
+    PAID
 }
