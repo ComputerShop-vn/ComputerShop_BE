@@ -24,6 +24,9 @@ IF OBJECT_ID('cart_items', 'U') IS NOT NULL DROP TABLE cart_items;
 IF OBJECT_ID('carts', 'U') IS NOT NULL DROP TABLE carts;
 IF OBJECT_ID('pc_build_items', 'U') IS NOT NULL DROP TABLE pc_build_items;
 IF OBJECT_ID('pc_builds', 'U') IS NOT NULL DROP TABLE pc_builds;
+-- chat tables (reference users — must drop before users)
+IF OBJECT_ID('chat_messages', 'U') IS NOT NULL DROP TABLE chat_messages;
+IF OBJECT_ID('chat_conversations', 'U') IS NOT NULL DROP TABLE chat_conversations;
 -- legacy names (drop if exist from old schema)
 IF OBJECT_ID('pc_build_item', 'U') IS NOT NULL DROP TABLE pc_build_item;
 IF OBJECT_ID('pc_build', 'U') IS NOT NULL DROP TABLE pc_build;
@@ -295,6 +298,28 @@ CREATE TABLE warranty_claim (
     solution_type NVARCHAR(50),
     return_date DATE,
     FOREIGN KEY (warranty_id) REFERENCES warranties(id)
+);
+-- chat_conversations
+CREATE TABLE chat_conversations (
+                                    id BIGINT IDENTITY(1, 1) PRIMARY KEY,
+                                    room_key NVARCHAR(50) NOT NULL UNIQUE,
+                                    user1_id INT NOT NULL,
+                                    user2_id INT NOT NULL,
+                                    last_message NVARCHAR(MAX),
+                                    last_message_at DATETIME2,
+                                    FOREIGN KEY (user1_id) REFERENCES users(user_id),
+                                    FOREIGN KEY (user2_id) REFERENCES users(user_id)
+);
+-- chat_messages
+CREATE TABLE chat_messages (
+                               id BIGINT IDENTITY(1, 1) PRIMARY KEY,
+                               conversation_id BIGINT NOT NULL,
+                               sender_id INT NOT NULL,
+                               content NVARCHAR(MAX) NOT NULL,
+                               sent_at DATETIME2 NOT NULL,
+                               is_read BIT NOT NULL DEFAULT 0,
+                               FOREIGN KEY (conversation_id) REFERENCES chat_conversations(id),
+                               FOREIGN KEY (sender_id) REFERENCES users(user_id)
 );
 GO
 -- ===============================
