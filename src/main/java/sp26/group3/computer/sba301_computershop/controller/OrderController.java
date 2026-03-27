@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import sp26.group3.computer.sba301_computershop.dto.request.PlaceOrderRequest;
 import sp26.group3.computer.sba301_computershop.dto.request.UpdateOrderStatusRequest;
 import sp26.group3.computer.sba301_computershop.dto.response.ApiResponse;
+import sp26.group3.computer.sba301_computershop.dto.response.OrderPaymentResultResponse;
 import sp26.group3.computer.sba301_computershop.dto.response.OrderResponse;
 import sp26.group3.computer.sba301_computershop.dto.response.PagedResponse;
 import sp26.group3.computer.sba301_computershop.service.OrderService;
@@ -63,6 +64,16 @@ public class OrderController {
     public ApiResponse<OrderResponse> getOrderById(@PathVariable int id) {
         ApiResponse<OrderResponse> apiResponse = new ApiResponse<>();
         apiResponse.setResult(orderService.getOrderById(id));
+        return apiResponse;
+    }
+
+    @GetMapping("/{id}/payment-result")
+    @PreAuthorize("hasAnyRole('MEMBER','STAFF','ADMIN')")
+    public ApiResponse<OrderPaymentResultResponse> getOrderPaymentResult(
+            @PathVariable int id,
+            @RequestParam(required = false) Integer installmentNo) {
+        ApiResponse<OrderPaymentResultResponse> apiResponse = new ApiResponse<>();
+        apiResponse.setResult(orderService.getOrderPaymentResult(id, installmentNo));
         return apiResponse;
     }
 

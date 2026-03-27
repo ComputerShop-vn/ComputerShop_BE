@@ -39,6 +39,6 @@ public class OrderItem {
     private String recipientPhone;
 
     @Column(name = "shipping_address")
-    private String shippingAddress;
+    private String shippingAddress; 
 }
 

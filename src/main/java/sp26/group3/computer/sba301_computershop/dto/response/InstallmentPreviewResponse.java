@@ -19,5 +19,6 @@ public class InstallmentPreviewResponse {
     double interestRate;
     int durationMonths;
     double totalPayableAmount;
+    double annualPenaltyRate;
     List<PaymentScheduleResponse> schedule;
 }

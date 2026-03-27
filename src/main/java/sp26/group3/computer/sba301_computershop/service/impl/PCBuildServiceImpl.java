@@ -43,6 +43,7 @@ public class PCBuildServiceImpl implements PCBuildService {
     UserRepository userRepository;
     CompatibilityService compatibilityService;
     OrderService orderService;
+    PromotionProductRepository promotionProductRepository;
 
     // ======================== UPSERT ITEM ========================
 
@@ -56,17 +57,12 @@ public class PCBuildServiceImpl implements PCBuildService {
         ProductVariant variant = productVariantRepository.findById(request.getVariantId())
                 .orElseThrow(() -> new AppException(ErrorCode.VARIANT_NOT_FOUND));
 
-        // RAM slot check: nếu thêm RAM mới (không phải update quantity), kiểm tra mainboard còn slot không
+        // RAM slot check: kiểm tra tổng quantity sau khi upsert không vượt quá slot mainboard
         if (request.getComponentType() == ComponentType.RAM) {
-            boolean alreadyInBuild = pcBuildItemRepository
-                    .findByBuildBuildIdAndComponentTypeAndVariantVariantId(
-                            build.getBuildId(), ComponentType.RAM, request.getVariantId())
-                    .isPresent();
-            if (!alreadyInBuild) {
-                validateRamSlots(build);
-            }
+            validateRamSlots(build, request.getVariantId(), request.getQuantity());
         }
 
+        double price = effectivePrice(variant);
         boolean isMultiSlot = request.getComponentType().isMultiSlot();
         if (isMultiSlot) {
             pcBuildItemRepository
@@ -75,7 +71,7 @@ public class PCBuildServiceImpl implements PCBuildService {
                     .ifPresentOrElse(
                             existing -> {
                                 existing.setQuantity(request.getQuantity());
-                                existing.setPrice(variant.getPrice());
+                                existing.setPrice(price);
                                 pcBuildItemRepository.save(existing);
                                 log.info("[PCBuild] Updated multi-slot item | buildId={} componentType={} variantId={}",
                                         build.getBuildId(), request.getComponentType(), variant.getVariantId());
@@ -86,7 +82,7 @@ public class PCBuildServiceImpl implements PCBuildService {
                                         .componentType(request.getComponentType())
                                         .variant(variant)
                                         .quantity(request.getQuantity())
-                                        .price(variant.getPrice())
+                                        .price(price)
                                         .build());
                                 log.info("[PCBuild] Added multi-slot item | buildId={} componentType={} variantId={}",
                                         build.getBuildId(), request.getComponentType(), variant.getVariantId());
@@ -99,7 +95,7 @@ public class PCBuildServiceImpl implements PCBuildService {
                     .ifPresentOrElse(
                             existing -> {
                                 existing.setVariant(variant);
-                                existing.setPrice(variant.getPrice());
+                                existing.setPrice(price);
                                 existing.setQuantity(request.getQuantity());
                                 pcBuildItemRepository.save(existing);
                                 log.info("[PCBuild] Overwrite item | buildId={} componentType={} variantId={}",
@@ -111,7 +107,7 @@ public class PCBuildServiceImpl implements PCBuildService {
                                         .componentType(request.getComponentType())
                                         .variant(variant)
                                         .quantity(request.getQuantity())
-                                        .price(variant.getPrice())
+                                        .price(price)
                                         .build());
                                 log.info("[PCBuild] Added item | buildId={} componentType={} variantId={}",
                                         build.getBuildId(), request.getComponentType(), variant.getVariantId());
@@ -185,7 +181,36 @@ public class PCBuildServiceImpl implements PCBuildService {
         return compatibilityService.getFilterHints(items, targetType);
     }
 
+    // ======================== REMOVE ITEM ========================
+
+    @Override
+    @Transactional
+    public PCBuildResponse removeItem(int buildItemId) {
+        User user = getCurrentUser();
+        PCBuildItem item = pcBuildItemRepository.findById(buildItemId)
+                .orElseThrow(() -> new AppException(ErrorCode.PC_BUILD_NOT_FOUND));
+
+        PCBuild build = item.getBuild();
+        if (build.getStatus() != BuildStatus.DRAFT
+                || build.getUser().getUserId() != user.getUserId()) {
+            throw new AppException(ErrorCode.PC_BUILD_NOT_FOUND);
+        }
+
+        pcBuildItemRepository.delete(item);
+        log.info("[PCBuild] Removed item | buildItemId={} buildId={}", buildItemId, build.getBuildId());
+        return reloadAndUpdate(build);
+    }
+
     // ======================== PRIVATE HELPERS ========================
+
+    /** Trả về giá sau khuyến mãi nếu có, ngược lại trả về giá gốc */
+    private double effectivePrice(ProductVariant variant) {
+        return promotionProductRepository
+                .findActivePromotionByProductId(variant.getProduct().getProductId())
+                .stream().findFirst()
+                .map(pp -> variant.getPrice() * (1 - pp.getPromotion().getDiscountPercent() / 100.0))
+                .orElse(variant.getPrice());
+    }
 
     private User getCurrentUser() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -193,7 +218,7 @@ public class PCBuildServiceImpl implements PCBuildService {
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
     }
 
-    private void validateRamSlots(PCBuild build) {
+    private void validateRamSlots(PCBuild build, int upsertVariantId, int newQuantity) {
         Optional<PCBuildItem> mainboardOpt = pcBuildItemRepository
                 .findByBuildBuildIdAndComponentType(build.getBuildId(), ComponentType.MAINBOARD);
         if (mainboardOpt.isEmpty()) return; // chưa có mainboard → chưa biết giới hạn
@@ -205,7 +230,7 @@ public class PCBuildServiceImpl implements PCBuildService {
                 .map(ProductVariantAttribute::getValue)
                 .findFirst()
                 .orElse(null);
-        if (ramSlotsStr == null) return; // mainboard không có thông tin slot
+        if (ramSlotsStr == null) return;
 
         int maxSlots;
         try {
@@ -214,13 +239,17 @@ public class PCBuildServiceImpl implements PCBuildService {
             return;
         }
 
-        long currentRamCount = pcBuildItemRepository
+        // Tính tổng quantity của tất cả RAM hiện tại, trừ variant đang upsert (sẽ bị overwrite)
+        int usedSlots = pcBuildItemRepository
                 .findAllByBuildBuildIdAndComponentType(build.getBuildId(), ComponentType.RAM)
-                .size();
+                .stream()
+                .filter(i -> i.getVariant().getVariantId() != upsertVariantId)
+                .mapToInt(PCBuildItem::getQuantity)
+                .sum();
 
-        if (currentRamCount >= maxSlots) {
-            log.warn("[PCBuild] RAM slots full: buildId={} maxSlots={} currentCount={}",
-                    build.getBuildId(), maxSlots, currentRamCount);
+        if (usedSlots + newQuantity > maxSlots) {
+            log.warn("[PCBuild] RAM slots exceeded: buildId={} maxSlots={} usedSlots={} newQty={}",
+                    build.getBuildId(), maxSlots, usedSlots, newQuantity);
             throw new AppException(ErrorCode.RAM_SLOTS_EXCEEDED);
         }
     }
@@ -267,7 +296,7 @@ public class PCBuildServiceImpl implements PCBuildService {
         // Use JOIN FETCH query to bypass Hibernate L1 cache and get fresh items from DB
         PCBuild fresh = pcBuildRepository.findWithItemsById(build.getBuildId()).orElseThrow();
         double total = fresh.getItems().stream()
-                .mapToDouble(i -> i.getPrice() * i.getQuantity())
+                .mapToDouble(i -> effectivePrice(i.getVariant()) * i.getQuantity())
                 .sum();
         fresh.setTotalPrice(total);
         fresh.setUpdatedAt(LocalDateTime.now());
@@ -302,6 +331,17 @@ public class PCBuildServiceImpl implements PCBuildService {
                 .map(ProductImage::getImageUrl)
                 .orElse(null);
 
+        // Tính discount giống CartService
+        Double discountedPrice = null;
+        double discountPercent = 0.0;
+        var promos = promotionProductRepository.findActivePromotionByProductId(product.getProductId());
+        if (!promos.isEmpty()) {
+            discountPercent = promos.get(0).getPromotion().getDiscountPercent();
+            discountedPrice = variant.getPrice() * (1 - discountPercent / 100.0);
+        }
+
+        double effectivePrice = discountedPrice != null ? discountedPrice : variant.getPrice();
+
         return PCBuildItemResponse.builder()
                 .buildItemId(item.getBuildItemId())
                 .componentType(item.getComponentType().name())
@@ -309,9 +349,11 @@ public class PCBuildServiceImpl implements PCBuildService {
                 .variantId(variant.getVariantId())
                 .variantName(variant.getVariantName())
                 .sku(variant.getSku())
-                .price(item.getPrice())
+                .price(variant.getPrice())
+                .discountedPrice(discountedPrice)
+                .discountPercent(discountPercent)
                 .quantity(item.getQuantity())
-                .subtotal(item.getPrice() * item.getQuantity())
+                .subtotal(effectivePrice * item.getQuantity())
                 .productId(product.getProductId())
                 .productName(product.getName())
                 .thumbnailUrl(thumbnailUrl)

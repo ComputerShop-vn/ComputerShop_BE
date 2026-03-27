@@ -29,4 +29,7 @@ public class InstallmentPackageRequest {
 
     @NotNull(message = "Active status is required")
     Boolean isActive;
+
+    @NotNull(message = "Annual penalty rate is required")
+    Double annualPenaltyRate;
 }

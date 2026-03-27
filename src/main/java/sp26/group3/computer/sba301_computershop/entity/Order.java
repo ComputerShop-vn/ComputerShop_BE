@@ -7,7 +7,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import sp26.group3.computer.sba301_computershop.enums.OrderStatus;
-import sp26.group3.computer.sba301_computershop.enums.PaymentType;
+import sp26.group3.computer.sba301_computershop.enums.PaymentMethod;
+import sp26.group3.computer.sba301_computershop.enums.PaymentMode;
 
 @Entity
 @Table(name = "orders")
@@ -34,8 +35,12 @@ public class Order {
     private OrderStatus status;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "payment_type")
-    private PaymentType paymentType;
+    @Column(name = "payment_method")
+    private PaymentMethod paymentMethod;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_mode")
+    private PaymentMode paymentMode;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "installment_package_id")

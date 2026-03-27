@@ -21,10 +21,12 @@ public class PCBuildItemResponse {
     String variantName;
     String sku;
 
-    // Giá snapshot tại thời điểm chọn
-    double price;
+    // Giá
+    double price;           // Giá gốc
+    Double discountedPrice; // Giá sau giảm (null nếu không có khuyến mãi)
+    double discountPercent; // % giảm (0 nếu không có)
     int quantity;
-    double subtotal; // price * quantity
+    double subtotal;        // effectivePrice * quantity
 
     // Product info
     int productId;

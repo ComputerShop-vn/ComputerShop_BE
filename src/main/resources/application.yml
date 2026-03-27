@@ -1,8 +1,8 @@
-spring:
-  profiles:
-    active: local
-  # ===============================
-  # LOAD ENV FILE
-  # ===============================
-  config:
-    import: optional:file:.env[.properties]
+    spring:
+      profiles:
+        active: local
+      # ===============================
+      # LOAD ENV FILE
+      # ===============================
+      config:
+        import: optional:file:.env[.properties]

@@ -1323,34 +1323,37 @@ formData.append("logo", logoFile);       // optional
 
 > Đặt hàng lấy **toàn bộ sản phẩm** hiện có trong giỏ hàng. Sau khi đặt thành công, **giỏ hàng bị xoá**.
 
-**Request — Thanh toán một lần (FULL):**
+**Request — Thanh toán một lần (FULL) qua COD:**
 ```json
 {
   "recipientName": "Nguyễn Văn A",
   "recipientPhone": "0901234567",
   "shippingAddress": "123 Đường ABC, Q1, TP.HCM",
-  "paymentType": "FULL"
+  "paymentMethod": "COD",
+  "paymentMode": "FULL"
 }
 ```
 
-**Request — Trả góp (INSTALLMENT):**
+**Request — Trả góp (INSTALLMENT) qua VNPAY:**
 ```json
 {
   "recipientName": "Nguyễn Văn A",
   "recipientPhone": "0901234567",
   "shippingAddress": "123 Đường ABC, Q1, TP.HCM",
-  "paymentType": "INSTALLMENT",
+  "paymentMethod": "VNPAY",
+  "paymentMode": "INSTALLMENT",
   "packageId": 2
 }
 ```
 
-| Field | Bắt buộc | Mặc định | Điều kiện                                                                                 |
-|-------|----------|----------|-------------------------------------------------------------------------------------------|
-| `recipientName` | ✅ | — | Không được rỗng                                                                           |
-| `recipientPhone` | ✅ | — | Không được rỗng                                                                           |
-| `shippingAddress` | ✅ | — | Không được rỗng                                                                           |
-| `paymentType` | ✅ | — | `"COD, "FULL"` hoặc `"INSTALLMENT"`                                                       |
-| `packageId` | ❌ | null | **Bắt buộc khi `paymentType = "INSTALLMENT"`**. Lấy từ `GET /installment-packages/active` |
+| Field | Bắt buộc | Mặc định | Điều kiện |
+|-------|----------|----------|-----------|
+| `recipientName` | ✅ | — | Không được rỗng |
+| `recipientPhone` | ✅ | — | Không được rỗng |
+| `shippingAddress` | ✅ | — | Không được rỗng |
+| `paymentMethod` | ✅ | — | `"COD"` hoặc `"VNPAY"` |
+| `paymentMode` | ✅ | — | `"FULL"` hoặc `"INSTALLMENT"` |
+| `packageId` | ❌ | null | **Bắt buộc khi `paymentMode = "INSTALLMENT"`**. Lấy từ `GET /installment-packages/active` |
 
 **Validation khi chọn INSTALLMENT:**
 - `packageId` phải tồn tại và `isActive = true`
@@ -1368,7 +1371,8 @@ formData.append("logo", logoFile);       // optional
     "username": "nguyenvana",
     "totalAmount": 24000000.0,
     "status": "PENDING",
-    "paymentType": "INSTALLMENT",
+    "paymentMethod": "VNPAY",
+    "paymentMode": "INSTALLMENT",
     "orderDate": "2026-03-04T10:30:00",
     "installmentPackage": {
       "packageId": 2,
@@ -1478,7 +1482,7 @@ formData.append("logo", logoFile);       // optional
 **Flow sau khi đặt hàng:**
 1. Validate stock cho TẤT CẢ items trước khi tạo bất kỳ thứ gì
 2. Nếu INSTALLMENT: validate `packageId` hợp lệ và `totalAmount >= minOrderAmount`
-3. Tạo Order (lưu `payment_type` và `installment_package_id`)
+3. Tạo Order (lưu `paymentMethod`, `paymentMode` và `installmentPackageId`)
 4. Giảm stock của từng variant (`stockQuantity -= quantity`)
 5. Tạo `ProductItem` với `serialNumber = "{sku}-{8 ký tự đầu UUID}"`
 6. Tạo `OrderItem` cho từng sản phẩm
@@ -1491,9 +1495,9 @@ formData.append("logo", logoFile);       // optional
 | ✅ Thành công (INSTALLMENT) | 1000, N payment records |
 | ❌ Giỏ hàng rỗng | 9002 "Cart is empty, cannot place order" |
 | ❌ Bất kỳ item nào không đủ stock | 9003 "Insufficient stock for variant" (không tạo order) |
-| ❌ `paymentType` null | 400 validation |
+| ❌ `paymentMethod` hoặc `paymentMode` null | 400 validation |
 | ❌ Thiếu recipientName/Phone/Address | 400 validation |
-| ❌ `paymentType = INSTALLMENT` nhưng thiếu `packageId` | 400 validation |
+| ❌ `paymentMode = INSTALLMENT` nhưng thiếu `packageId` | 400 validation |
 | ❌ `packageId` không tồn tại hoặc `isActive = false` | 400 hoặc custom error |
 | ❌ `totalAmount < minOrderAmount` của gói trả góp | 400 hoặc custom error |
 
@@ -1602,10 +1606,11 @@ PENDING → PROCESSING → SHIPPING → DELIVERED
 |-------|----------|-------|
 | `orderId` | ✅ | ID đơn hàng cần thanh toán |
 | `bankCode` | ❌ | Mã ngân hàng VD: `NCB`, `VIETINBANK`, `VCB`. Null = hiện màn hình chọn ngân hàng |
+| `installmentNo` | ❌ | Kỳ trả góp cần thanh toán (1, 2, ...). Null = hệ thống tự tìm kỳ chưa thanh toán tiếp theo. |
 
 **Ví dụ:**
 - `GET /orders/payment/createPayment?orderId=10` → VNPay hiện page chọn ngân hàng
-- `GET /orders/payment/createPayment?orderId=10&bankCode=NCB` → Thẳng vào thanh toán NCB
+- `GET /orders/payment/createPayment?orderId=10&installmentNo=1` → Thanh toán kỳ 1
 
 **Response:**
 ```json
@@ -1626,12 +1631,41 @@ PENDING → PROCESSING → SHIPPING → DELIVERED
 
 **Flow thanh toán VNPay:**
 ```
-1. FE → Tạo Order → nhận paymentUrl
-2. FE → redirect user đến paymentUrl
-3. User → hoàn tất thanh toán trên VNPay
-4. VNPay → GET /callback (FE)
-6. FE → GET /orders/{id} để hiển thị thông tin đơn hàng và trạng thái đơn hàng/thanh toán
+1. FE → Tạo Order hoặc chọn kỳ thanh toán
+2. FE → Gọi createPayment (nếu trả góp, gửi kèm installmentNo) → nhận paymentUrl
+3. FE → redirect user đến paymentUrl
+4. User → hoàn tất thanh toán trên VNPay
+5. VNPay → GET /callback (Backend) → Backend redirect FE: localhost:3000/payment-result?orderId=...&installmentNo=...
+6. FE → Gọi GET /orders/{id}/payment-result?installmentNo=... để kiểm tra kết quả cuối cùng
 ```
+
+---
+
+## GET `/orders/{id}/payment-result`
+
+**Auth:** Authenticated
+
+**Query params:**
+- `installmentNo` (optional): Kỳ thanh toán cần kiểm tra kết quả. Nếu trả góp kỳ 1, gửi `1`. Nếu thanh toán FULL (hoặc down payment), có thể bỏ qua hoặc gửi `0`.
+
+**Response:**
+```json
+{
+  "code": 1000,
+  "message": null,
+  "result": {
+    "orderId": 10,
+    "amount": 4040000.0,
+    "status": "success",
+    "installmentNo": 2
+  }
+}
+```
+
+| Field | Mô tả |
+|-------|-------|
+| `status` | `"success"` (đã thanh toán) hoặc `"failed"` (chưa thanh toán / lỗi) |
+| `installmentNo` | Trả về kỳ vừa thanh toán. Sẽ là `null` nếu là thanh toán FULL hoặc trả trước. |
 
 ---
 
@@ -3257,3 +3291,323 @@ POST /api/v1/pc-builds/draft/order
 | **Draft auto-create** | Nếu user chưa có DRAFT build, cả `GET /draft` lẫn `PUT /draft/items` đều tự tạo DRAFT mới rỗng |
 | **Sau khi order** | Build status chuyển sang `ORDERED`. User cần build mới nếu muốn tiếp tục |
 | **Compatibility filter** | Chỉ lọc ở tầng search — server **không** chặn add item không tương thích (trừ RAM slot) |
+
+---
+
+---
+
+# 13. 📊 Reports — `/reports`
+
+> **Auth chung:** Tất cả endpoint trong section này yêu cầu role `ADMIN` hoặc `STAFF`.
+> Các endpoint `/export` trả về file `.xlsx` thay vì JSON.
+
+---
+
+## GET `/reports/revenue/time` — Doanh thu theo thời gian
+
+**Auth:** ADMIN, STAFF
+
+**Query Parameters:**
+
+| Param | Bắt buộc | Kiểu | Mặc định | Mô tả |
+|-------|----------|------|----------|-------|
+| `fromDate` | ❌ | `date` (yyyy-MM-dd) | 1 tháng trước | Ngày bắt đầu |
+| `toDate` | ❌ | `date` (yyyy-MM-dd) | Hôm nay | Ngày kết thúc |
+| `groupBy` | ❌ | `DAY` \| `MONTH` \| `YEAR` | `MONTH` | Đơn vị nhóm |
+
+**Ví dụ request:**
+```
+GET /api/v1/reports/revenue/time?fromDate=2025-01-01&toDate=2025-03-31&groupBy=MONTH
+```
+
+**Response — Thành công:**
+```json
+{
+  "code": 1000,
+  "message": null,
+  "result": {
+    "fromDate": "2025-01-01",
+    "toDate": "2025-03-31",
+    "groupBy": "MONTH",
+    "totalRevenue": 250000000.0,
+    "totalOrders": 18,
+    "breakdown": [
+      { "period": "2025-01", "revenue": 75000000.0, "orderCount": 5 },
+      { "period": "2025-02", "revenue": 90000000.0, "orderCount": 7 },
+      { "period": "2025-03", "revenue": 85000000.0, "orderCount": 6 }
+    ]
+  }
+}
+```
+
+> Chỉ tính các đơn có `status = COMPLETED`.
+> Khi `groupBy=DAY`, `period` có dạng `yyyy-MM-dd` (ví dụ `"2025-03-15"`).
+> Khi `groupBy=YEAR`, `period` có dạng `"2025"`.
+
+| Case | Code | Message |
+|------|------|---------|
+| ✅ Thành công | 1000 | null |
+| ❌ Không có quyền | 1004 | "Access Denied" |
+| ❌ Token không hợp lệ | 1003 | "Unauthenticated" |
+
+---
+
+## GET `/reports/revenue/time/export` — Export Excel doanh thu theo thời gian
+
+**Auth:** ADMIN, STAFF
+
+**Query Parameters:** Giống hệt `GET /reports/revenue/time`
+
+**Ví dụ request:**
+```
+GET /api/v1/reports/revenue/time/export?fromDate=2025-01-01&toDate=2025-03-31&groupBy=MONTH
+```
+
+**Response:**
+File `.xlsx` được tải về trực tiếp.
+
+| Header | Giá trị |
+|--------|---------|
+| `Content-Type` | `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet` |
+| `Content-Disposition` | `attachment; filename="doanh-thu-theo-thoi-gian_2025-01-01_2025-03-31.xlsx"` |
+
+**Cấu trúc file Excel:**
+
+| Cột | Nội dung |
+|-----|---------|
+| A | STT |
+| B | Kỳ (ngày / tháng / năm tuỳ `groupBy`) |
+| C | Doanh thu (VNĐ) — format `#,##0` |
+| D | Số đơn hàng |
+
+> Phần đầu sheet gồm tiêu đề, khoảng thời gian và tổng doanh thu / tổng đơn.
+
+| Case | Kết quả |
+|------|---------|
+| ✅ Thành công | Download file `.xlsx` |
+| ❌ Không có quyền | 1004 |
+| ❌ Token không hợp lệ | 1003 |
+
+---
+
+## GET `/reports/revenue/product` — Doanh thu theo sản phẩm
+
+**Auth:** ADMIN, STAFF
+
+**Query Parameters:**
+
+| Param | Bắt buộc | Kiểu | Mặc định | Mô tả |
+|-------|----------|------|----------|-------|
+| `fromDate` | ❌ | `date` (yyyy-MM-dd) | 1 tháng trước | Ngày bắt đầu |
+| `toDate` | ❌ | `date` (yyyy-MM-dd) | Hôm nay | Ngày kết thúc |
+| `limit` | ❌ | int | `10` | Giới hạn số sản phẩm trả về (top N) |
+
+**Ví dụ request:**
+```
+GET /api/v1/reports/revenue/product?fromDate=2025-01-01&toDate=2025-03-31&limit=5
+```
+
+**Response — Thành công:**
+```json
+{
+  "code": 1000,
+  "message": null,
+  "result": {
+    "fromDate": "2025-01-01",
+    "toDate": "2025-03-31",
+    "totalRevenue": 250000000.0,
+    "products": [
+      {
+        "productName": "ASUS ROG Strix G16",
+        "variantName": "RTX 4070 / 16GB / 1TB",
+        "totalSold": 5,
+        "revenue": 120000000.0
+      },
+      {
+        "productName": "Dell XPS 15",
+        "variantName": "Core i7 / 32GB / 512GB",
+        "totalSold": 3,
+        "revenue": 75000000.0
+      }
+    ]
+  }
+}
+```
+
+> Danh sách được sắp xếp theo `revenue` giảm dần (sản phẩm doanh thu cao nhất đứng đầu).
+> Chỉ tính các đơn có `status = COMPLETED`.
+> `totalRevenue` là tổng doanh thu của các sản phẩm trong danh sách (sau khi áp dụng `limit`).
+
+| Case | Code | Message |
+|------|------|---------|
+| ✅ Thành công | 1000 | null |
+| ❌ Không có quyền | 1004 | "Access Denied" |
+| ❌ Token không hợp lệ | 1003 | "Unauthenticated" |
+
+---
+
+## GET `/reports/revenue/product/export` — Export Excel doanh thu theo sản phẩm
+
+**Auth:** ADMIN, STAFF
+
+**Query Parameters:** Giống hệt `GET /reports/revenue/product`
+
+**Ví dụ request:**
+```
+GET /api/v1/reports/revenue/product/export?fromDate=2025-01-01&toDate=2025-03-31&limit=10
+```
+
+**Response:**
+File `.xlsx` được tải về trực tiếp.
+
+| Header | Giá trị |
+|--------|---------|
+| `Content-Type` | `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet` |
+| `Content-Disposition` | `attachment; filename="doanh-thu-theo-san-pham_2025-01-01_2025-03-31.xlsx"` |
+
+**Cấu trúc file Excel:**
+
+| Cột | Nội dung |
+|-----|---------|
+| A | STT |
+| B | Tên sản phẩm |
+| C | Biến thể (variant) |
+| D | Số lượng bán |
+| E | Doanh thu (VNĐ) — format `#,##0` |
+
+| Case | Kết quả |
+|------|---------|
+| ✅ Thành công | Download file `.xlsx` |
+| ❌ Không có quyền | 1004 |
+| ❌ Token không hợp lệ | 1003 |
+
+---
+
+## GET `/reports/revenue/installment` — Doanh thu trả góp
+
+**Auth:** ADMIN, STAFF
+
+**Không có query parameter.**
+
+**Ví dụ request:**
+```
+GET /api/v1/reports/revenue/installment
+```
+
+**Response — Thành công:**
+```json
+{
+  "code": 1000,
+  "message": null,
+  "result": {
+    "summary": {
+      "totalPaid": 45000000.0,
+      "totalUnpaid": 20000000.0,
+      "totalOverdue": 5000000.0,
+      "total": 70000000.0
+    },
+    "orders": [
+      {
+        "orderId": 12,
+        "customerUsername": "nguyenvana",
+        "orderTotal": 30000000.0,
+        "totalInstallments": 6,
+        "paidInstallments": 4,
+        "remainingInstallments": 2,
+        "nextDueDate": "2025-04-15"
+      },
+      {
+        "orderId": 8,
+        "customerUsername": "tranthib",
+        "orderTotal": 40000000.0,
+        "totalInstallments": 12,
+        "paidInstallments": 12,
+        "remainingInstallments": 0,
+        "nextDueDate": "Đã hoàn tất"
+      }
+    ]
+  }
+}
+```
+
+**Giải thích `summary`:**
+
+| Field | Mô tả |
+|-------|-------|
+| `totalPaid` | Tổng tiền đã thu thành công (status = `PAID`) |
+| `totalUnpaid` | Tổng tiền chưa thu, chưa đến hạn (status = `UNPAID`) |
+| `totalOverdue` | Tổng tiền quá hạn chưa thanh toán (status = `OVERDUE`) |
+| `total` | Tổng cộng toàn bộ (paid + unpaid + overdue) |
+
+**Giải thích từng đơn trong `orders`:**
+
+| Field | Mô tả |
+|-------|-------|
+| `orderId` | Mã đơn hàng |
+| `customerUsername` | Username của khách |
+| `orderTotal` | Tổng giá trị đơn hàng |
+| `totalInstallments` | Tổng số kỳ trả góp |
+| `paidInstallments` | Số kỳ đã thanh toán |
+| `remainingInstallments` | Số kỳ còn lại |
+| `nextDueDate` | Ngày đến hạn kỳ gần nhất chưa trả (`yyyy-MM-dd`), hoặc `"Đã hoàn tất"` nếu trả hết |
+
+> Chỉ bao gồm các đơn có `payment_type = INSTALLMENT`.
+> Danh sách sắp xếp theo `orderId` giảm dần (đơn mới nhất đứng đầu).
+
+| Case | Code | Message |
+|------|------|---------|
+| ✅ Thành công | 1000 | null |
+| ❌ Không có quyền | 1004 | "Access Denied" |
+| ❌ Token không hợp lệ | 1003 | "Unauthenticated" |
+
+---
+
+## GET `/reports/revenue/installment/export` — Export Excel doanh thu trả góp
+
+**Auth:** ADMIN, STAFF
+
+**Không có query parameter.**
+
+**Ví dụ request:**
+```
+GET /api/v1/reports/revenue/installment/export
+```
+
+**Response:**
+File `.xlsx` được tải về trực tiếp.
+
+| Header | Giá trị |
+|--------|---------|
+| `Content-Type` | `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet` |
+| `Content-Disposition` | `attachment; filename="doanh-thu-tra-gop_2025-03-31.xlsx"` |
+
+**Cấu trúc file Excel — 2 sheets:**
+
+**Sheet 1: "Tổng quan trả góp"**
+
+| Hàng | Nội dung |
+|------|---------|
+| 1 | Tiêu đề: `TỔNG QUAN DOANH THU TRẢ GÓP` |
+| 3 | Tổng đã thu (PAID) |
+| 4 | Tổng chưa thu (UNPAID) |
+| 5 | Tổng quá hạn (OVERDUE) |
+| 7 | TỔNG CỘNG |
+
+**Sheet 2: "Chi tiết đơn trả góp"**
+
+| Cột | Nội dung |
+|-----|---------|
+| A | STT |
+| B | Mã đơn |
+| C | Khách hàng (username) |
+| D | Tổng đơn (VNĐ) — format `#,##0` |
+| E | Tổng kỳ |
+| F | Đã trả (số kỳ) |
+| G | Còn lại (số kỳ) |
+| H | Ngày đến hạn kỳ gần nhất |
+
+| Case | Kết quả |
+|------|---------|
+| ✅ Thành công | Download file `.xlsx` |
+| ❌ Không có quyền | 1004 |
+| ❌ Token không hợp lệ | 1003 |

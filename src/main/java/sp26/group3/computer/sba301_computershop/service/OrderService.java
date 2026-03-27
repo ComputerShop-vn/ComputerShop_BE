@@ -5,6 +5,7 @@ import org.springframework.data.domain.Pageable;
 import sp26.group3.computer.sba301_computershop.dto.request.AddToCartRequest;
 import sp26.group3.computer.sba301_computershop.dto.request.PlaceOrderRequest;
 import sp26.group3.computer.sba301_computershop.dto.request.UpdateOrderStatusRequest;
+import sp26.group3.computer.sba301_computershop.dto.response.OrderPaymentResultResponse;
 import sp26.group3.computer.sba301_computershop.dto.response.OrderResponse;
 import sp26.group3.computer.sba301_computershop.dto.response.PagedResponse;
 
@@ -28,4 +29,6 @@ public interface OrderService {
     OrderResponse updateOrderStatus(int orderId, UpdateOrderStatusRequest request);
 
     void cancelOrder(int orderId);
+
+    OrderPaymentResultResponse getOrderPaymentResult(int orderId, Integer installmentNo);
 }

@@ -4,7 +4,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-import sp26.group3.computer.sba301_computershop.enums.PaymentType;
+import sp26.group3.computer.sba301_computershop.enums.PaymentMethod;
+import sp26.group3.computer.sba301_computershop.enums.PaymentMode;
 
 @Data
 @NoArgsConstructor
@@ -22,8 +23,11 @@ public class PlaceOrderRequest {
     @NotBlank(message = "Shipping address is required")
     String shippingAddress;
 
-    @NotNull(message = "Payment type is required (FULL or INSTALLMENT)")
-    PaymentType paymentType;
+    @NotNull(message = "Payment method is required (COD, VNPAY)")
+    PaymentMethod paymentMethod;
+
+    @NotNull(message = "Payment mode is required (FULL, INSTALLMENT)")
+    PaymentMode paymentMode;
 
     // Only required for INSTALLMENT
     Integer packageId;
