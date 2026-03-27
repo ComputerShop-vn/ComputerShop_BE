@@ -1,4 +1,4 @@
--- ===============================
+﻿-- ===============================
 -- SBA301 Computer Shop - Database Initialization
 -- SQL Server - matches Hibernate entity model (ddl-auto: validate)
 -- ===============================
@@ -60,7 +60,8 @@ CREATE TABLE installment_package (
     interest_rate FLOAT NOT NULL,
     min_order_amount FLOAT NOT NULL,
     down_payment_percentage FLOAT NOT NULL DEFAULT 20.0,
-    is_active BIT DEFAULT 1
+    is_active BIT DEFAULT 1,
+    annual_penalty_rate FLOAT NOT NULL DEFAULT 0.365
 );
 -- users
 CREATE TABLE users (
