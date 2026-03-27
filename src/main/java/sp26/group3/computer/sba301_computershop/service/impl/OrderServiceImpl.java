@@ -134,9 +134,11 @@ public class OrderServiceImpl implements OrderService {
         // 5. Create payment schedule
         createPaymentSchedules(order, request);
 
-        // 6. Clear cart
-        // cartItemRepository.deleteAllByCartCartId(cart.getCartId());
-        // log.info("Cleared cart after placing order | cartId={}", cart.getCartId());
+        // 6. Clear cart (Only clear now for COD. For others, clear on payment success)
+        if (request.getPaymentMethod() == PaymentMethod.COD) {
+            cartItemRepository.deleteAllByCartCartId(cart.getCartId());
+            log.info("Cleared cart after placing COD order | cartId={}", cart.getCartId());
+        }
 
         // 7. Handle Payment URL for VNPAY
         String paymentUrl = null;
