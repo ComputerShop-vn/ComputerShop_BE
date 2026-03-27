@@ -135,8 +135,8 @@ public class OrderServiceImpl implements OrderService {
         createPaymentSchedules(order, request);
 
         // 6. Clear cart
-//        cartItemRepository.deleteAllByCartCartId(cart.getCartId());
-//        log.info("Cleared cart after placing order | cartId={}", cart.getCartId());
+        // cartItemRepository.deleteAllByCartCartId(cart.getCartId());
+        // log.info("Cleared cart after placing order | cartId={}", cart.getCartId());
 
         // 7. Handle Payment URL for VNPAY
         String paymentUrl = null;
@@ -148,13 +148,14 @@ public class OrderServiceImpl implements OrderService {
         return toOrderResponse(order, orderItems, paymentUrl);
     }
 
-    // ======================== PLACE ORDER FROM BUILD ITEMS ========================
+    // ======================== PLACE ORDER FROM BUILD ITEMS
+    // ========================
 
     @Override
     @Transactional
     public OrderResponse placeOrderFromItems(List<AddToCartRequest> items,
-                                             PlaceOrderRequest request,
-                                             HttpServletRequest servletRequest) {
+            PlaceOrderRequest request,
+            HttpServletRequest servletRequest) {
         User user = getCurrentUser();
 
         // 1. Load variants and validate stock
@@ -295,7 +296,8 @@ public class OrderServiceImpl implements OrderService {
                 .build();
     }
 
-    // ======================== PAGED: GET ALL ORDERS (ADMIN/STAFF) ========================
+    // ======================== PAGED: GET ALL ORDERS (ADMIN/STAFF)
+    // ========================
 
     @Override
     public PagedResponse<OrderResponse> getAllOrdersPaged(Pageable pageable) {
@@ -435,7 +437,7 @@ public class OrderServiceImpl implements OrderService {
         } else if (request.getPaymentMode() == PaymentMode.FULL) {
             OrderPaymentSchedule schedule = OrderPaymentSchedule.builder()
                     .order(order)
-                    .installmentNo(1)
+                    .installmentNo(0)
                     .amount(order.getTotalAmount())
                     .dueDate(LocalDate.now().plusDays(7))
                     .status(PaymentStatus.UNPAID)
@@ -465,7 +467,8 @@ public class OrderServiceImpl implements OrderService {
 
             double monthlyPayment;
             if (interestRatePerMonth > 0) {
-                monthlyPayment = (remainingBalance * interestRatePerMonth * Math.pow(1 + interestRatePerMonth, durationMonths))
+                monthlyPayment = (remainingBalance * interestRatePerMonth
+                        * Math.pow(1 + interestRatePerMonth, durationMonths))
                         / (Math.pow(1 + interestRatePerMonth, durationMonths) - 1);
             } else {
                 monthlyPayment = remainingBalance / durationMonths;
@@ -477,12 +480,14 @@ public class OrderServiceImpl implements OrderService {
                         .order(order)
                         .installmentNo(i)
                         .amount(monthlyPayment)
-                        .dueDate(LocalDate.now().plusMonths(i)) // Requirement 6: First installment 1 month after purchase
+                        .dueDate(LocalDate.now().plusMonths(i)) // Requirement 6: First installment 1 month after
+                                                                // purchase
                         .status(PaymentStatus.UNPAID)
                         .build();
                 paymentScheduleRepository.save(schedule);
             }
-            log.info("Created down payment + {} installment schedules for orderId={}", durationMonths, order.getOrderId());
+            log.info("Created down payment + {} installment schedules for orderId={}", durationMonths,
+                    order.getOrderId());
         }
     }
 
