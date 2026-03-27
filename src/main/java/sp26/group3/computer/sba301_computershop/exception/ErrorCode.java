@@ -66,6 +66,7 @@ public enum ErrorCode {
     EMPTY_CART(9002, "Cart is empty, cannot place order", HttpStatus.BAD_REQUEST),
     INSUFFICIENT_STOCK(9003, "Insufficient stock for variant", HttpStatus.BAD_REQUEST),
     ORDER_ALREADY_PAID(9004, "Order is already fully paid", HttpStatus.BAD_REQUEST),
+    INVALID_STATUS_TRANSITION(9005, "Invalid order status transition", HttpStatus.BAD_REQUEST),
 
     // PC Build errors
     PC_BUILD_NOT_FOUND(10001, "PC build not found", HttpStatus.NOT_FOUND),

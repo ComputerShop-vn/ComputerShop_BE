@@ -188,8 +188,10 @@ public class PaymentServiceImpl implements PaymentService {
 
                 // Update order status if FULL payment
                 if (order.getPaymentMode() == PaymentMode.FULL) {
-                    order.setStatus(OrderStatus.PAID);
-                    orderRepository.save(order);
+                    if (order.getStatus().canTransitionTo(OrderStatus.CONFIRMED)) {
+                        order.setStatus(OrderStatus.CONFIRMED);
+                        orderRepository.save(order);
+                    }
                 }
 
                 // Clear cart on successful payment (first time only)
@@ -275,9 +277,11 @@ public class PaymentServiceImpl implements PaymentService {
 
                         // Update order level status if FULL payment or first payment
                         if (order.getPaymentMode() == PaymentMode.FULL) {
-                             order.setStatus(OrderStatus.PAID);
-                             orderRepository.save(order);
-                             log.info("Order {} marked as PAID via IPN", orderId);
+                            if (order.getStatus().canTransitionTo(OrderStatus.CONFIRMED)) {
+                                order.setStatus(OrderStatus.CONFIRMED);
+                                orderRepository.save(order);
+                                log.info("Order {} marked as CONFIRMED via IPN", orderId);
+                            }
                         } else if (order.getPaymentMode() == PaymentMode.INSTALLMENT && installmentNo == 0) {
                              // Mark as partially paid or similar status if needed, but for now just clear cart
                              log.info("Order {} down payment received", orderId);

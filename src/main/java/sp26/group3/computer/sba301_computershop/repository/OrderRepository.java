@@ -23,7 +23,7 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
     @Query(value = "SELECT CAST(order_date AS DATE) as period, " +
                    "SUM(total_amount) as revenue, COUNT(*) as orderCount " +
                    "FROM orders " +
-                   "WHERE status = 'COMPLETED' AND order_date >= :from AND order_date <= :to " +
+                   "WHERE status = 'DELIVERED' AND order_date >= :from AND order_date <= :to " +
                    "GROUP BY CAST(order_date AS DATE) " +
                    "ORDER BY CAST(order_date AS DATE)",
            nativeQuery = true)
@@ -33,7 +33,7 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
     @Query(value = "SELECT FORMAT(order_date, 'yyyy-MM') as period, " +
                    "SUM(total_amount) as revenue, COUNT(*) as orderCount " +
                    "FROM orders " +
-                   "WHERE status = 'COMPLETED' AND order_date >= :from AND order_date <= :to " +
+                   "WHERE status = 'DELIVERED' AND order_date >= :from AND order_date <= :to " +
                    "GROUP BY FORMAT(order_date, 'yyyy-MM') " +
                    "ORDER BY FORMAT(order_date, 'yyyy-MM')",
            nativeQuery = true)
@@ -43,7 +43,7 @@ public interface OrderRepository extends JpaRepository<Order, Integer> {
     @Query(value = "SELECT CAST(YEAR(order_date) AS NVARCHAR(4)) as period, " +
                    "SUM(total_amount) as revenue, COUNT(*) as orderCount " +
                    "FROM orders " +
-                   "WHERE status = 'COMPLETED' AND order_date >= :from AND order_date <= :to " +
+                   "WHERE status = 'DELIVERED' AND order_date >= :from AND order_date <= :to " +
                    "GROUP BY YEAR(order_date) " +
                    "ORDER BY YEAR(order_date)",
            nativeQuery = true)

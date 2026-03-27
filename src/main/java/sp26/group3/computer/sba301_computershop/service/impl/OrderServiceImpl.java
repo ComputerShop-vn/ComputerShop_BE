@@ -328,11 +328,15 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
 
+        if (!order.getStatus().canTransitionTo(request.getStatus())) {
+            throw new AppException(ErrorCode.INVALID_STATUS_TRANSITION);
+        }
+
         order.setStatus(request.getStatus());
         orderRepository.save(order);
         log.info("Updated order status | orderId={} status={}", orderId, request.getStatus());
 
-        if (request.getStatus() == OrderStatus.COMPLETED) {
+        if (request.getStatus() == OrderStatus.DELIVERED) {
             warrantyService.createWarrantiesForOrder(order);
         }
 
@@ -349,12 +353,17 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
 
-        // Only the owner can cancel, and only PENDING orders
-        if (order.getUser().getUserId() != user.getUserId()) {
-            throw new AppException(ErrorCode.ORDER_NOT_FOUND);
+        // Owners or Shop (Staff/Admin) can cancel
+        boolean isOwner = order.getUser().getUserId() == user.getUserId();
+        String roleName = user.getRole().getName();
+        boolean isShop = roleName.equals("ADMIN") || roleName.equals("STAFF");
+
+        if (!isOwner && !isShop) {
+            throw new AppException(ErrorCode.UNAUTHORIZED);
         }
-        if (order.getStatus() != OrderStatus.PENDING) {
-            throw new AppException(ErrorCode.ORDER_NOT_FOUND);
+
+        if (!order.getStatus().canTransitionTo(OrderStatus.CANCELLED)) {
+            throw new AppException(ErrorCode.INVALID_STATUS_TRANSITION);
         }
 
         // Restore stock
