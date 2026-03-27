@@ -43,6 +43,7 @@ public class PCBuildServiceImpl implements PCBuildService {
     UserRepository userRepository;
     CompatibilityService compatibilityService;
     OrderService orderService;
+    PromotionProductRepository promotionProductRepository;
 
     // ======================== UPSERT ITEM ========================
 
@@ -61,6 +62,7 @@ public class PCBuildServiceImpl implements PCBuildService {
             validateRamSlots(build, request.getVariantId(), request.getQuantity());
         }
 
+        double price = effectivePrice(variant);
         boolean isMultiSlot = request.getComponentType().isMultiSlot();
         if (isMultiSlot) {
             pcBuildItemRepository
@@ -69,7 +71,7 @@ public class PCBuildServiceImpl implements PCBuildService {
                     .ifPresentOrElse(
                             existing -> {
                                 existing.setQuantity(request.getQuantity());
-                                existing.setPrice(variant.getPrice());
+                                existing.setPrice(price);
                                 pcBuildItemRepository.save(existing);
                                 log.info("[PCBuild] Updated multi-slot item | buildId={} componentType={} variantId={}",
                                         build.getBuildId(), request.getComponentType(), variant.getVariantId());
@@ -80,7 +82,7 @@ public class PCBuildServiceImpl implements PCBuildService {
                                         .componentType(request.getComponentType())
                                         .variant(variant)
                                         .quantity(request.getQuantity())
-                                        .price(variant.getPrice())
+                                        .price(price)
                                         .build());
                                 log.info("[PCBuild] Added multi-slot item | buildId={} componentType={} variantId={}",
                                         build.getBuildId(), request.getComponentType(), variant.getVariantId());
@@ -93,7 +95,7 @@ public class PCBuildServiceImpl implements PCBuildService {
                     .ifPresentOrElse(
                             existing -> {
                                 existing.setVariant(variant);
-                                existing.setPrice(variant.getPrice());
+                                existing.setPrice(price);
                                 existing.setQuantity(request.getQuantity());
                                 pcBuildItemRepository.save(existing);
                                 log.info("[PCBuild] Overwrite item | buildId={} componentType={} variantId={}",
@@ -105,7 +107,7 @@ public class PCBuildServiceImpl implements PCBuildService {
                                         .componentType(request.getComponentType())
                                         .variant(variant)
                                         .quantity(request.getQuantity())
-                                        .price(variant.getPrice())
+                                        .price(price)
                                         .build());
                                 log.info("[PCBuild] Added item | buildId={} componentType={} variantId={}",
                                         build.getBuildId(), request.getComponentType(), variant.getVariantId());
@@ -201,6 +203,15 @@ public class PCBuildServiceImpl implements PCBuildService {
 
     // ======================== PRIVATE HELPERS ========================
 
+    /** Trả về giá sau khuyến mãi nếu có, ngược lại trả về giá gốc */
+    private double effectivePrice(ProductVariant variant) {
+        return promotionProductRepository
+                .findActivePromotionByProductId(variant.getProduct().getProductId())
+                .stream().findFirst()
+                .map(pp -> variant.getPrice() * (1 - pp.getPromotion().getDiscountPercent() / 100.0))
+                .orElse(variant.getPrice());
+    }
+
     private User getCurrentUser() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         return userRepository.findByEmail(email)
@@ -285,7 +296,7 @@ public class PCBuildServiceImpl implements PCBuildService {
         // Use JOIN FETCH query to bypass Hibernate L1 cache and get fresh items from DB
         PCBuild fresh = pcBuildRepository.findWithItemsById(build.getBuildId()).orElseThrow();
         double total = fresh.getItems().stream()
-                .mapToDouble(i -> i.getPrice() * i.getQuantity())
+                .mapToDouble(i -> effectivePrice(i.getVariant()) * i.getQuantity())
                 .sum();
         fresh.setTotalPrice(total);
         fresh.setUpdatedAt(LocalDateTime.now());
@@ -320,6 +331,17 @@ public class PCBuildServiceImpl implements PCBuildService {
                 .map(ProductImage::getImageUrl)
                 .orElse(null);
 
+        // Tính discount giống CartService
+        Double discountedPrice = null;
+        double discountPercent = 0.0;
+        var promos = promotionProductRepository.findActivePromotionByProductId(product.getProductId());
+        if (!promos.isEmpty()) {
+            discountPercent = promos.get(0).getPromotion().getDiscountPercent();
+            discountedPrice = variant.getPrice() * (1 - discountPercent / 100.0);
+        }
+
+        double effectivePrice = discountedPrice != null ? discountedPrice : variant.getPrice();
+
         return PCBuildItemResponse.builder()
                 .buildItemId(item.getBuildItemId())
                 .componentType(item.getComponentType().name())
@@ -327,9 +349,11 @@ public class PCBuildServiceImpl implements PCBuildService {
                 .variantId(variant.getVariantId())
                 .variantName(variant.getVariantName())
                 .sku(variant.getSku())
-                .price(item.getPrice())
+                .price(variant.getPrice())
+                .discountedPrice(discountedPrice)
+                .discountPercent(discountPercent)
                 .quantity(item.getQuantity())
-                .subtotal(item.getPrice() * item.getQuantity())
+                .subtotal(effectivePrice * item.getQuantity())
                 .productId(product.getProductId())
                 .productName(product.getName())
                 .thumbnailUrl(thumbnailUrl)
