@@ -186,21 +186,19 @@ public class PaymentServiceImpl implements PaymentService {
                 Order order = orderRepository.findById(orderId)
                         .orElseThrow(() -> new RuntimeException("Order not found"));
 
-                // // Update order status
-                // order.setStatus(OrderStatus.PAID);
-                // orderRepository.save(order);
+                // Update order status if FULL payment
+                if (order.getPaymentMode() == PaymentMode.FULL) {
+                    order.setStatus(OrderStatus.PAID);
+                    orderRepository.save(order);
+                }
 
-                // // Clear cart
-                // User user = order.getUser();
-
-                // Cart cart = cartRepository.findByUserUserId(user.getUserId())
-                // .orElse(null);
-
-                // if (cart != null) {
-                // cartItemRepository.deleteAllByCartCartId(cart.getCartId());
-                // log.info("Cart cleared after successful payment | cartId={}",
-                // cart.getCartId());
-                // }
+                // Clear cart on successful payment (first time only)
+                User user = order.getUser();
+                Cart cart = cartRepository.findByUserUserId(user.getUserId()).orElse(null);
+                if (cart != null) {
+                    cartItemRepository.deleteAllByCartCartId(cart.getCartId());
+                    log.info("Cart cleared via callback for user {}", user.getUserId());
+                }
 
                 return returnUrl;
 
@@ -275,21 +273,25 @@ public class PaymentServiceImpl implements PaymentService {
                             orderPaymentScheduleRepository.save(schedule);
                         }
 
-                        // Update status for installment payment ONLY when all durations are paid
-                        // if (order.getPaymentMode() == PaymentMode.INSTALLMENT) {
-                        // if (allPaid) {
-                        // //order.setStatus(OrderStatus.PAID);
-                        // orderRepository.save(order);
-                        // log.info("Order {} fully paid - marked as PAID via IPN", orderId);
-                        // } else {
-                        // log.info("Order {} installment payment received - waiting for remaining
-                        // schedules",
-                        // orderId);
-                        // }
-                        // } else {
-                        // log.info("Order {} full payment - schedule updated, status unchanged",
-                        // orderId);
-                        // }
+                        // Update order level status if FULL payment or first payment
+                        if (order.getPaymentMode() == PaymentMode.FULL) {
+                             order.setStatus(OrderStatus.PAID);
+                             orderRepository.save(order);
+                             log.info("Order {} marked as PAID via IPN", orderId);
+                        } else if (order.getPaymentMode() == PaymentMode.INSTALLMENT && installmentNo == 0) {
+                             // Mark as partially paid or similar status if needed, but for now just clear cart
+                             log.info("Order {} down payment received", orderId);
+                        }
+
+                        // Clear cart for both FULL and Down payment (installmentNo=0 or full)
+                        if (installmentNo == 0 || order.getPaymentMode() == PaymentMode.FULL) {
+                            User user = order.getUser();
+                            Cart cart = cartRepository.findByUserUserId(user.getUserId()).orElse(null);
+                            if (cart != null) {
+                                cartItemRepository.deleteAllByCartCartId(cart.getCartId());
+                                log.info("Cart cleared via IPN for user {}", user.getUserId());
+                            }
+                        }
                     } else {
                         log.warn("Giao dịch VNPay thất bại cho Order ID: {}. Mã lỗi: {}", orderId, responseCode);
 
