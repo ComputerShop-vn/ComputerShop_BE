@@ -28,6 +28,7 @@ public class ProductDetailResponse {
     private String brandLogoUrl;
 
     private List<String> imageUrls;
+    private String thumbnailUrl;
 
     private Double averageRating;
     private Integer totalReviews;

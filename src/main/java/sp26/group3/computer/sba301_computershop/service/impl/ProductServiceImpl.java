@@ -240,6 +240,11 @@ public class ProductServiceImpl implements ProductService {
                 .collect(Collectors.toList());
         response.setImageUrls(imageUrls);
 
+        productImages.stream()
+                .filter(ProductImage::isThumbnail)
+                .findFirst()
+                .ifPresent(img -> response.setThumbnailUrl(img.getImageUrl()));
+
         Double avgRating = reviewRepository.getAverageRatingByProductId(productId);
         Long totalReviews = reviewRepository.getTotalReviewsByProductId(productId);
         response.setAverageRating(avgRating != null ? avgRating : 0.0);
