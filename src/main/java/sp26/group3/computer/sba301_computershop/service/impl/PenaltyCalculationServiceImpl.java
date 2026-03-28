@@ -12,13 +12,15 @@ public class PenaltyCalculationServiceImpl implements PenaltyCalculationService 
     public double calculateDailyPenalty(double amount, double annualPenaltyRate) {
         BigDecimal installmentAmount = BigDecimal.valueOf(amount);
         BigDecimal rate = BigDecimal.valueOf(annualPenaltyRate);
+        BigDecimal divisor = BigDecimal.valueOf(100);
         BigDecimal daysInYear = BigDecimal.valueOf(365);
+        BigDecimal divisorTotal = divisor.multiply(daysInYear); // 36500
 
         // Calculate daily penalty for 1 day
-        // Formula: Amount * (AnnualRate / 365) * 1
+        // Formula: Amount * (AnnualRate / 100 / 365) * 1
         BigDecimal dailyPenalty = installmentAmount
                 .multiply(rate)
-                .divide(daysInYear, 10, RoundingMode.HALF_UP);
+                .divide(divisorTotal, 10, RoundingMode.HALF_UP);
 
         // Round to 2 decimal places (common for currency)
         return dailyPenalty.setScale(2, RoundingMode.HALF_UP).doubleValue();
