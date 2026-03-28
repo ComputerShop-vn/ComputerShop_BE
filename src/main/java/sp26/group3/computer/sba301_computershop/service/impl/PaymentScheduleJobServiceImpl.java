@@ -100,11 +100,13 @@ public class PaymentScheduleJobServiceImpl implements PaymentScheduleJobService 
                 if (schedule.getOrder().getInstallmentPackage() != null) {
                     double annualRate = schedule.getOrder().getInstallmentPackage().getAnnualPenaltyRate();
                     double dailyPenalty = penaltyCalculationService.calculateDailyPenalty(schedule.getAmount(), annualRate);
-                    
+                    log.info("Calculated daily penalty for Order {}, Installment {}: +{}", 
+                            schedule.getOrder().getOrderId(), schedule.getInstallmentNo(), dailyPenalty);
+
                     double newPenaltyTotal = schedule.getPenaltyAmount() + dailyPenalty;
                     schedule.setPenaltyAmount(newPenaltyTotal);
                     
-                    scheduleRepository.save(schedule);
+                    scheduleRepository.saveAndFlush(schedule);
                 }
             } catch (Exception e) {
                 log.error("Failed to calculate penalty for schedule ID {}: {}", schedule.getPaymentScheduleId(), e.getMessage());

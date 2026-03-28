@@ -69,7 +69,7 @@ public class PaymentServiceImpl implements PaymentService {
                         .findFirst()
                         .orElseThrow(() -> new AppException(ErrorCode.ORDER_ALREADY_PAID));
             }
-            amount = BigDecimal.valueOf(targetPayment.getAmount());
+            amount = BigDecimal.valueOf(targetPayment.getAmount() + targetPayment.getPenaltyAmount());
             finalInstallmentNo = targetPayment.getInstallmentNo();
         } else {
             amount = BigDecimal.valueOf(order.getTotalAmount());
