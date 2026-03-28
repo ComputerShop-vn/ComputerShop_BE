@@ -51,4 +51,7 @@ public class Order {
 
     @OneToMany(mappedBy = "order")
     private List<OrderPaymentSchedule> orderPaymentSchedule;
+
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
+    private List<OrderItem> orderItems;
 }

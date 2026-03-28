@@ -18,6 +18,7 @@ public class PaymentScheduleResponse {
     int paymentScheduleId;
     int installmentNo;
     double amount;
+    double penaltyAmount;
     LocalDate dueDate;
     LocalDate paidDate;
     String vnpTransactionNo;

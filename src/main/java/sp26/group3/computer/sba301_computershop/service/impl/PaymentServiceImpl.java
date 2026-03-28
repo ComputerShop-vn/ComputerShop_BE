@@ -14,6 +14,8 @@ import sp26.group3.computer.sba301_computershop.entity.Cart;
 import sp26.group3.computer.sba301_computershop.entity.Order;
 import sp26.group3.computer.sba301_computershop.entity.OrderPaymentSchedule;
 import sp26.group3.computer.sba301_computershop.entity.User;
+import sp26.group3.computer.sba301_computershop.entity.OrderItem;
+import sp26.group3.computer.sba301_computershop.entity.ProductVariant;
 import sp26.group3.computer.sba301_computershop.enums.PaymentStatus;
 import sp26.group3.computer.sba301_computershop.enums.PaymentMethod;
 import sp26.group3.computer.sba301_computershop.enums.PaymentMode;
@@ -242,8 +244,12 @@ public class PaymentServiceImpl implements PaymentService {
                             User user = order.getUser();
                             Cart cart = cartRepository.findByUserUserId(user.getUserId()).orElse(null);
                             if (cart != null) {
-                                cartItemRepository.deleteAllByCartCartId(cart.getCartId());
-                                log.info("Cart cleared via IPN for user {}", user.getUserId());
+                                for (OrderItem item : order.getOrderItems()) {
+                                    ProductVariant variant = item.getProductItem().getVariant();
+                                    cartItemRepository.findByCartCartIdAndVariantVariantId(cart.getCartId(), variant.getVariantId())
+                                            .ifPresent(cartItemRepository::delete);
+                                }
+                                log.info("Ordered items cleared from cart via IPN for user {}", user.getUserId());
                             }
                         }
                     } else {

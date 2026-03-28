@@ -4,6 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import java.util.List;
 import sp26.group3.computer.sba301_computershop.enums.PaymentMethod;
 import sp26.group3.computer.sba301_computershop.enums.PaymentMode;
 
@@ -31,4 +32,7 @@ public class PlaceOrderRequest {
 
     // Only required for INSTALLMENT
     Integer packageId;
+
+    // Optional: Choose specific products from cart. If NULL or EMPTY, take all cart items.
+    List<Integer> variantIds;
 }

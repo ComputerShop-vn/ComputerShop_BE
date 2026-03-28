@@ -67,6 +67,16 @@ public class OrderServiceImpl implements OrderService {
             throw new AppException(ErrorCode.EMPTY_CART);
         }
 
+        // Filter specifically chosen items if present in request
+        if (request.getVariantIds() != null && !request.getVariantIds().isEmpty()) {
+            cartItems = cartItems.stream()
+                    .filter(item -> request.getVariantIds().contains(item.getVariant().getVariantId()))
+                    .collect(java.util.stream.Collectors.toList());
+            if (cartItems.isEmpty()) {
+                throw new AppException(ErrorCode.CART_ITEM_NOT_FOUND);
+            }
+        }
+
         // 1. Validate stock for all items
         for (CartItem cartItem : cartItems) {
             ProductVariant variant = cartItem.getVariant();
@@ -134,10 +144,12 @@ public class OrderServiceImpl implements OrderService {
         // 5. Create payment schedule
         createPaymentSchedules(order, request);
 
-        // 6. Clear cart (Only clear now for COD. For others, clear on payment success)
+        // 6. Clear selected cart items (Only clear now for COD. For others, clear on payment success)
         if (request.getPaymentMethod() == PaymentMethod.COD) {
-            cartItemRepository.deleteAllByCartCartId(cart.getCartId());
-            log.info("Cleared cart after placing COD order | cartId={}", cart.getCartId());
+            for (CartItem item : cartItems) {
+                cartItemRepository.delete(item);
+            }
+            log.info("Cleared selected cart items after placing COD order | cartId={}", cart.getCartId());
         }
 
         // 7. Handle Payment URL for VNPAY
@@ -566,6 +578,7 @@ public class OrderServiceImpl implements OrderService {
                 .paymentScheduleId(schedule.getPaymentScheduleId())
                 .installmentNo(schedule.getInstallmentNo())
                 .amount(schedule.getAmount())
+                .penaltyAmount(schedule.getPenaltyAmount())
                 .dueDate(schedule.getDueDate())
                 .paidDate(schedule.getPaidDate())
                 .vnpTransactionNo(schedule.getVnpTransactionNo())
