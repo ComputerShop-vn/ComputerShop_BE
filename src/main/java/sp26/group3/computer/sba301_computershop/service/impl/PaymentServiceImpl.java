@@ -224,12 +224,17 @@ public class PaymentServiceImpl implements PaymentService {
                                 .findByOrderOrderIdAndInstallmentNo(orderId, installmentNo)
                                 .orElse(null);
 
-                        if (schedule != null && schedule.getStatus() == PaymentStatus.UNPAID) {
+                        if (schedule != null &&
+                                (schedule.getStatus() == PaymentStatus.UNPAID ||
+                                        schedule.getStatus() == PaymentStatus.OVERDUE ||
+                                        schedule.getStatus() == PaymentStatus.FAILED)) {
+
                             schedule.setStatus(PaymentStatus.PAID);
                             schedule.setPaidDate(java.time.LocalDate.now());
                             schedule.setVnpTransactionNo(vnpTransactionNo);
                             orderPaymentScheduleRepository.saveAndFlush(schedule);
-                            log.info("Schedule updated and FLUSHED to PAID for OrderId={} and InstallmentNo={}", orderId, installmentNo);
+                            log.info("Schedule updated and FLUSHED to PAID for OrderId={} and InstallmentNo={}",
+                                    orderId, installmentNo);
                         }
 
                         // Clear cart for both FULL and Down payment (installmentNo=0 or full)
