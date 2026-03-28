@@ -228,7 +228,8 @@ public class PaymentServiceImpl implements PaymentService {
                             schedule.setStatus(PaymentStatus.PAID);
                             schedule.setPaidDate(java.time.LocalDate.now());
                             schedule.setVnpTransactionNo(vnpTransactionNo);
-                            orderPaymentScheduleRepository.save(schedule);
+                            orderPaymentScheduleRepository.saveAndFlush(schedule);
+                            log.info("Schedule updated and FLUSHED to PAID for OrderId={} and InstallmentNo={}", orderId, installmentNo);
                         }
 
                         // Clear cart for both FULL and Down payment (installmentNo=0 or full)
