@@ -172,51 +172,7 @@ public class PaymentServiceImpl implements PaymentService {
         String orderIdStr = (parts.length > 1) ? parts[1] : "";
         String instNoStr = (parts.length > 2) ? parts[2] : "0";
         String returnUrl = "http://localhost:3000/payment-result?orderId=" + orderIdStr + "&installmentNo=" + instNoStr;
-
-        if (signValue.equals(vnpSecureHash)) {
-
-            String responseCode = request.getParameter("vnp_ResponseCode");
-
-            if ("00".equals(responseCode)) {
-
-                log.info("Thanh toán thành công OrderId={}", orderIdStr);
-
-                Integer orderId = Integer.parseInt(orderIdStr);
-
-                Order order = orderRepository.findById(orderId)
-                        .orElseThrow(() -> new RuntimeException("Order not found"));
-
-                // Update order status if FULL payment
-                if (order.getPaymentMode() == PaymentMode.FULL) {
-                    if (order.getStatus().canTransitionTo(OrderStatus.CONFIRMED)) {
-                        order.setStatus(OrderStatus.CONFIRMED);
-                        orderRepository.save(order);
-                    }
-                }
-
-                // Clear cart on successful payment (first time only)
-                User user = order.getUser();
-                Cart cart = cartRepository.findByUserUserId(user.getUserId()).orElse(null);
-                if (cart != null) {
-                    cartItemRepository.deleteAllByCartCartId(cart.getCartId());
-                    log.info("Cart cleared via callback for user {}", user.getUserId());
-                }
-
-                return returnUrl;
-
-            } else {
-
-                log.warn("Thanh toán thất bại ResponseCode={}", responseCode);
-
-                return returnUrl;
-            }
-
-        } else {
-
-            log.error("VNPay checksum invalid");
-
-            return returnUrl;
-        }
+        return returnUrl;
     }
 
     @Override
@@ -273,18 +229,6 @@ public class PaymentServiceImpl implements PaymentService {
                             schedule.setPaidDate(java.time.LocalDate.now());
                             schedule.setVnpTransactionNo(vnpTransactionNo);
                             orderPaymentScheduleRepository.save(schedule);
-                        }
-
-                        // Update order level status if FULL payment or first payment
-                        if (order.getPaymentMode() == PaymentMode.FULL) {
-                            if (order.getStatus().canTransitionTo(OrderStatus.CONFIRMED)) {
-                                order.setStatus(OrderStatus.CONFIRMED);
-                                orderRepository.save(order);
-                                log.info("Order {} marked as CONFIRMED via IPN", orderId);
-                            }
-                        } else if (order.getPaymentMode() == PaymentMode.INSTALLMENT && installmentNo == 0) {
-                             // Mark as partially paid or similar status if needed, but for now just clear cart
-                             log.info("Order {} down payment received", orderId);
                         }
 
                         // Clear cart for both FULL and Down payment (installmentNo=0 or full)
