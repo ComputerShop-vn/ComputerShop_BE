@@ -439,7 +439,8 @@ VALUES
 (22, N'Bàn phím cơ',            21),
 (23, N'Chuột Gaming',           21),
 (24, N'Tai Nghe',               21),
-(25, N'Ghế Gaming',             21);
+(25, N'Ghế Gaming',             21),
+(29, N'HDD - Ổ cứng',           6);
 SET IDENTITY_INSERT categories OFF;
 
 -- ── Brands ──────────────────────────────────────────────────────────────────
@@ -469,7 +470,11 @@ VALUES
 (21, 'HyperX'),
 (22, 'Secretlab'),
 (23, 'Acer'),
-(24, 'Lenovo');
+(24, 'Lenovo'),
+(25, 'Western Digital'),
+(26, 'Toshiba'),
+(27, 'Razer'),
+(28, 'Akko');
 SET IDENTITY_INSERT brands OFF;
 
 -- ── Attributes ──────────────────────────────────────────────────────────────
@@ -510,7 +515,11 @@ VALUES
 (24, 'Refresh Rate'),     -- Hz
 (25, 'Resolution'),
 (26, 'Response Time'),    -- ms
-(27, 'Panel Type');       -- IPS, VA, OLED...
+(27, 'Panel Type'),       -- IPS, VA, OLED...
+(28, 'CPU Model'),
+(29, 'GPU Model'),
+(30, 'Mainboard Chipset'),
+(31, 'Storage Capacity');
 SET IDENTITY_INSERT attributes OFF;
 
 -- ── Products ────────────────────────────────────────────────────────────────
@@ -668,7 +677,51 @@ VALUES
      8990000,  24, 20, 12),
 (43, N'HyperX Cloud Alpha Wireless',
      N'Tai nghe gaming không dây, driver 50mm, pin 300 giờ.',
-     3490000,  24, 21, 12);
+     3490000, 24, 21, 12),
+
+-- ── SSD (Category 11) - Thêm 5 sản phẩm ──
+(44, N'Kingston NV2 1TB NVMe PCIe 4.0', N'SSD PCIe 4.0 giá tốt, hiệu năng ổn định.', 1500000, 11, 7, 36),
+(45, N'Samsung 980 Pro 1TB NVMe PCIe 4.0', N'SSD PCIe 4.0 cao cấp, tốc độ đọc 7000MB/s.', 2800000, 11, 8, 60),
+(46, N'MSI Spatium M480 1TB NVMe PCIe 4.0', N'SSD hiệu năng cao MSI Spatium.', 2500000, 11, 5, 60),
+(47, N'Gigabyte Aorus Gen4 1TB NVMe', N'SSD Aorus với tản nhiệt đồng cao cấp.', 2600000, 11, 16, 60),
+(48, N'WD Black SN850X 1TB NVMe', N'SSD gaming tốt nhất từ WD, đọc 7300MB/s.', 3200000, 11, 25, 60),
+
+-- ── HDD (Category 29) - Thêm 5 sản phẩm ──
+(49, N'WD Blue 2TB 7200RPM', N'Ổ cứng HDD truyền thống, tin cậy cho lưu trữ dữ liệu.', 1400000, 29, 25, 24),
+(50, N'Seagate Barracuda 2TB 7200RPM', N'HDD phổ thông Seagate, tốc độ quay 7200 vòng/phút.', 1450000, 29, 18, 24),
+(51, N'Toshiba P300 1TB 7200RPM', N'HDD bền bỉ, hiệu năng cao cho máy tính bàn.', 950000, 29, 26, 24),
+(52, N'WD Red Plus 4TB NAS', N'HDD chuyên dùng cho hệ thống NAS và lưu trữ đám mây.', 3600000, 29, 25, 36),
+(53, N'Seagate IronWolf 4TB NAS', N'HDD IronWolf tối ưu cho máy chủ lưu trữ NAS.', 3800000, 29, 18, 36),
+
+-- ── Build PC (Category 13-16) ──
+(54, N'PC Gaming Challenger Alpha', N'Bộ PC Gaming thế hệ mới sử dụng i5-13600K và RTX 4060.', 25000000, 13, 1, 36),
+(55, N'PC Gaming Ultra Extreme', N'Bộ máy siêu cấp với i9-14900K và RTX 4090.', 95000000, 13, 1, 36),
+(56, N'PC Văn Phòng Slim Case', N'Bộ máy nhỏ gọn cho văn phòng, chạy cực êm.', 8000000, 14, 1, 24),
+(57, N'PC Văn Phòng Pro S2', N'Máy tính chuyên dụng cho kế toán và hành chính.', 12000000, 14, 4, 36),
+(58, N'Workstation Renderer XP', N'Cấu hình chuyên dụng cho đồ họa 3D và Render.', 45000000, 15, 2, 36),
+(59, N'Workstation AI Developer', N'Thiết kế tối ưu cho Machine Learning và AI.', 75000000, 15, 2, 36),
+(60, N'PC Custom Black Phantom', N'Dàn máy tản nhiệt nước custom ống cứng, thẩm mỹ cực cao.', 120000000, 16, 5, 24),
+(61, N'PC Custom Liquid Aurora', N'Thiết kế ánh sáng Aurora lộng lẫy kết hợp tản nhiệt nước.', 110000000, 16, 4, 24),
+
+-- ── Bàn phím cơ (Category 22) - Thêm 3 sản phẩm ──
+(62, N'Akko 3068B Plus Blue on White', N'Bàn phím cơ không dây AKKO B-Series, switch Akko Jelly Blue.', 1800000, 22, 28, 12),
+(63, N'Razer BlackWidow V4 Pro', N'Bàn phím cơ flagship Razer, tích hợp núm xoay đa năng và RGB.', 5500000, 22, 27, 24),
+(64, N'ASUS ROG Azoth', N'Bàn phím cơ custom 75% không dây, màn hình OLED độc đáo.', 6200000, 22, 4, 24),
+
+-- ── Chuột Gaming (Category 23) - Thêm 3 sản phẩm ──
+(65, N'Razer DeathAdder V3 Pro', N'Chuột gaming không dây siêu nhẹ, thiết kế công thái học đỉnh cao.', 3800000, 23, 27, 24),
+(66, N'ASUS ROG Harpe Ace AimLab Edition', N'Chuột siêu nhẹ hợp tác cùng AimLab, phản hồi cực nhanh.', 3200000, 23, 4, 24),
+(67, N'Corsair Darkstar Wireless', N'Chuột MMO/MOBA chuyên dụng với 15 nút lập trình.', 3500000, 23, 6, 24),
+
+-- ── Tai Nghe (Category 24) - Thêm 3 sản phẩm ──
+(68, N'Razer BlackShark V2 Pro 2023', N'Tai nghe esports không dây, micro siêu rõ nét, pin 70 giờ.', 4500000, 24, 27, 24),
+(69, N'Corsair Virtuoso RGB Wireless XT', N'Âm thanh cao cấp Hi-Res, kết nối Bluetooth/Slipstream đồng thời.', 6800000, 24, 6, 24),
+(70, N'Logitech G733 Lightspeed', N'Tai nghe không dây siêu nhẹ, phong cách colorway rực rỡ.', 3200000, 24, 9, 24),
+
+-- ── Ghế Gaming (Category 25) - Thêm 3 sản phẩm ──
+(71, N'Secretlab TITAN Evo Black', N'Ghế gaming cao cấp số 1 thế giới, da TPU giả da siêu bền.', 12500000, 25, 22, 60),
+(72, N'Corsair T3 Rush Comfort', N'Chất liệu vải thông thoáng, thiết kế phong cách ghế đua xe.', 6500000, 25, 6, 24),
+(73, N'MSI MAG CH120 I', N'Khung thép chắc chắn, ngả lưng 180 độ, kê tay 4D.', 4800000, 25, 5, 24);
 SET IDENTITY_INSERT products OFF;
 
 -- ── Product Variants ────────────────────────────────────────────────────────
@@ -796,7 +849,43 @@ VALUES
 (38, 25, 'HS-NOVAPRO-WIRELESS',     8990000, 25, N'Arctis Nova Pro Wireless'),
 
 -- HyperX Cloud Alpha Wireless (product 43)
-(66, 43, 'HS-CLOUDALPHA-WL',        3490000, 35, N'HyperX Cloud Alpha Wireless');
+(66, 43, 'HS-CLOUDALPHA-WL',        3490000, 35, N'HyperX Cloud Alpha Wireless'),
+
+-- Variants for SSD/HDD
+(101, 44, 'SSD-KS-NV2-1TB',     1500000, 100, N'Kingston NV2 1TB'),
+(102, 45, 'SSD-SAM-980P-1TB',   2800000, 80, N'Samsung 980 Pro 1TB'),
+(103, 46, 'SSD-MSI-M480-1TB',   2500000, 50, N'MSI Spatium M480 1TB'),
+(104, 47, 'SSD-GB-AORUS-1TB',   2600000, 40, N'Aorus Gen4 1TB'),
+(105, 48, 'SSD-WD-SN850X-1TB',  3200000, 60, N'WD Black SN850X 1TB'),
+(106, 49, 'HDD-WD-BLUE-2TB',    1400000, 150, N'WD Blue 2TB'),
+(107, 50, 'HDD-SG-BAR-2TB',     1450000, 120, N'Seagate Barracuda 2TB'),
+(108, 51, 'HDD-TSB-P300-1TB',    950000, 100, N'Toshiba P300 1TB'),
+(109, 52, 'HDD-WD-RED-4TB',     3600000, 40, N'WD Red Plus 4TB'),
+(110, 53, 'HDD-SG-IRON-4TB',    3800000, 30, N'Seagate IronWolf 4TB'),
+
+-- Variants for BuildPC
+(111, 54, 'PC-GAMING-001',      25000000, 10, N'PC Gaming Challenger Alpha'),
+(112, 55, 'PC-GAMING-002',      95000000, 5,  N'PC Gaming Ultra Extreme'),
+(113, 56, 'PC-OFFICE-001',       8000000, 20, N'PC Văn Phòng Slim'),
+(114, 57, 'PC-OFFICE-002',      12000000, 15, N'PC Văn Phòng Pro'),
+(115, 58, 'PC-WORK-001',        45000000, 8,  N'Workstation Renderer'),
+(116, 59, 'PC-WORK-002',        75000000, 6,  N'Workstation AI Dev'),
+(117, 60, 'PC-CUSTOM-001',     120000000, 3,  N'PC Custom Black Phantom'),
+(118, 61, 'PC-CUSTOM-002',     110000000, 4,  N'PC Custom Liquid Aurora'),
+
+-- Variants for Accessories
+(120, 62, 'KB-AKKO-3068B',      1800000, 30, N'Akko 3068B Plus Jelly Blue'),
+(121, 63, 'KB-RAZER-BWV4-ORANGE', 5500000, 20, N'BlackWidow V4 Pro Orange Switch'),
+(122, 64, 'KB-ASUS-AZOTH-BROWN',  6200000, 15, N'ROG Azoth NX Brown Switch'),
+(123, 65, 'MOU-RAZER-DA-V3-PRO',  3800000, 40, N'DeathAdder V3 Pro Black'),
+(124, 66, 'MOU-ASUS-HARPE-ACE',   3200000, 25, N'ROG Harpe Ace Black'),
+(125, 67, 'MOU-COR-DARKSTAR',     3500000, 30, N'Darkstar Wireless RGB'),
+(126, 68, 'HEA-RAZER-BS-V2PRO',   4500000, 50, N'BlackShark V2 Pro 2023'),
+(127, 69, 'HEA-COR-VIRT-XT',      6800000, 10, N'Virtuoso RGB Wireless XT'),
+(128, 70, 'HEA-LOG-G733-WH',      3200000, 60, N'Logitech G733 White'),
+(129, 71, 'GHE-SEC-TITAN-EVO',   12500000, 12, N'Secretlab TITAN Evo Stealth'),
+(130, 72, 'GHE-COR-T3-RUSH',      6500000, 18, N'Corsair T3 Rush Grey/White'),
+(131, 73, 'GHE-MSI-CH120I',       4800000, 25, N'MSI MAG CH120 I Black/Red');
 SET IDENTITY_INSERT product_variants OFF;
 
 -- ── Attributes legend:
@@ -982,7 +1071,36 @@ VALUES
 -- ── Dell XPS 15 OLED (variant 61) ──
 (281, 61, 7,  '32GB'), (282, 61, 8,  'DDR5'),
 (283, 61, 23, '15.6"'),(284, 61, 24, '60Hz'),
-(285, 61, 25, '3456x2160'), (286, 61, 27, 'OLED');
+(285, 61, 25, '3456x2160'), (286, 61, 27, 'OLED'),
+
+-- Attributes for storage variants (101-110)
+(501, 101, 12, 'PCIe 4.0 NVMe'), (502, 101, 13, '3500MB/s'), (503, 101, 14, '2100MB/s'),
+(504, 102, 12, 'PCIe 4.0 NVMe'), (505, 102, 13, '7000MB/s'), (506, 102, 14, '5000MB/s'),
+(507, 103, 12, 'PCIe 4.0 NVMe'), (508, 103, 13, '7000MB/s'), (509, 103, 14, '5500MB/s'),
+(510, 104, 12, 'PCIe 4.0 NVMe'), (511, 104, 13, '5000MB/s'), (512, 104, 14, '4400MB/s'),
+(513, 105, 12, 'PCIe 4.0 NVMe'), (514, 105, 13, '7300MB/s'), (515, 105, 14, '6600MB/s'),
+(516, 106, 12, 'SATA 3'), (517, 106, 13, '180MB/s'),
+(518, 107, 12, 'SATA 3'), (519, 107, 13, '190MB/s'),
+(520, 108, 12, 'SATA 3'), (521, 108, 13, '150MB/s'),
+(522, 109, 12, 'SATA 3'), (523, 109, 13, '200MB/s'),
+(524, 110, 12, 'SATA 3'), (525, 110, 13, '180MB/s'),
+
+-- Attributes for keyboard variants (120-122)
+(600, 120, 11, 'Compact 65%'), (601, 121, 11, 'Full-size'), (602, 122, 11, '75% Custom'),
+-- Attributes for mouse variants (123-125)
+(603, 123, 10, '30000 DPI'), (604, 124, 10, '36000 DPI'), (605, 125, 10, '26000 DPI'),
+-- Attributes for headset variants (126-128)
+(606, 126, 24, 'Wireless 2.4GHz'), (607, 127, 24, 'Bluetooth/Wireless/3.5mm'), (608, 128, 24, 'Lightspeed Wireless'),
+
+-- Attributes for Build PC variants (111-118)
+(612, 111, 28, 'Intel Core i5-13600K'), (613, 111, 29, 'NVIDIA RTX 4060 8GB'), (614, 111, 30, 'B760M'), (615, 111, 7, '16GB DDR5'), (616, 111, 31, '500GB NVMe Gen4'), (617, 111, 15, '650W'),
+(618, 112, 28, 'Intel Core i9-14900K'), (619, 112, 29, 'NVIDIA RTX 4090 24GB'), (620, 112, 30, 'Z790-E'), (621, 112, 7, '64GB DDR5'), (622, 112, 31, '2TB NVMe Gen4'), (623, 112, 15, '1000W'),
+(624, 113, 28, 'Intel Core i3-12100'), (625, 113, 29, 'Intel UHD Graphics'), (626, 113, 30, 'H610M'), (627, 113, 7, '8GB DDR4'), (628, 113, 31, '256GB SSD'), (629, 113, 15, '450W'),
+(630, 114, 28, 'Intel Core i5-13400'), (631, 114, 29, 'NVIDIA GTX 1650'), (632, 114, 30, 'B660M'), (633, 114, 7, '16GB DDR4'), (634, 114, 31, '512GB NVMe'), (635, 114, 15, '550W'),
+(636, 115, 28, 'AMD Ryzen 9 7950X'), (637, 115, 29, 'NVIDIA RTX 4080 16GB'), (638, 115, 30, 'X670E'), (639, 115, 7, '64GB DDR5'), (640, 115, 31, '1TB NVMe Gen4'), (641, 115, 15, '850W'),
+(642, 116, 28, 'Intel Core i9-14900K'), (643, 116, 29, 'Dual NVIDIA RTX 4090'), (644, 116, 30, 'W790 Workstation'), (645, 116, 7, '128GB DDR5 ECC'), (646, 116, 31, '4TB NVMe Raid'), (647, 116, 15, '1600W'),
+(648, 117, 28, 'Intel Core i9-14900K'), (649, 117, 29, 'NVIDIA RTX 4090 24GB'), (650, 117, 30, 'Z790 Dark Hero'), (651, 117, 7, '64GB DDR5'), (652, 117, 31, '2TB NVMe Gen5'), (653, 117, 15, '1200W'),
+(654, 118, 28, 'Intel Core i7-14700K'), (655, 118, 29, 'NVIDIA RTX 4080 Super'), (656, 118, 30, 'Z790 Formula'), (657, 118, 7, '32GB DDR5 RGB'), (658, 118, 31, '1TB NVMe Gen4'), (659, 118, 15, '850W');
 SET IDENTITY_INSERT product_variant_attributes OFF;
 
 -- ── Compatibility Rules ──────────────────────────────────────────────────────
@@ -1027,7 +1145,7 @@ VALUES
 (22, 22, 'https://res.cloudinary.com/dfp44sbsj/image/upload/v1774617052/computer-shop/products/92ebafd2-3ddd-43dc-828d-5256a22b10ba.jpg',       1),
 (23, 23, 'https://res.cloudinary.com/dfp44sbsj/image/upload/v1774617067/computer-shop/products/5b8f9d78-16df-403a-9d02-606b2e46e348.jpg',      1),
 (24, 24, 'https://res.cloudinary.com/dfp44sbsj/image/upload/v1774617084/computer-shop/products/c3327cb7-248c-4f8a-a1d8-e1ab2eef5587.jpg',      1),
-(25, 25, 'https://res.cloudinary.com/dfp44sbsj/image/upload/v1774617100/computer-shop/products/3fad2064-d620-4b7a-8e8f-20f63217e450.jpg',  1),
+(25, 25, 'https://res.cloudinary.com/dfp44sbsj/image/upload/v1774668472/computer-shop/products/d558f9df-07b0-42fe-a6b1-8d63183911b8.jpg',  1),
 (26, 29, 'https://res.cloudinary.com/dfp44sbsj/image/upload/v1774629516/computer-shop/products/d77f159a-190e-4bc1-a82b-23b9ecdbed9e.png',        1),
 (27, 30, 'https://res.cloudinary.com/dfp44sbsj/image/upload/v1774629597/computer-shop/products/18a25b91-a1d8-4725-adc9-dc1fba7259c1.png',   1),
 (28, 31, 'https://res.cloudinary.com/dfp44sbsj/image/upload/v1774617173/computer-shop/products/c5f6a6bf-3102-4521-9211-ce3a70ec8b17.jpg',         1),
@@ -1042,7 +1160,43 @@ VALUES
 (37, 40, 'https://res.cloudinary.com/dfp44sbsj/image/upload/v1774617356/computer-shop/products/346e453b-9578-41e5-be56-a24b51c40340.jpg',     1),
 (38, 41, 'https://res.cloudinary.com/dfp44sbsj/image/upload/v1774617375/computer-shop/products/4433e80d-e6ac-4c8d-890b-efe94c5395b3.jpg',       1),
 (39, 42, 'https://res.cloudinary.com/dfp44sbsj/image/upload/v1774617390/computer-shop/products/80db18ea-f2b2-473a-a63e-7b746e9c093d.jpg',      1),
-(40, 43, 'https://res.cloudinary.com/dfp44sbsj/image/upload/v1774617405/computer-shop/products/7858dd9d-921f-48f9-a052-bc01a0e8ed63.jpg',1);
+(40, 43, 'https://res.cloudinary.com/dfp44sbsj/image/upload/v1774668562/computer-shop/products/f9963d54-54ff-4ff9-8b8b-be8326db1286.webp', 1),
+
+-- Placeholders for Storage (44-53)
+(41, 44, 'https://res.cloudinary.com/dfp44sbsj/image/upload/v1774668647/computer-shop/products/799edc34-623f-4ca3-9685-adbbe00a0eeb.png', 1),
+(42, 45, 'https://res.cloudinary.com/dfp44sbsj/image/upload/v1774668843/computer-shop/products/1bfef682-6858-4cb3-9823-0cfc3df8a86c.jpg', 1),
+(43, 46, 'https://res.cloudinary.com/dfp44sbsj/image/upload/v1774668868/computer-shop/products/46d07797-1631-4cb4-b97c-3af1ae9884e0.webp', 1),
+(44, 47, 'https://res.cloudinary.com/dfp44sbsj/image/upload/v1774668910/computer-shop/products/2a9ac45c-3aec-435a-8118-dc68b0f21b5f.jpg', 1),
+(45, 48, 'https://res.cloudinary.com/dfp44sbsj/image/upload/v1774669018/computer-shop/products/03b16063-451a-4749-8b28-942e30543896.webp', 1),
+(46, 49, 'https://res.cloudinary.com/dfp44sbsj/image/upload/v1774669052/computer-shop/products/c0b11f99-49d0-494b-9b3b-ff61611d679c.png', 1),
+(47, 50, 'https://res.cloudinary.com/dfp44sbsj/image/upload/v1774669080/computer-shop/products/b6c729b6-ba13-4e86-ba83-a9ee52e2a90e.jpg', 1),
+(48, 51, 'https://res.cloudinary.com/dfp44sbsj/image/upload/v1774669111/computer-shop/products/eadca0bf-517c-4d8d-b564-7abad0d75783.jpg', 1),
+(49, 52, 'https://res.cloudinary.com/dfp44sbsj/image/upload/v1774669136/computer-shop/products/8f65ebeb-edeb-47c3-937e-6a14686e6554.webp', 1),
+(50, 53, 'https://res.cloudinary.com/dfp44sbsj/image/upload/v1774669218/computer-shop/products/5062c816-06b1-41b8-9a64-a2feb33bedb3.webp', 1),
+
+-- Placeholders for Build PC (54-61)
+(51, 54, 'https://res.cloudinary.com/dfp44sbsj/image/upload/v1774669265/computer-shop/products/1a95cd1c-f84e-46db-916c-4204fba704ea.jpg', 1),
+(52, 55, 'https://res.cloudinary.com/dfp44sbsj/image/upload/v1774669291/computer-shop/products/cac53d86-8cf4-4c8d-a3f3-e8554a2b2486.jpg', 1),
+(53, 56, 'https://res.cloudinary.com/dfp44sbsj/image/upload/v1774669316/computer-shop/products/d4210bee-6f96-4481-bd7f-4d0e7132785f.webp', 1),
+(54, 57, 'https://res.cloudinary.com/dfp44sbsj/image/upload/v1774669341/computer-shop/products/1fdf8f53-8768-4f8c-822c-a73b85b67157.webp', 1),
+(55, 58, 'https://res.cloudinary.com/dfp44sbsj/image/upload/v1774669364/computer-shop/products/70b5011c-4449-4ef0-bd27-1f94835c50a6.jpg', 1),
+(56, 59, 'https://res.cloudinary.com/dfp44sbsj/image/upload/v1774669397/computer-shop/products/7f51634b-1d81-45a4-9734-f9c1d2fa2ce2.jpg', 1),
+(57, 60, 'https://res.cloudinary.com/dfp44sbsj/image/upload/v1774669423/computer-shop/products/91aa0324-4977-482b-bc75-8859f28ef621.webp', 1),
+(58, 61, 'https://res.cloudinary.com/dfp44sbsj/image/upload/v1774669457/computer-shop/products/5009c67f-1ce6-43b3-b3dc-461b95c836ea.jpg', 1),
+
+-- Placeholders for Accessories (62-73)
+(59, 62, 'https://res.cloudinary.com/dfp44sbsj/image/upload/v1774669666/computer-shop/products/c45021c0-1862-44a5-b6f2-82548dd6214a.jpg', 1),
+(60, 63, 'https://res.cloudinary.com/dfp44sbsj/image/upload/v1774669695/computer-shop/products/14e8966a-9560-40b9-b8a8-c851da00cc69.png', 1),
+(61, 64, 'https://res.cloudinary.com/dfp44sbsj/image/upload/v1774669724/computer-shop/products/1acdf8ce-c0cf-41b1-96a4-b9e8711b9cd2.png', 1),
+(62, 65, 'https://res.cloudinary.com/dfp44sbsj/image/upload/v1774669748/computer-shop/products/2bf7d697-5a78-4efc-8647-acf0ec19ae7f.jpg', 1),
+(63, 66, 'https://res.cloudinary.com/dfp44sbsj/image/upload/v1774669800/computer-shop/products/8120a1a0-37dd-4512-a082-6ae6f510e7de.jpg', 1),
+(64, 67, 'https://res.cloudinary.com/dfp44sbsj/image/upload/v1774669826/computer-shop/products/ba7998af-8b21-4626-8de3-8811da9925e2.png', 1),
+(65, 68, 'https://res.cloudinary.com/dfp44sbsj/image/upload/v1774669850/computer-shop/products/688ab100-3a10-4d1a-8abb-6c996d4d9a85.webp', 1),
+(66, 69, 'https://res.cloudinary.com/dfp44sbsj/image/upload/v1774669890/computer-shop/products/8fe48cd4-c199-44c2-aac7-edd0dbd43f97.jpg', 1),
+(67, 70, 'https://res.cloudinary.com/dfp44sbsj/image/upload/v1774669915/computer-shop/products/7e9f4ec8-be8e-4107-a829-204f6930860d.jpg', 1),
+(68, 71, 'https://res.cloudinary.com/dfp44sbsj/image/upload/v1774669939/computer-shop/products/31616ff7-ac45-47e8-bad1-18ca6369325b.webp', 1),
+(69, 72, 'https://res.cloudinary.com/dfp44sbsj/image/upload/v1774669978/computer-shop/products/de3ef972-9c31-46a2-beb9-0ad7e2b5533a.jpg', 1),
+(70, 73, 'https://res.cloudinary.com/dfp44sbsj/image/upload/v1774669999/computer-shop/products/3ce0bfdf-2564-47be-bc79-6bcef797e6c2.jpg', 1);
 SET IDENTITY_INSERT product_images OFF;
 
 -- ── Blogs ────────────────────────────────────────────────────────────────────
@@ -1228,7 +1382,41 @@ VALUES
 -- variant 65: Corsair K70 RGB MX Brown
 (178,65,'SN-KB-K70-BROWN-001'),(179,65,'SN-KB-K70-BROWN-002'),(180,65,'SN-KB-K70-BROWN-003'),
 -- variant 66: HyperX Cloud Alpha Wireless
-(181,66,'SN-HS-CLOUDALPHA-001'),(182,66,'SN-HS-CLOUDALPHA-002'),(183,66,'SN-HS-CLOUDALPHA-003');
+(181, 66, 'SN-HS-CLOUDALPHA-001'),(182, 66, 'SN-HS-CLOUDALPHA-002'),(183, 66, 'SN-HS-CLOUDALPHA-003'),
+
+-- Serial numbers for new variants (101-118)
+(301, 101, 'SN-SSD-KS-001'), (302, 101, 'SN-SSD-KS-002'),
+(303, 102, 'SN-SSD-SAM-001'), (304, 102, 'SN-SSD-SAM-002'),
+(305, 103, 'SN-SSD-MSI-001'), (306, 103, 'SN-SSD-MSI-002'),
+(307, 104, 'SN-SSD-GB-001'), (308, 104, 'SN-SSD-GB-002'),
+(309, 105, 'SN-SSD-WD-001'), (310, 105, 'SN-SSD-WD-002'),
+(311, 106, 'SN-HDD-WD-B-001'), (312, 106, 'SN-HDD-WD-B-002'),
+(313, 107, 'SN-HDD-SG-B-001'), (314, 107, 'SN-HDD-SG-B-002'),
+(315, 108, 'SN-HDD-TSB-001'), (316, 108, 'SN-HDD-TSB-002'),
+(317, 109, 'SN-HDD-WD-R-001'), (318, 109, 'SN-HDD-WD-R-002'),
+(319, 110, 'SN-HDD-SG-I-001'), (320, 110, 'SN-HDD-SG-I-002'),
+(321, 111, 'SN-PC-GAM-1-001'), (322, 111, 'SN-PC-GAM-1-002'),
+(323, 112, 'SN-PC-GAM-2-001'), (324, 112, 'SN-PC-GAM-2-002'),
+(325, 113, 'SN-PC-OFF-1-001'), (326, 113, 'SN-PC-OFF-1-002'),
+(327, 114, 'SN-PC-OFF-2-001'), (328, 114, 'SN-PC-OFF-2-002'),
+(329, 115, 'SN-PC-WRK-1-001'), (330, 115, 'SN-PC-WRK-1-002'),
+(331, 116, 'SN-PC-WRK-2-001'), (332, 116, 'SN-PC-WRK-2-002'),
+(333, 117, 'SN-PC-CST-1-001'), (334, 117, 'SN-PC-CST-1-002'),
+(335, 118, 'SN-PC-CST-2-001'), (336, 118, 'SN-PC-CST-2-002'),
+
+-- Serial numbers for Accessory variants (120-131)
+(401, 120, 'SN-KB-AKKO-001'), (402, 120, 'SN-KB-AKKO-002'),
+(403, 121, 'SN-KB-RAZ-001'), (404, 121, 'SN-KB-RAZ-002'),
+(405, 122, 'SN-KB-ASU-001'), (406, 122, 'SN-KB-ASU-002'),
+(407, 123, 'SN-MOU-RAZ-001'), (408, 123, 'SN-MOU-RAZ-002'),
+(409, 124, 'SN-MOU-ASU-001'), (410, 124, 'SN-MOU-ASU-002'),
+(411, 125, 'SN-MOU-COR-001'), (412, 125, 'SN-MOU-COR-002'),
+(413, 126, 'SN-HEA-RAZ-001'), (414, 126, 'SN-HEA-RAZ-002'),
+(415, 127, 'SN-HEA-COR-001'), (416, 127, 'SN-HEA-COR-002'),
+(417, 128, 'SN-HEA-LOG-001'), (418, 128, 'SN-HEA-LOG-002'),
+(419, 129, 'SN-GHE-SEC-001'), (420, 129, 'SN-GHE-SEC-002'),
+(421, 130, 'SN-GHE-COR-001'), (422, 130, 'SN-GHE-COR-002'),
+(423, 131, 'SN-GHE-MSI-001'), (424, 131, 'SN-GHE-MSI-002');
 SET IDENTITY_INSERT product_items OFF;
 
 -- ── Carts ────────────────────────────────────────────────────────────────────
